@@ -2,6 +2,11 @@ import { IsEnum, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-valid
 import { ExpensePaymentMethod } from '@prisma/client';
 
 export class CreateExpenseDto {
+  /** Client-generated UUID, for idempotent offline retries — see CustomersService/WashOrdersService for the same pattern. */
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @IsUUID()
   categoryId!: string;
 

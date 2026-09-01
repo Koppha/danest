@@ -96,10 +96,32 @@ function makeFakeTx(seedWallets: WalletRow[] = [], seedPurchases: PurchaseRow[] 
   return { tx, wallets, ledger, purchases, usage };
 }
 
-function buildService() {
-  const prisma = {} as any;
+function buildService(prisma: any = {}) {
   const audit = { record: vi.fn(async () => undefined) } as any;
   return new PrepaidService(prisma, audit);
+}
+
+function makeFakePrismaForPurchase() {
+  const purchases: PurchaseRow[] = [];
+  const prisma = {
+    prepaidPackage: {
+      findUniqueOrThrow: vi.fn(async ({ where }: any) => ({
+        id: where.id,
+        validityDays: 30,
+        washCount: 5,
+        applicableScope: 'ANY_VEHICLE_OF_CUSTOMER',
+      })),
+    },
+    prepaidPackagePurchase: {
+      findUnique: vi.fn(async ({ where }: any) => purchases.find((p) => p.id === where.id) ?? null),
+      create: vi.fn(async ({ data }: any) => {
+        const row = { id: data.id ?? `pp-${purchases.length + 1}`, ...data } as PurchaseRow;
+        purchases.push(row);
+        return row;
+      }),
+    },
+  } as any;
+  return { prisma, purchases };
 }
 
 describe('PrepaidService.debitForWash', () => {
@@ -181,5 +203,19 @@ describe('PrepaidService package usage', () => {
     await expect(
       service.useForWash(tx as any, { purchaseId: 'pp-1', washOrderId: 'wash-1', vehicleId: 'veh-1', clientEntryId: 'ce-1', actorId: 'u' }),
     ).rejects.toThrow(ConflictException);
+  });
+});
+
+describe('PrepaidService.purchasePackage', () => {
+  it('is idempotent on a client-supplied id — a retried offline purchase does not duplicate', async () => {
+    const { prisma, purchases } = makeFakePrismaForPurchase();
+    const service = buildService(prisma);
+    const params = { id: 'client-uuid-1', customerId: 'cust-1', packageId: 'pk-1', actor: { userId: 'u', branchId: 'b', deviceId: 'd' } } as any;
+
+    const first = await service.purchasePackage(params);
+    const second = await service.purchasePackage(params);
+
+    expect(second.id).toBe(first.id);
+    expect(purchases).toHaveLength(1);
   });
 });

@@ -13,8 +13,9 @@ function makeFakePrisma(opts: {
   const prisma = {
     cashCollection: {
       findFirst: vi.fn(async () => (opts.lastCollectionEnd ? { periodEndAt: opts.lastCollectionEnd } : null)),
+      findUnique: vi.fn(async ({ where }: any) => collections.find((c) => c.id === where.id) ?? null),
       create: vi.fn(async ({ data }: any) => {
-        const row = { id: `cc-${collections.length + 1}`, ...data };
+        const row = { id: data.id ?? `cc-${collections.length + 1}`, ...data };
         collections.push(row);
         return row;
       }),
@@ -88,5 +89,29 @@ describe('CollectionsService', () => {
     const over = await service.confirm({ branchId: 'branch-1', countedCash: 1100, varianceReason: 'extra tip left in till', actor });
     expect(over.collection.result).toBe('OVER');
     expect(over.collection.variance).toBe(100);
+  });
+
+  it('is idempotent on a client-supplied id — a retried offline confirm does not duplicate', async () => {
+    const { prisma, collections } = makeFakePrisma({ cashSales: 1000 });
+    const audit = { record: vi.fn(async () => undefined) } as any;
+    const service = new CollectionsService(prisma, audit);
+    const params = { id: 'client-uuid-1', branchId: 'branch-1', countedCash: 1000, actor } as any;
+
+    const first = await service.confirm(params);
+    const second = await service.confirm(params);
+
+    expect(second.collection.id).toBe(first.collection.id);
+    expect(collections).toHaveLength(1);
+  });
+
+  it('uses countedAt (when the attendant actually counted) as the period end, not "now"', async () => {
+    const { prisma } = makeFakePrisma({ cashSales: 1000 });
+    const audit = { record: vi.fn(async () => undefined) } as any;
+    const service = new CollectionsService(prisma, audit);
+    const countedAt = '2026-08-15T12:00:00.000Z';
+
+    const { collection } = await service.confirm({ branchId: 'branch-1', countedCash: 1000, actor, countedAt });
+
+    expect(new Date(collection.periodEndAt).toISOString()).toBe(countedAt);
   });
 });

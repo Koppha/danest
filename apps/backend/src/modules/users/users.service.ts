@@ -32,7 +32,18 @@ export class UsersService {
     });
   }
 
+  /**
+   * Idempotent on dto.id (client UUID) so an offline-queued retry never
+   * throws "username already exists" against its own earlier success. A
+   * genuine username collision (a different id) still rejects — that's a
+   * real cross-device conflict, not a retry.
+   */
   async create(dto: CreateUserDto, actor: AuthenticatedUser) {
+    if (dto.id) {
+      const byId = await this.prisma.user.findUnique({ where: { id: dto.id }, select: SAFE_SELECT });
+      if (byId) return byId;
+    }
+
     const existing = await this.prisma.user.findUnique({ where: { username: dto.username } });
     if (existing) throw new ConflictException('Username already exists');
 
@@ -41,6 +52,7 @@ export class UsersService {
 
     const user = await this.prisma.user.create({
       data: {
+        id: dto.id,
         branchId: dto.branchId,
         fullName: dto.fullName,
         username: dto.username,

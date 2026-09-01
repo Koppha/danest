@@ -2,13 +2,14 @@ import { describe, it, expect, vi } from 'vitest';
 import { BadRequestException } from '@nestjs/common';
 import { ExpensesService } from './expenses.service.js';
 
-function makeFakePrisma(original: any) {
-  const expenses = [original];
+function makeFakePrisma(original?: any) {
+  const expenses = original ? [original] : [];
   const prisma = {
     expense: {
+      findUnique: vi.fn(async ({ where }: any) => expenses.find((e) => e.id === where.id) ?? null),
       findUniqueOrThrow: vi.fn(async ({ where }: any) => expenses.find((e) => e.id === where.id)!),
       create: vi.fn(async ({ data }: any) => {
-        const row = { id: `exp-${expenses.length + 1}`, ...data };
+        const row = { id: data.id ?? `exp-${expenses.length + 1}`, ...data };
         expenses.push(row);
         return row;
       }),
@@ -48,5 +49,21 @@ describe('ExpensesService.reverse', () => {
     const service = new ExpensesService(prisma, audit);
 
     await expect(service.reverse('exp-1', 'again', actor)).rejects.toThrow(BadRequestException);
+  });
+});
+
+describe('ExpensesService.create', () => {
+  it('is idempotent on a client-supplied id — a retried offline create does not duplicate', async () => {
+    const { prisma, expenses } = makeFakePrisma();
+    const audit = { record: vi.fn(async () => undefined) } as any;
+    const service = new ExpensesService(prisma, audit);
+    const dto = { id: 'client-uuid-1', categoryId: 'cat-1', description: 'Detergent', amount: 150, paymentMethod: 'CASH' } as any;
+
+    const first = await service.create(dto, actor);
+    const second = await service.create(dto, actor);
+
+    expect(second.id).toBe(first.id);
+    expect(expenses).toHaveLength(1);
+    expect(audit.record).toHaveBeenCalledTimes(1); // second call short-circuited before recording again
   });
 });

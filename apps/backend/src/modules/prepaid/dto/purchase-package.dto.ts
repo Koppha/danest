@@ -1,6 +1,11 @@
 import { IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class PurchasePackageDto {
+  /** Client-generated UUID, for idempotent offline retries. */
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @IsUUID()
   customerId!: string;
 

@@ -19,9 +19,16 @@ export class ExpensesService {
     return this.prisma.expenseCategory.findMany({ where: { active: true } });
   }
 
+  /** Idempotent on dto.id (client UUID) so an offline-queued retry never duplicates an expense. */
   async create(dto: CreateExpenseDto, actor: AuthenticatedUser) {
+    if (dto.id) {
+      const existing = await this.prisma.expense.findUnique({ where: { id: dto.id }, include: { category: true } });
+      if (existing) return existing;
+    }
+
     const expense = await this.prisma.expense.create({
       data: { ...dto, branchId: actor.branchId, createdById: actor.userId },
+      include: { category: true },
     });
 
     await this.audit.record({

@@ -2,6 +2,11 @@ import { IsEnum, IsOptional, IsString, IsUUID, MinLength } from 'class-validator
 import { RoleName } from '@prisma/client';
 
 export class CreateUserDto {
+  /** Client-generated UUID, for idempotent offline retries. */
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @IsUUID()
   branchId!: string;
 

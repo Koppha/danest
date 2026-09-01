@@ -110,15 +110,29 @@ export class CollectionsService {
     return rows.reduce((sum, r) => sum + Number(r.amount), 0);
   }
 
+  /**
+   * Idempotent on params.id (client UUID) so an offline-queued retry never
+   * duplicates a collection. params.countedAt — when the attendant actually
+   * counted the cash, which may be well before this request lands if it was
+   * queued offline — is used as the period end instead of server "now", so
+   * a late sync doesn't pull in transactions the attendant never saw.
+   */
   async confirm(params: {
+    id?: string;
     branchId: string;
     countedCash: number;
     varianceReason?: string;
     witness?: string;
     notes?: string;
+    countedAt?: string;
     actor: AuthenticatedUser;
   }) {
-    const breakdown = await this.computeExpected(params.branchId);
+    if (params.id) {
+      const existing = await this.prisma.cashCollection.findUnique({ where: { id: params.id } });
+      if (existing) return { collection: existing, breakdown: await this.computeExpected(params.branchId, existing.periodEndAt) };
+    }
+
+    const breakdown = await this.computeExpected(params.branchId, params.countedAt ? new Date(params.countedAt) : undefined);
     const variance = params.countedCash - breakdown.expected;
     const result = variance === 0 ? 'MATCHED' : variance < 0 ? 'SHORT' : 'OVER';
 
@@ -128,6 +142,7 @@ export class CollectionsService {
 
     const collection = await this.prisma.cashCollection.create({
       data: {
+        id: params.id,
         branchId: params.branchId,
         periodStartAt: breakdown.periodStart,
         periodEndAt: breakdown.periodEnd,

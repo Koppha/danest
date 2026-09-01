@@ -147,12 +147,19 @@ export class PrepaidService {
     return this.prisma.prepaidPackage.findMany({ where: activeOnly ? { active: true } : undefined });
   }
 
+  /** Idempotent on params.id (client UUID) so an offline-queued retry never duplicates a purchase. */
   async purchasePackage(params: {
+    id?: string;
     customerId: string;
     packageId: string;
     vehicleId?: string;
     actor: AuthenticatedUser;
   }) {
+    if (params.id) {
+      const existing = await this.prisma.prepaidPackagePurchase.findUnique({ where: { id: params.id } });
+      if (existing) return existing;
+    }
+
     const pkg = await this.prisma.prepaidPackage.findUniqueOrThrow({ where: { id: params.packageId } });
     if (pkg.applicableScope === 'SPECIFIC_VEHICLE' && !params.vehicleId) {
       throw new BadRequestException('This package requires a specific vehicle to be selected');
@@ -160,6 +167,7 @@ export class PrepaidService {
 
     const purchase = await this.prisma.prepaidPackagePurchase.create({
       data: {
+        id: params.id,
         packageId: pkg.id,
         customerId: params.customerId,
         vehicleId: params.vehicleId,
