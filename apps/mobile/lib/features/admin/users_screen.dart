@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/connectivity.dart';
 import '../../core/session.dart';
+import '../../data/local/offline_pos_repository.dart';
 import '../../data/remote/api_client.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
@@ -9,8 +10,7 @@ import '../../design_system/widgets.dart';
 const _roles = ['ATTENDANT', 'SUPERVISOR', 'ADMINISTRATOR', 'OWNER'];
 
 final usersProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
-  final resp = await ref.watch(apiClientProvider).get('/users');
-  return resp.data as List<dynamic>;
+  return ref.watch(offlinePosRepositoryProvider).listUsers();
 });
 
 class UsersScreen extends ConsumerWidget {
@@ -24,7 +24,7 @@ class UsersScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: isOnline ? () => _showAddUserDialog(context, ref) : null,
+        onPressed: () => _showAddUserDialog(context, ref),
         icon: const Icon(Icons.person_add_alt_1),
         label: const Text('Add user'),
       ),
@@ -50,7 +50,7 @@ class UsersScreen extends ConsumerWidget {
                         Icon(Icons.cloud_off, size: 14, color: DnColors.amber),
                         SizedBox(width: 6),
                         Expanded(
-                          child: Text('Offline — user accounts can only be created or changed while connected.', style: TextStyle(fontSize: 12, color: DnColors.amber)),
+                          child: Text('Offline — new accounts can be created but won\'t be able to log in until this device reconnects and syncs. Activating/deactivating existing accounts needs a connection.', style: TextStyle(fontSize: 12, color: DnColors.amber)),
                         ),
                       ],
                     ),
@@ -72,6 +72,7 @@ class UsersScreen extends ConsumerWidget {
                     final u = list[i] as Map<String, dynamic>;
                     final role = (u['role'] as Map<String, dynamic>)['name'] as String;
                     final active = u['active'] as bool;
+                    final pending = u['pending'] == true;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: DnCard(
@@ -89,15 +90,22 @@ class UsersScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Switch(
-                              value: active,
-                              onChanged: isOnline
-                                  ? (v) async {
-                                      await ref.read(apiClientProvider).patch('/users/${u['id']}', data: {'active': v});
-                                      ref.invalidate(usersProvider);
-                                    }
-                                  : null,
-                            ),
+                            if (pending)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(color: DnColors.amberSoft, borderRadius: BorderRadius.circular(6)),
+                                child: const Text('Pending sync', style: TextStyle(fontSize: 11, color: DnColors.amber, fontWeight: FontWeight.w600)),
+                              )
+                            else
+                              Switch(
+                                value: active,
+                                onChanged: isOnline
+                                    ? (v) async {
+                                        await ref.read(apiClientProvider).patch('/users/${u['id']}', data: {'active': v});
+                                        ref.invalidate(usersProvider);
+                                      }
+                                    : null,
+                              ),
                           ],
                         ),
                       ),
@@ -164,14 +172,14 @@ class UsersScreen extends ConsumerWidget {
               onPressed: () async {
                 if (nameController.text.trim().isEmpty || usernameController.text.trim().isEmpty || passwordController.text.length < 8) return;
                 final branchId = ref.read(sessionProvider).user?.branchId ?? '';
-                await ref.read(apiClientProvider).post('/users', data: {
-                  'branchId': branchId,
-                  'fullName': nameController.text.trim(),
-                  'username': usernameController.text.trim(),
-                  'password': passwordController.text,
-                  'role': role,
-                  if (pinController.text.trim().isNotEmpty) 'pin': pinController.text.trim(),
-                });
+                await ref.read(offlinePosRepositoryProvider).createUser(
+                      branchId: branchId,
+                      fullName: nameController.text.trim(),
+                      username: usernameController.text.trim(),
+                      password: passwordController.text,
+                      role: role,
+                      pin: pinController.text.trim().isEmpty ? null : pinController.text.trim(),
+                    );
                 ref.invalidate(usersProvider);
                 if (ctx.mounted) Navigator.pop(ctx);
               },

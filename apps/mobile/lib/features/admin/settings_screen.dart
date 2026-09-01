@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/connectivity.dart';
+import '../../data/local/offline_pos_repository.dart';
 import '../../data/models/models.dart';
 import '../../data/remote/api_client.dart';
-import '../../data/remote/pos_repository.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
 
-final servicesSettingsProvider = FutureProvider.autoDispose((ref) => ref.watch(posRepositoryProvider).listServices());
-final extrasSettingsProvider = FutureProvider.autoDispose((ref) => ref.watch(posRepositoryProvider).listExtras());
+final servicesSettingsProvider = FutureProvider.autoDispose((ref) => ref.watch(offlinePosRepositoryProvider).listServices());
+final extrasSettingsProvider = FutureProvider.autoDispose((ref) => ref.watch(offlinePosRepositoryProvider).listExtras());
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -37,7 +37,7 @@ class SettingsScreen extends ConsumerWidget {
                   Icon(Icons.cloud_off, size: 14, color: DnColors.amber),
                   SizedBox(width: 6),
                   Expanded(
-                    child: Text('Offline — prices and services can only be changed while connected.', style: TextStyle(fontSize: 12, color: DnColors.amber)),
+                    child: Text('Offline — price edits will sync automatically. Adding a new service or extra needs a connection.', style: TextStyle(fontSize: 12, color: DnColors.amber)),
                   ),
                 ],
               ),
@@ -73,7 +73,7 @@ class SettingsScreen extends ConsumerWidget {
                                   IconButton(
                                     icon: const Icon(Icons.edit_outlined, size: 18),
                                     tooltip: 'Edit',
-                                    onPressed: isOnline ? () => _showServiceDialog(context, ref, existing: s) : null,
+                                    onPressed: () => _showServiceDialog(context, ref, existing: s),
                                   ),
                                 ],
                               ),
@@ -115,7 +115,7 @@ class SettingsScreen extends ConsumerWidget {
                                   IconButton(
                                     icon: const Icon(Icons.edit_outlined, size: 18),
                                     tooltip: 'Edit',
-                                    onPressed: isOnline ? () => _showExtraDialog(context, ref, existing: e) : null,
+                                    onPressed: () => _showExtraDialog(context, ref, existing: e),
                                   ),
                                 ],
                               ),
@@ -159,11 +159,11 @@ class SettingsScreen extends ConsumerWidget {
               final price = double.tryParse(priceController.text);
               final duration = int.tryParse(durationController.text);
               if (nameController.text.trim().isEmpty || price == null || duration == null) return;
-              final data = {'name': nameController.text.trim(), 'basePrice': price, 'durationMinutes': duration};
+              final name = nameController.text.trim();
               if (existing == null) {
-                await ref.read(apiClientProvider).post('/wash-services', data: data);
+                await ref.read(apiClientProvider).post('/wash-services', data: {'name': name, 'basePrice': price, 'durationMinutes': duration});
               } else {
-                await ref.read(apiClientProvider).patch('/wash-services/${existing.id}', data: data);
+                await ref.read(offlinePosRepositoryProvider).updateService(id: existing.id, name: name, basePrice: price, durationMinutes: duration);
               }
               ref.invalidate(servicesSettingsProvider);
               if (ctx.mounted) Navigator.pop(ctx);
@@ -197,11 +197,11 @@ class SettingsScreen extends ConsumerWidget {
             onPressed: () async {
               final price = double.tryParse(priceController.text);
               if (nameController.text.trim().isEmpty || price == null) return;
-              final data = {'name': nameController.text.trim(), 'price': price};
+              final name = nameController.text.trim();
               if (existing == null) {
-                await ref.read(apiClientProvider).post('/wash-extras', data: data);
+                await ref.read(apiClientProvider).post('/wash-extras', data: {'name': name, 'price': price});
               } else {
-                await ref.read(apiClientProvider).patch('/wash-extras/${existing.id}', data: data);
+                await ref.read(offlinePosRepositoryProvider).updateExtra(id: existing.id, name: name, price: price);
               }
               ref.invalidate(extrasSettingsProvider);
               if (ctx.mounted) Navigator.pop(ctx);

@@ -54,7 +54,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Add user is disabled and an offline notice shows when there is no connection', (tester) async {
+  testWidgets('Add user stays reachable offline (queues for sync), with an offline notice shown', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -69,7 +69,7 @@ void main() {
 
     expect(find.textContaining('Offline —'), findsOneWidget);
     final fab = tester.widget<FloatingActionButton>(find.byType(FloatingActionButton));
-    expect(fab.onPressed, isNull);
+    expect(fab.onPressed, isNotNull);
     expect(tester.takeException(), isNull);
   });
 }

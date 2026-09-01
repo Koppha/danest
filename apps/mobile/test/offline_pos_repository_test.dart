@@ -224,6 +224,58 @@ void main() {
     expect(queue.length, 1);
     expect(queue.first.status, 'WAITING');
   });
+
+  test('updating a service price offline applies to the cache immediately and preserves the tier, and queues a PATCH', () async {
+    await db.into(db.localWashServices).insert(
+          LocalWashServicesCompanion.insert(id: 'svc-1', name: 'Standard Wash', tier: 'premium', basePrice: 60, durationMinutes: 15),
+        );
+
+    await repo.updateService(id: 'svc-1', name: 'Standard Wash', basePrice: 75, durationMinutes: 20);
+
+    final service = await db.select(db.localWashServices).getSingle();
+    expect(service.basePrice, 75);
+    expect(service.durationMinutes, 20);
+    expect(service.tier, 'premium'); // untouched field must survive the update
+
+    final outbox = await db.select(db.pendingSyncOps).get();
+    expect(outbox, hasLength(1));
+    expect(outbox.single.entityType, 'service');
+    expect(outbox.single.opType, 'update');
+  });
+
+  test('updating an extra price offline applies to the cache immediately and queues a PATCH', () async {
+    await db.into(db.localWashExtras).insert(
+          LocalWashExtrasCompanion.insert(id: 'ext-1', name: 'Tyre Shine', price: 20),
+        );
+
+    await repo.updateExtra(id: 'ext-1', name: 'Tyre Shine', price: 25);
+
+    final extra = await db.select(db.localWashExtras).getSingle();
+    expect(extra.price, 25);
+
+    final outbox = await db.select(db.pendingSyncOps).get();
+    expect(outbox, hasLength(1));
+    expect(outbox.single.entityType, 'extra');
+    expect(outbox.single.opType, 'update');
+  });
+
+  test('creating a user offline stores it as pending (with the plaintext password, until synced) and lists it as pending', () async {
+    await repo.createUser(branchId: 'branch-1', fullName: 'New Attendant', username: 'newattendant', password: 'supersecret1', role: 'ATTENDANT');
+
+    final pendingUsers = await db.select(db.localPendingUsers).get();
+    expect(pendingUsers, hasLength(1));
+    expect(pendingUsers.single.password, 'supersecret1');
+
+    final outbox = await db.select(db.pendingSyncOps).get();
+    expect(outbox, hasLength(1));
+    expect(outbox.single.entityType, 'user');
+    expect(outbox.single.opType, 'create');
+
+    final listed = await repo.listUsers();
+    expect(listed, hasLength(1));
+    expect(listed.single['pending'], isTrue);
+    expect(listed.single['username'], 'newattendant');
+  });
 }
 
 class _AlwaysOffline extends ConnectivityNotifier {

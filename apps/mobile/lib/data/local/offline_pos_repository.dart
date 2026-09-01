@@ -123,6 +123,55 @@ class OfflinePosRepository {
         .toList();
   }
 
+  /// Price edits apply to the cached row immediately (so the change is
+  /// visible right away) and queue a PATCH — safe to do offline since it
+  /// targets an existing row rather than creating a new one.
+  Future<void> updateService({
+    required String id,
+    required String name,
+    required double basePrice,
+    required int durationMinutes,
+  }) async {
+    final existing = await (_db.select(_db.localWashServices)..where((s) => s.id.equals(id))).getSingleOrNull();
+    await _db
+        .into(_db.localWashServices)
+        .insertOnConflictUpdate(
+          LocalWashServicesCompanion.insert(
+            id: id,
+            name: name,
+            tier: existing?.tier ?? 'standard',
+            basePrice: basePrice,
+            durationMinutes: durationMinutes,
+          ),
+        );
+    await _enqueueOrPush(
+      entityType: 'service',
+      entityId: id,
+      opType: 'update',
+      path: '/wash-services/$id',
+      method: 'PATCH',
+      payload: {'name': name, 'basePrice': basePrice, 'durationMinutes': durationMinutes},
+    );
+  }
+
+  Future<void> updateExtra({
+    required String id,
+    required String name,
+    required double price,
+  }) async {
+    await _db
+        .into(_db.localWashExtras)
+        .insertOnConflictUpdate(LocalWashExtrasCompanion.insert(id: id, name: name, price: price));
+    await _enqueueOrPush(
+      entityType: 'extra',
+      entityId: id,
+      opType: 'update',
+      path: '/wash-extras/$id',
+      method: 'PATCH',
+      payload: {'name': name, 'price': price},
+    );
+  }
+
   /// Cached, read-only — loyalty redemption itself still requires connectivity.
   Future<LoyaltySummary?> loyaltySummary(String vehicleId) async {
     if (_isOnline) {
@@ -476,6 +525,83 @@ class OfflinePosRepository {
       'paymentMethod': paymentMethod,
       'category': {'id': categoryId, 'name': categoryName},
     };
+  }
+
+  // --------------------------------------------------------------- users
+
+  /// Online rows come straight from the server; any not-yet-synced
+  /// [LocalPendingUsers] rows are appended and marked `pending: true` (the
+  /// row is deleted once its create op actually reaches the server — see
+  /// the cleanup in [_pushOne] and [SyncService.pushAll]), so a
+  /// just-created account is visible immediately even before syncing.
+  Future<List<Map<String, dynamic>>> listUsers() async {
+    List<Map<String, dynamic>> synced = [];
+    if (_isOnline) {
+      try {
+        final resp = await _dio.get('/users');
+        synced = (resp.data as List).cast<Map<String, dynamic>>();
+      } on DioException {
+        // Fall through to whatever's pending locally.
+      }
+    }
+    final pendingRows = await _db.select(_db.localPendingUsers).get();
+    final pending = pendingRows
+        .map(
+          (u) => {
+            'id': u.id,
+            'fullName': u.fullName,
+            'username': u.username,
+            'active': true,
+            'role': {'name': u.role},
+            'pending': true,
+          },
+        )
+        .toList();
+    return [...synced, ...pending];
+  }
+
+  /// Password hashing (argon2) is server-only, so the account can't log in
+  /// anywhere until this create op actually reaches the server — the
+  /// plaintext password sits in the outbox/[LocalPendingUsers] only until
+  /// then, same trust model as every other offline payload in local SQLite.
+  Future<void> createUser({
+    required String branchId,
+    required String fullName,
+    required String username,
+    required String password,
+    required String role,
+    String? pin,
+  }) async {
+    final id = _uuid.v4();
+    await _db
+        .into(_db.localPendingUsers)
+        .insert(
+          LocalPendingUsersCompanion.insert(
+            id: id,
+            branchId: branchId,
+            fullName: fullName,
+            username: username,
+            password: password,
+            role: role,
+            pin: Value(pin),
+            createdAt: DateTime.now(),
+          ),
+        );
+    await _enqueueOrPush(
+      entityType: 'user',
+      entityId: id,
+      opType: 'create',
+      path: '/users',
+      payload: {
+        'id': id,
+        'branchId': branchId,
+        'fullName': fullName,
+        'username': username,
+        'password': password,
+        'role': role,
+        if (pin != null) 'pin': pin,
+      },
+    );
   }
 
   // ---------------------------------------------------------- collections
@@ -984,6 +1110,12 @@ class OfflinePosRepository {
       await (_db.delete(
         _db.pendingSyncOps,
       )..where((o) => o.idempotencyKey.equals(idempotencyKey))).go();
+      if (entityType == 'user' && opType == 'create') {
+        final userId = payload['id'] as String?;
+        if (userId != null) {
+          await (_db.delete(_db.localPendingUsers)..where((u) => u.id.equals(userId))).go();
+        }
+      }
     } on DioException {
       // Leave queued; SyncService will retry on the next sweep.
     }
