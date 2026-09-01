@@ -14,6 +14,7 @@ import '../features/reports/reports_screen.dart';
 import '../features/admin/collections_screen.dart';
 import '../features/admin/expenses_screen.dart';
 import '../features/admin/settings_screen.dart';
+import '../features/admin/users_screen.dart';
 import '../features/admin/audit_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -45,6 +46,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/admin/collections', builder: (context, state) => const CollectionsScreen()),
           GoRoute(path: '/admin/expenses', builder: (context, state) => const ExpensesScreen()),
           GoRoute(path: '/admin/settings', builder: (context, state) => const SettingsScreen()),
+          GoRoute(path: '/admin/users', builder: (context, state) => const UsersScreen()),
           GoRoute(path: '/admin/audit', builder: (context, state) => const AuditScreen()),
         ],
       ),

@@ -26,6 +26,7 @@ const _mainNav = [
 const _adminNav = [
   NavItem('/admin/collections', 'Collections', Icons.savings_outlined),
   NavItem('/admin/expenses', 'Expenses', Icons.description_outlined),
+  NavItem('/admin/users', 'Users', Icons.badge_outlined),
   NavItem('/admin/settings', 'Settings', Icons.settings_outlined),
   NavItem('/admin/audit', 'Audit & SMS', Icons.shield_outlined),
 ];
