@@ -82,6 +82,45 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('finish wash sheet keeps its submit button above the system nav bar', (tester) async {
+    await _setSurfaceSize(tester, const Size(900, 700));
+    final order = WashOrder(
+      id: 'w1',
+      status: 'READY',
+      totalAmount: 60,
+      createdAt: DateTime.now(),
+      vehicle: Vehicle(id: 'v1', customerId: 'c1', regNumberDisplay: 'ABC 123'),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(padding: const EdgeInsets.only(bottom: 80)),
+            child: child!,
+          ),
+          home: Consumer(
+            builder: (context, ref, _) => Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () => showFinishWashSheet(context, ref, order),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    final buttonBottom = tester.getBottomLeft(find.widgetWithText(ElevatedButton, 'FINISH WASH & SEND SMS')).dy;
+    expect(buttonBottom, lessThanOrEqualTo(700 - 80));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('wash queue card with long names does not overflow on a narrow phone', (tester) async {
     await _setSurfaceSize(tester, const Size(320, 640));
     final order = WashOrder(

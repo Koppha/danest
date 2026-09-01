@@ -74,66 +74,68 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
     final isOnline = widget.ref.watch(connectivityProvider);
     final availableMethods = isOnline ? _methods : _methods.where((m) => offlineSafePaymentMethods.contains(m.$1)).toList();
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+    return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Finish wash — ${widget.order.vehicle?.regNumberDisplay ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            const SizedBox(height: 4),
-            Text('Total due: M${widget.order.totalAmount.toStringAsFixed(2)}', style: const TextStyle(color: DnColors.muted)),
-            if (!isOnline) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(color: DnColors.amberSoft, borderRadius: BorderRadius.circular(8)),
-                child: const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.cloud_off, size: 14, color: DnColors.amber),
-                    SizedBox(width: 6),
-                    Expanded(
-                      child: Text('Offline — prepaid balance, packages and free washes are unavailable until reconnected', style: TextStyle(fontSize: 12, color: DnColors.amber)),
-                    ),
-                  ],
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Finish wash — ${widget.order.vehicle?.regNumberDisplay ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 4),
+              Text('Total due: M${widget.order.totalAmount.toStringAsFixed(2)}', style: const TextStyle(color: DnColors.muted)),
+              if (!isOnline) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(color: DnColors.amberSoft, borderRadius: BorderRadius.circular(8)),
+                  child: const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.cloud_off, size: 14, color: DnColors.amber),
+                      SizedBox(width: 6),
+                      Expanded(
+                        child: Text('Offline — prepaid balance, packages and free washes are unavailable until reconnected', style: TextStyle(fontSize: 12, color: DnColors.amber)),
+                      ),
+                    ],
+                  ),
                 ),
+              ],
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: availableMethods.map((m) {
+                  final selected = _method == m.$1;
+                  return ChoiceChip(
+                    label: Text(m.$2),
+                    avatar: Icon(m.$3, size: 16, color: selected ? Colors.white : DnColors.muted),
+                    selected: selected,
+                    onSelected: (_) => setState(() => _method = m.$1),
+                    selectedColor: DnColors.blue,
+                    labelStyle: TextStyle(color: selected ? Colors.white : DnColors.ink),
+                  );
+                }).toList(),
+              ),
+              if (_referenceRequired) ...[
+                const SizedBox(height: 12),
+                TextField(controller: _referenceController, decoration: const InputDecoration(labelText: 'Reference number')),
+              ],
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Text(_error!, style: const TextStyle(color: DnColors.red, fontSize: 13)),
+              ],
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _submitting ? null : _submit,
+                child: _submitting
+                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('FINISH WASH & SEND SMS'),
               ),
             ],
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: availableMethods.map((m) {
-                final selected = _method == m.$1;
-                return ChoiceChip(
-                  label: Text(m.$2),
-                  avatar: Icon(m.$3, size: 16, color: selected ? Colors.white : DnColors.muted),
-                  selected: selected,
-                  onSelected: (_) => setState(() => _method = m.$1),
-                  selectedColor: DnColors.blue,
-                  labelStyle: TextStyle(color: selected ? Colors.white : DnColors.ink),
-                );
-              }).toList(),
-            ),
-            if (_referenceRequired) ...[
-              const SizedBox(height: 12),
-              TextField(controller: _referenceController, decoration: const InputDecoration(labelText: 'Reference number')),
-            ],
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Text(_error!, style: const TextStyle(color: DnColors.red, fontSize: 13)),
-            ],
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _submitting ? null : _submit,
-              child: _submitting
-                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('FINISH WASH & SEND SMS'),
-            ),
-          ],
+          ),
         ),
       ),
     );
