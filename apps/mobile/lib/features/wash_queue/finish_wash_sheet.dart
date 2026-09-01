@@ -91,11 +91,13 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(color: DnColors.amberSoft, borderRadius: BorderRadius.circular(8)),
                 child: const Row(
-                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(Icons.cloud_off, size: 14, color: DnColors.amber),
                     SizedBox(width: 6),
-                    Text('Offline — prepaid balance, packages and free washes are unavailable until reconnected', style: TextStyle(fontSize: 12, color: DnColors.amber)),
+                    Expanded(
+                      child: Text('Offline — prepaid balance, packages and free washes are unavailable until reconnected', style: TextStyle(fontSize: 12, color: DnColors.amber)),
+                    ),
                   ],
                 ),
               ),

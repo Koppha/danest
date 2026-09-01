@@ -110,23 +110,26 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
                       ElevatedButton(onPressed: _searching ? null : _search, child: const Text('Search')),
                     ],
                   ),
-                  if (_results.isEmpty && !_searching && _searchController.text.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: [
-                        const Text('No customer matches that.', style: TextStyle(color: DnColors.muted)),
-                        OutlinedButton.icon(
-                          onPressed: () => _showAddCustomerDialog(branchId),
-                          icon: const Icon(Icons.add, size: 16),
-                          label: const Text('Add customer'),
-                        ),
-                      ],
-                    ),
-                  ],
+                  const SizedBox(height: 12),
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      Text(
+                        _results.isEmpty && !_searching && _searchController.text.isNotEmpty
+                            ? 'No customer matches that.'
+                            : 'Can\'t find who you\'re looking for?',
+                        style: const TextStyle(color: DnColors.muted),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => _showAddCustomerDialog(branchId),
+                        icon: const Icon(Icons.add, size: 16),
+                        label: const Text('Add customer'),
+                      ),
+                    ],
+                  ),
                   ..._results.map((c) => _CustomerTile(
                         customer: c,
                         selected: _selectedCustomer?.id == c.id,

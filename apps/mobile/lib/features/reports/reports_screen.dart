@@ -24,20 +24,23 @@ class ReportsScreen extends ConsumerWidget {
           children: [
             const Text('This month', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 2.2,
-              children: [
-                DnKpi(icon: Icons.payments, label: 'Total sales', value: 'M${(s['totalSales'] as num).toStringAsFixed(0)}', tint: DnColors.greenSoft, iconColor: DnColors.green),
-                DnKpi(icon: Icons.local_car_wash, label: 'Completed washes', value: '${s['totalCompletedWashes']}', tint: DnColors.blueSoft, iconColor: DnColors.blue),
-                DnKpi(icon: Icons.card_giftcard, label: 'Free washes', value: '${s['totalFreeWashes']}', tint: DnColors.purpleSoft, iconColor: const Color(0xFF7C4DEB)),
-                DnKpi(icon: Icons.account_balance_wallet, label: 'Prepaid deposits', value: 'M${(s['totalPrepaidDeposits'] as num).toStringAsFixed(0)}', tint: DnColors.amberSoft, iconColor: DnColors.amber),
-              ],
-            ),
+            LayoutBuilder(builder: (context, constraints) {
+              final cols = constraints.maxWidth > 700 ? 3 : (constraints.maxWidth > 420 ? 2 : 1);
+              return GridView.count(
+                crossAxisCount: cols,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 2.6,
+                children: [
+                  DnKpi(icon: Icons.payments, label: 'Total sales', value: 'M${(s['totalSales'] as num).toStringAsFixed(0)}', tint: DnColors.greenSoft, iconColor: DnColors.green),
+                  DnKpi(icon: Icons.local_car_wash, label: 'Completed washes', value: '${s['totalCompletedWashes']}', tint: DnColors.blueSoft, iconColor: DnColors.blue),
+                  DnKpi(icon: Icons.card_giftcard, label: 'Free washes', value: '${s['totalFreeWashes']}', tint: DnColors.purpleSoft, iconColor: const Color(0xFF7C4DEB)),
+                  DnKpi(icon: Icons.account_balance_wallet, label: 'Prepaid deposits', value: 'M${(s['totalPrepaidDeposits'] as num).toStringAsFixed(0)}', tint: DnColors.amberSoft, iconColor: DnColors.amber),
+                ],
+              );
+            }),
             const SizedBox(height: 20),
             DnCard(
               child: Column(
@@ -49,7 +52,11 @@ class ReportsScreen extends ConsumerWidget {
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [Text(e.key as String), Text('M${(e.value as num).toStringAsFixed(2)}')],
+                          children: [
+                            Expanded(child: Text(e.key as String, overflow: TextOverflow.ellipsis, maxLines: 1)),
+                            const SizedBox(width: 8),
+                            Text('M${(e.value as num).toStringAsFixed(2)}'),
+                          ],
                         ),
                       ))),
                 ],

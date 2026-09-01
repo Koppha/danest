@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/session.dart';
 import '../../data/models/models.dart';
 import '../../data/remote/pos_repository.dart';
 import '../../design_system/theme.dart';
@@ -23,16 +24,28 @@ class CustomersScreen extends ConsumerWidget {
       children: [
         Padding(
           padding: const EdgeInsets.all(16),
-          child: TextField(
-            decoration: const InputDecoration(hintText: 'Search by name, phone, or registration', prefixIcon: Icon(Icons.search)),
-            onSubmitted: (v) => ref.read(customersSearchProvider.notifier).state = v,
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  decoration: const InputDecoration(hintText: 'Search by name, phone, or registration', prefixIcon: Icon(Icons.search)),
+                  onSubmitted: (v) => ref.read(customersSearchProvider.notifier).state = v,
+                ),
+              ),
+              const SizedBox(width: 10),
+              OutlinedButton.icon(
+                onPressed: () => _showAddCustomerDialog(context, ref),
+                icon: const Icon(Icons.person_add_alt_1, size: 16),
+                label: const Text('Add customer'),
+              ),
+            ],
           ),
         ),
         Expanded(
           child: customers.when(
             data: (list) {
               if (list.isEmpty) {
-                return const DnEmptyState(icon: Icons.people_outline, title: 'No customers found', hint: 'Try a different search, or add one from New Wash.');
+                return const DnEmptyState(icon: Icons.people_outline, title: 'No customers found', hint: 'Try a different search, or tap "Add customer" above.');
               }
               return ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -87,6 +100,41 @@ class CustomersScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showAddCustomerDialog(BuildContext context, WidgetRef ref) {
+    final nameController = TextEditingController();
+    final phoneController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add customer'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Full name')),
+            const SizedBox(height: 8),
+            TextField(controller: phoneController, decoration: const InputDecoration(labelText: 'Phone number')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              final branchId = ref.read(sessionProvider).user?.branchId ?? '';
+              await ref.read(posRepositoryProvider).createCustomer(
+                    fullName: nameController.text.trim(),
+                    phone: phoneController.text.trim(),
+                    branchId: branchId,
+                  );
+              ref.invalidate(customersListProvider);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
   }
 }

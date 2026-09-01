@@ -105,7 +105,8 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: DnColors.muted)),
+          Expanded(child: Text(label, style: const TextStyle(color: DnColors.muted), overflow: TextOverflow.ellipsis, maxLines: 1)),
+          const SizedBox(width: 8),
           Text('${negative ? '-' : ''}M${v.toStringAsFixed(2)}'),
         ],
       ),

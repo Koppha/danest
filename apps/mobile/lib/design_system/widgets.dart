@@ -104,8 +104,8 @@ class DnKpi extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: DnColors.muted, fontSize: 12), overflow: TextOverflow.ellipsis),
-                Text(value, style: TextStyle(color: iconColor, fontSize: 20, fontWeight: FontWeight.bold)),
+                Text(label, style: const TextStyle(color: DnColors.muted, fontSize: 12), overflow: TextOverflow.ellipsis, maxLines: 1),
+                Text(value, style: TextStyle(color: iconColor, fontSize: 20, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis, maxLines: 1),
               ],
             ),
           ),

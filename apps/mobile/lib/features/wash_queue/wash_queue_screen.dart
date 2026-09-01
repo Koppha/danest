@@ -73,21 +73,30 @@ class _QueueCard extends StatelessWidget {
                 ],
               ),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                DnStatusPill(status: order.status),
-                const SizedBox(height: 10),
-                if (order.status == 'WAITING')
-                  OutlinedButton(onPressed: () => _transition(context, 'WASHING'), child: const Text('Start washing')),
-                if (order.status == 'WASHING')
-                  OutlinedButton(onPressed: () => _transition(context, 'READY'), child: const Text('Mark ready')),
-                if (order.status == 'READY')
-                  ElevatedButton(
-                    onPressed: () => showFinishWashSheet(context, ref, order),
-                    child: const Text('Finish & send SMS'),
-                  ),
-              ],
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 140),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  DnStatusPill(status: order.status),
+                  const SizedBox(height: 10),
+                  if (order.status == 'WAITING')
+                    OutlinedButton(
+                      onPressed: () => _transition(context, 'WASHING'),
+                      child: const Text('Start washing', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
+                    ),
+                  if (order.status == 'WASHING')
+                    OutlinedButton(
+                      onPressed: () => _transition(context, 'READY'),
+                      child: const Text('Mark ready', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
+                    ),
+                  if (order.status == 'READY')
+                    ElevatedButton(
+                      onPressed: () => showFinishWashSheet(context, ref, order),
+                      child: const Text('Finish & send SMS', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
+                    ),
+                ],
+              ),
             ),
           ],
         ),
