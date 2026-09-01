@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/remote/api_client.dart';
+import '../../core/session.dart';
+import '../../data/local/offline_pos_repository.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
 
-final expensesProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
-  final resp = await ref.watch(apiClientProvider).get('/expenses');
-  return resp.data as List<dynamic>;
-});
+final expensesProvider = FutureProvider.autoDispose<List<dynamic>>(
+  (ref) => ref.watch(offlinePosRepositoryProvider).listExpenses(),
+);
 
-final expenseCategoriesProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
-  final resp = await ref.watch(apiClientProvider).get('/expenses/categories');
-  return resp.data as List<dynamic>;
-});
+final expenseCategoriesProvider = FutureProvider.autoDispose<List<dynamic>>(
+  (ref) => ref.watch(offlinePosRepositoryProvider).listExpenseCategories(),
+);
 
 class ExpensesScreen extends ConsumerWidget {
   const ExpensesScreen({super.key});
@@ -113,12 +112,14 @@ class ExpensesScreen extends ConsumerWidget {
                 onPressed: () async {
                   final amount = double.tryParse(amountController.text) ?? 0;
                   if (categoryId == null || amount <= 0) return;
-                  await ref.read(apiClientProvider).post('/expenses', data: {
-                    'categoryId': categoryId,
-                    'description': descController.text.trim(),
-                    'amount': amount,
-                    'paymentMethod': method,
-                  });
+                  final branchId = ref.read(sessionProvider).user?.branchId ?? '';
+                  await ref.read(offlinePosRepositoryProvider).createExpense(
+                        categoryId: categoryId!,
+                        description: descController.text.trim(),
+                        amount: amount,
+                        paymentMethod: method,
+                        branchId: branchId,
+                      );
                   ref.invalidate(expensesProvider);
                   if (ctx.mounted) Navigator.pop(ctx);
                 },

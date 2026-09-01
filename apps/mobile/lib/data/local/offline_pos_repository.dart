@@ -332,6 +332,152 @@ class OfflinePosRepository {
     );
   }
 
+  // ------------------------------------------------------------- expenses
+
+  Future<void> _cacheExpenseCategories(List<dynamic> categories) async {
+    await _db.batch((batch) {
+      for (final c in categories) {
+        final map = c as Map<String, dynamic>;
+        batch.insert(
+          _db.localExpenseCategories,
+          LocalExpenseCategoriesCompanion.insert(id: map['id'] as String, name: map['name'] as String),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> listExpenseCategories() async {
+    if (_isOnline) {
+      try {
+        final resp = await _dio.get('/expenses/categories');
+        final categories = resp.data as List<dynamic>;
+        await _cacheExpenseCategories(categories);
+        return categories.cast<Map<String, dynamic>>();
+      } on DioException {
+        // Fall through to cache.
+      }
+    }
+    final rows = await _db.select(_db.localExpenseCategories).get();
+    return rows.map((r) => {'id': r.id, 'name': r.name}).toList();
+  }
+
+  Future<void> _cacheExpenses(List<dynamic> expenses) async {
+    await _db.batch((batch) {
+      for (final e in expenses) {
+        final map = e as Map<String, dynamic>;
+        final category = map['category'] as Map<String, dynamic>;
+        batch.insert(
+          _db.localExpenseCategories,
+          LocalExpenseCategoriesCompanion.insert(id: category['id'] as String, name: category['name'] as String),
+          mode: InsertMode.insertOrReplace,
+        );
+        batch.insert(
+          _db.localExpenses,
+          LocalExpensesCompanion.insert(
+            id: map['id'] as String,
+            branchId: (map['branchId'] as String?) ?? '',
+            categoryId: category['id'] as String,
+            description: map['description'] as String,
+            amount: double.parse(map['amount'].toString()),
+            paymentMethod: map['paymentMethod'] as String,
+            createdAt: DateTime.parse(map['createdAt'] as String),
+            dirty: const Value(false),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> _cachedExpensesAsMaps() async {
+    final rows = await (_db.select(
+      _db.localExpenses,
+    )..orderBy([(e) => OrderingTerm.desc(e.createdAt)])).get();
+    final categoryRows = await _db.select(_db.localExpenseCategories).get();
+    final categoryNames = {for (final c in categoryRows) c.id: c.name};
+    return rows
+        .map(
+          (r) => {
+            'id': r.id,
+            'description': r.description,
+            'amount': r.amount,
+            'paymentMethod': r.paymentMethod,
+            'category': {'id': r.categoryId, 'name': categoryNames[r.categoryId] ?? 'Unknown'},
+          },
+        )
+        .toList();
+  }
+
+  /// Online: fetch live + refresh cache. Offline: serve from cache (includes
+  /// anything created offline on this device, dirty or already synced).
+  Future<List<Map<String, dynamic>>> listExpenses() async {
+    if (_isOnline) {
+      try {
+        final resp = await _dio.get('/expenses');
+        final expenses = resp.data as List<dynamic>;
+        await _cacheExpenses(expenses);
+        return expenses.cast<Map<String, dynamic>>();
+      } on DioException {
+        // Fall through to cache.
+      }
+    }
+    return _cachedExpensesAsMaps();
+  }
+
+  Future<Map<String, dynamic>> createExpense({
+    required String categoryId,
+    required String description,
+    required double amount,
+    required String paymentMethod,
+    required String branchId,
+  }) async {
+    final id = _uuid.v4();
+    final now = DateTime.now();
+    await _db
+        .into(_db.localExpenses)
+        .insert(
+          LocalExpensesCompanion.insert(
+            id: id,
+            branchId: branchId,
+            categoryId: categoryId,
+            description: description,
+            amount: amount,
+            paymentMethod: paymentMethod,
+            createdAt: now,
+            dirty: const Value(true),
+          ),
+        );
+    await _enqueueOrPush(
+      entityType: 'expense',
+      entityId: id,
+      opType: 'create',
+      path: '/expenses',
+      payload: {
+        'id': id,
+        'categoryId': categoryId,
+        'description': description,
+        'amount': amount,
+        'paymentMethod': paymentMethod,
+      },
+    );
+    final categoryRows = await _db.select(_db.localExpenseCategories).get();
+    var categoryName = 'Unknown';
+    for (final c in categoryRows) {
+      if (c.id == categoryId) {
+        categoryName = c.name;
+        break;
+      }
+    }
+    return {
+      'id': id,
+      'description': description,
+      'amount': amount,
+      'paymentMethod': paymentMethod,
+      'category': {'id': categoryId, 'name': categoryName},
+    };
+  }
+
   // ----------------------------------------------------------- wash queue
 
   Future<WashOrder> startWash({

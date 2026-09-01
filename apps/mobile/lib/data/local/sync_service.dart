@@ -68,6 +68,8 @@ class SyncService {
         if (op.opType == 'create') return '/wash-orders';
         if (op.opType.startsWith('transition')) return '/wash-orders/${op.entityId}/status';
         if (op.opType == 'finish') return '/wash-orders/${op.entityId}/finish';
+      case 'expense':
+        return '/expenses';
     }
     throw StateError('Unknown sync op: ${op.entityType}/${op.opType}');
   }
