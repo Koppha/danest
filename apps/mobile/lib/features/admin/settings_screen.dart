@@ -140,6 +140,7 @@ class SettingsScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         title: Text(existing == null ? 'Add service' : 'Edit service'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -180,6 +181,7 @@ class SettingsScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         title: Text(existing == null ? 'Add extra' : 'Edit extra'),
         content: Column(
           mainAxisSize: MainAxisSize.min,

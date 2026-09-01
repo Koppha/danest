@@ -77,6 +77,7 @@ class ExpensesScreen extends ConsumerWidget {
         final categories = dialogRef.watch(expenseCategoriesProvider);
         return StatefulBuilder(
           builder: (ctx, setDialogState) => AlertDialog(
+            scrollable: true,
             title: const Text('Record expense'),
             content: Column(
               mainAxisSize: MainAxisSize.min,

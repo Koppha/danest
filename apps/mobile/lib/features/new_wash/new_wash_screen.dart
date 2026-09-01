@@ -288,6 +288,7 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         title: const Text('Add customer'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -326,6 +327,7 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         title: const Text('Add vehicle'),
         content: Column(
           mainAxisSize: MainAxisSize.min,

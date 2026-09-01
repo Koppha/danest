@@ -39,6 +39,7 @@ class _PrepaidScreenState extends ConsumerState<PrepaidScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
+          scrollable: true,
           title: Text('Top up ${_selected!.fullName}'),
           content: Column(
             mainAxisSize: MainAxisSize.min,

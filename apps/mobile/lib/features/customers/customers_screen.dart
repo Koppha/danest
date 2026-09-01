@@ -109,6 +109,7 @@ class CustomersScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         title: const Text('Add customer'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
