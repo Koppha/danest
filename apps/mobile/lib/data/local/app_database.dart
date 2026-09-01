@@ -155,6 +155,110 @@ class SyncMeta extends Table {
   Set<Column> get primaryKey => {key};
 }
 
+/// Cache of active expense categories — read-only, refreshed alongside the
+/// wash-service/extra catalog.
+class LocalExpenseCategories extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Expenses created offline get a client UUID and `dirty=true` until pushed
+/// — same pattern as LocalCustomers.
+class LocalExpenses extends Table {
+  TextColumn get id => text()();
+  TextColumn get branchId => text()();
+  TextColumn get categoryId => text()();
+  TextColumn get description => text()();
+  RealColumn get amount => real()();
+  TextColumn get paymentMethod => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  BoolColumn get dirty => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Cache of purchasable prepaid packages — read-only reference data.
+class LocalPrepaidPackages extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get eligibleTiers => text()(); // comma-separated; empty = all tiers
+  IntColumn get washCount => integer()();
+  RealColumn get price => real()();
+  IntColumn get validityDays => integer()();
+  TextColumn get applicableScope => text()(); // ANY_VEHICLE_OF_CUSTOMER | SPECIFIC_VEHICLE
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// One row per customer with a wallet — cached balance, refreshed on every
+/// online overview fetch and optimistically mutated on offline
+/// deposits/spends. The server remains authoritative: a spend that turns
+/// out to exceed the real balance is rejected at sync time and surfaces in
+/// the Sync Issues screen rather than failing silently.
+class LocalPrepaidWallets extends Table {
+  TextColumn get customerId => text()();
+  RealColumn get balance => real()();
+  DateTimeColumn get asOf => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {customerId};
+}
+
+/// Cached prepaid package purchases, for offline eligibility checks
+/// (tier/vehicle/expiry/remaining-count) before allowing an offline PACKAGE
+/// spend — same "provisional, server can still reject" model as the wallet.
+class LocalPrepaidPackagePurchases extends Table {
+  TextColumn get id => text()();
+  TextColumn get packageId => text()();
+  TextColumn get customerId => text()();
+  TextColumn get vehicleId => text().nullable()();
+  DateTimeColumn get expiresAt => dateTime()();
+  IntColumn get remainingCount => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Cash collection confirmations queued offline. Deliberately has no
+/// expected/variance/result columns — computeExpected() aggregates every
+/// device's transactions since the last cutoff, which a single offline
+/// device cannot know. The server computes those once the sync lands,
+/// using `countedAt` (not "now") as the period end.
+class LocalCashCollections extends Table {
+  TextColumn get id => text()();
+  TextColumn get branchId => text()();
+  RealColumn get countedCash => real()();
+  TextColumn get varianceReason => text().nullable()();
+  TextColumn get witness => text().nullable()();
+  TextColumn get notes => text().nullable()();
+  DateTimeColumn get countedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Users created offline. Holds the plaintext password only until it syncs
+/// — password hashing is server-only (argon2), so this account cannot log
+/// in anywhere until the create request actually reaches the server.
+class LocalPendingUsers extends Table {
+  TextColumn get id => text()();
+  TextColumn get branchId => text()();
+  TextColumn get fullName => text()();
+  TextColumn get username => text()();
+  TextColumn get password => text()();
+  TextColumn get role => text()();
+  TextColumn get pin => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(tables: [
   LocalWashServices,
   LocalWashExtras,
@@ -167,13 +271,36 @@ class SyncMeta extends Table {
   LocalPaymentComponents,
   PendingSyncOps,
   SyncMeta,
+  LocalExpenseCategories,
+  LocalExpenses,
+  LocalPrepaidPackages,
+  LocalPrepaidWallets,
+  LocalPrepaidPackagePurchases,
+  LocalCashCollections,
+  LocalPendingUsers,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(localExpenseCategories);
+            await m.createTable(localExpenses);
+            await m.createTable(localPrepaidPackages);
+            await m.createTable(localPrepaidWallets);
+            await m.createTable(localPrepaidPackagePurchases);
+            await m.createTable(localCashCollections);
+            await m.createTable(localPendingUsers);
+          }
+        },
+      );
 }
 
 LazyDatabase _openConnection() {
