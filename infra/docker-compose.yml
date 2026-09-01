@@ -1,0 +1,41 @@
+name: de-nest
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-de_nest}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-de_nest_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-de_nest}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-de_nest}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ../apps/backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ../apps/backend/.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-de_nest}:${POSTGRES_PASSWORD:-de_nest_dev_password}@postgres:5432/${POSTGRES_DB:-de_nest}?schema=public
+    ports:
+      - "${API_PORT:-3000}:3000"
+    volumes:
+      - backend_storage:/app/storage
+
+volumes:
+  postgres_data:
+  backend_storage:

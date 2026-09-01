@@ -1,0 +1,810 @@
+// De Nest Car Wash — Prisma schema
+// Conventions: UUID PKs, numeric(12,2) money, UTC timestamps, append-only
+// tables (loyalty_ledger, wallet/package ledgers, audit_logs, collections,
+// expenses) are never updated/deleted from the service layer — corrections
+// are new rows referencing the original.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------- org/access
+
+model Branch {
+  id      String  @id @default(uuid()) @db.Uuid
+  name    String
+  code    String  @unique
+  address String?
+  phone   String?
+  active  Boolean @default(true)
+
+  users               User[]
+  devices             Device[]
+  customers           Customer[]
+  washOrders          WashOrder[]
+  cashCollections     CashCollection[]
+  expenses            Expense[]
+  auditLogs           AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("branches")
+}
+
+enum RoleName {
+  ATTENDANT
+  SUPERVISOR
+  ADMINISTRATOR
+  OWNER
+}
+
+model Role {
+  id   String   @id @default(uuid()) @db.Uuid
+  name RoleName @unique
+
+  users           User[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(uuid()) @db.Uuid
+  key         String  @unique // e.g. "wash.void", "collections.manage"
+  description String?
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @db.Uuid
+  permissionId String @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  branchId     String    @db.Uuid
+  fullName     String
+  username     String    @unique
+  passwordHash String
+  pinHash      String?
+  roleId       String    @db.Uuid
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime?
+
+  branch Branch @relation(fields: [branchId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  refreshTokens        RefreshToken[]
+  devicesRegistered     Device[]              @relation("DeviceRegisteredBy")
+  washOrdersCreated     WashOrder[]           @relation("WashOrderCreatedBy")
+  washStatusChanges     WashStatusHistory[]
+  paymentsCreated       Payment[]             @relation("PaymentCreatedBy")
+  loyaltyLedgerEntries  LoyaltyLedgerEntry[]
+  walletLedgerEntries   PrepaidWalletLedgerEntry[]
+  packageUsageEntries   PrepaidPackageUsage[]
+  collectionsCollected  CashCollection[]      @relation("CollectionCollectedBy")
+  collectionsApproved   CashCollection[]      @relation("CollectionApprovedBy")
+  expensesCreated       Expense[]
+  auditLogs             AuditLog[]
+  syncBatches           SyncBatch[]
+  conflictsResolved     SyncConflict[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  tokenHash String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  replacedByTokenId String? @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+enum Platform {
+  ANDROID
+  WINDOWS
+}
+
+enum DeviceStatus {
+  ACTIVE
+  REVOKED
+}
+
+model Device {
+  id             String       @id @default(uuid()) @db.Uuid
+  branchId       String       @db.Uuid
+  deviceName     String
+  platform       Platform
+  installId      String       @unique
+  lastSyncAt     DateTime?
+  status         DeviceStatus @default(ACTIVE)
+  registeredById String       @db.Uuid
+
+  branch       Branch @relation(fields: [branchId], references: [id])
+  registeredBy User   @relation("DeviceRegisteredBy", fields: [registeredById], references: [id])
+
+  washOrders       WashOrder[]
+  washStatusEvents WashStatusHistory[]
+  payments         Payment[]
+  loyaltyEntries   LoyaltyLedgerEntry[]
+  walletEntries    PrepaidWalletLedgerEntry[]
+  auditLogs        AuditLog[]
+  syncBatches      SyncBatch[]
+
+  createdAt DateTime @default(now())
+
+  @@map("devices")
+}
+
+// ------------------------------------------------------------- customers/vehicles
+
+enum CustomerStatus {
+  ACTIVE
+  BLOCKED
+}
+
+model Customer {
+  id             String         @id @db.Uuid // client-generated
+  branchId       String         @db.Uuid
+  fullName       String
+  phone          String
+  altPhone       String?
+  dateRegistered DateTime       @default(now())
+  status         CustomerStatus @default(ACTIVE)
+  notes          String?
+
+  branch   Branch    @relation(fields: [branchId], references: [id])
+  vehicles Vehicle[]
+  washOrders       WashOrder[]
+  wallet           PrepaidWallet?
+  packagePurchases PrepaidPackagePurchase[]
+  smsMessages      SmsMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([branchId, phone])
+  @@map("customers")
+}
+
+enum VehicleType {
+  SEDAN
+  HATCHBACK
+  SUV
+  BAKKIE
+  TRUCK
+  MOTORBIKE
+  OTHER
+}
+
+model Vehicle {
+  id                  String      @id @db.Uuid // client-generated
+  customerId          String      @db.Uuid
+  regNumberNormalized String      @unique
+  regNumberDisplay    String
+  make                String?
+  model               String?
+  colour              String?
+  vehicleType         VehicleType @default(SEDAN)
+  active              Boolean     @default(true)
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  washOrders        WashOrder[]
+  loyaltyLedger     LoyaltyLedgerEntry[]
+  loyaltyRewards    LoyaltyReward[]
+  packagePurchases  PrepaidPackagePurchase[]
+  packageUsage      PrepaidPackageUsage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("vehicles")
+}
+
+// ------------------------------------------------------------- services/wash orders
+
+model WashService {
+  id                     String   @id @default(uuid()) @db.Uuid
+  name                   String
+  tier                   String   @default("standard") // matches PrepaidPackage.eligibleTiers
+  basePrice              Decimal  @db.Decimal(12, 2)
+  durationMinutes        Int
+  applicableVehicleTypes VehicleType[]
+  active                 Boolean  @default(true)
+
+  orderItems WashOrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("wash_services")
+}
+
+model WashExtra {
+  id              String  @id @default(uuid()) @db.Uuid
+  name            String
+  price           Decimal @db.Decimal(12, 2)
+  durationMinutes Int     @default(0)
+  active          Boolean @default(true)
+
+  orderItems WashOrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("wash_extras")
+}
+
+enum WashStatus {
+  WAITING
+  WASHING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+model WashOrder {
+  id              String     @id @db.Uuid // client-generated, offline dedup key
+  branchId        String     @db.Uuid
+  vehicleId       String     @db.Uuid
+  customerId      String     @db.Uuid // denormalized for query speed
+  createdById     String     @db.Uuid
+  deviceId        String?    @db.Uuid
+  status          WashStatus @default(WAITING)
+  totalAmount     Decimal    @db.Decimal(12, 2)
+  currency        String     @default("LSL")
+  createdAt       DateTime   @default(now())
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  cancelReason    String?
+
+  branch   Branch   @relation(fields: [branchId], references: [id])
+  vehicle  Vehicle  @relation(fields: [vehicleId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  createdBy User    @relation("WashOrderCreatedBy", fields: [createdById], references: [id])
+  device   Device?  @relation(fields: [deviceId], references: [id])
+
+  items          WashOrderItem[]
+  statusHistory  WashStatusHistory[]
+  payment        Payment?
+  loyaltyEntries LoyaltyLedgerEntry[]
+  packageUsage   PrepaidPackageUsage[]
+  smsMessages    SmsMessage[]
+
+  @@index([branchId, status])
+  @@index([vehicleId])
+  @@map("wash_orders")
+}
+
+enum WashOrderItemType {
+  SERVICE
+  EXTRA
+}
+
+model WashOrderItem {
+  id            String            @id @default(uuid()) @db.Uuid
+  washOrderId   String            @db.Uuid
+  itemType      WashOrderItemType
+  serviceId     String?           @db.Uuid
+  extraId       String?           @db.Uuid
+  nameSnapshot  String
+  priceSnapshot Decimal           @db.Decimal(12, 2)
+  qty           Int               @default(1)
+
+  washOrder WashOrder    @relation(fields: [washOrderId], references: [id], onDelete: Cascade)
+  service   WashService? @relation(fields: [serviceId], references: [id])
+  extra     WashExtra?   @relation(fields: [extraId], references: [id])
+
+  @@map("wash_order_items")
+}
+
+model WashStatusHistory {
+  id            String     @id @default(uuid()) @db.Uuid
+  washOrderId   String     @db.Uuid
+  fromStatus    WashStatus?
+  toStatus      WashStatus
+  changedById   String     @db.Uuid
+  changedAt     DateTime   @default(now())
+  deviceId      String?    @db.Uuid
+
+  washOrder WashOrder @relation(fields: [washOrderId], references: [id], onDelete: Cascade)
+  changedBy User      @relation(fields: [changedById], references: [id])
+  device    Device?   @relation(fields: [deviceId], references: [id])
+
+  @@map("wash_status_history")
+}
+
+// ------------------------------------------------------------------- payments
+
+enum PaymentMethodCode {
+  CASH
+  CARD
+  MOBILE_MONEY
+  BANK_TRANSFER
+  WALLET
+  PACKAGE
+  LOYALTY_FREE_WASH
+}
+
+enum ReferenceRequirement {
+  NONE
+  OPTIONAL
+  MANDATORY
+}
+
+model PaymentMethodConfig {
+  id                String                @id @default(uuid()) @db.Uuid
+  code              PaymentMethodCode     @unique
+  label             String
+  referenceRequired ReferenceRequirement  @default(NONE)
+  active            Boolean               @default(true)
+
+  components PaymentComponent[]
+
+  @@map("payment_methods")
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  VOIDED
+}
+
+model Payment {
+  id           String        @id @default(uuid()) @db.Uuid
+  washOrderId  String        @unique @db.Uuid
+  createdById  String        @db.Uuid
+  deviceId     String?       @db.Uuid
+  totalAmount  Decimal       @db.Decimal(12, 2)
+  status       PaymentStatus @default(PENDING)
+  completedAt  DateTime?
+  voided       Boolean       @default(false)
+  voidedAt     DateTime?
+  voidReason   String?
+
+  washOrder WashOrder @relation(fields: [washOrderId], references: [id])
+  createdBy User      @relation("PaymentCreatedBy", fields: [createdById], references: [id])
+  device    Device?   @relation(fields: [deviceId], references: [id])
+
+  components PaymentComponent[]
+
+  @@map("payments")
+}
+
+model PaymentComponent {
+  id                String  @id @default(uuid()) @db.Uuid
+  paymentId         String  @db.Uuid
+  paymentMethodId   String  @db.Uuid
+  amount            Decimal @db.Decimal(12, 2)
+  externalReference String?
+  walletLedgerId    String? @unique @db.Uuid
+  packageUsageId    String? @unique @db.Uuid
+  loyaltyRewardId   String? @unique @db.Uuid
+
+  payment       Payment              @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethodConfig  @relation(fields: [paymentMethodId], references: [id])
+  walletLedger  PrepaidWalletLedgerEntry? @relation(fields: [walletLedgerId], references: [id])
+  packageUsage  PrepaidPackageUsage?      @relation(fields: [packageUsageId], references: [id])
+  loyaltyReward LoyaltyReward?            @relation(fields: [loyaltyRewardId], references: [id])
+
+  @@map("payment_components")
+}
+
+// -------------------------------------------------------------------- loyalty
+
+enum LoyaltyEventType {
+  WASH_CREDITED
+  WASH_REVERSED
+  REWARD_EARNED
+  REWARD_REDEEMED
+  REWARD_EXPIRED
+  MANAGER_ADJUSTMENT
+}
+
+model LoyaltyLedgerEntry {
+  id           String           @id @default(uuid()) @db.Uuid
+  vehicleId    String           @db.Uuid
+  washOrderId  String?          @db.Uuid
+  eventType    LoyaltyEventType
+  periodMonth  DateTime // first-of-month
+  createdAt    DateTime         @default(now())
+  createdById  String           @db.Uuid
+  deviceId     String?          @db.Uuid
+  notes        String?
+
+  vehicle   Vehicle    @relation(fields: [vehicleId], references: [id])
+  washOrder WashOrder? @relation(fields: [washOrderId], references: [id])
+  createdBy User       @relation(fields: [createdById], references: [id])
+  device    Device?    @relation(fields: [deviceId], references: [id])
+
+  rewardsEarnedFrom LoyaltyReward[] @relation("RewardEarnedFrom")
+
+  @@unique([washOrderId, eventType])
+  @@index([vehicleId, periodMonth, eventType])
+  @@map("loyalty_ledger")
+}
+
+enum RewardStatus {
+  AVAILABLE
+  REDEEMED
+  EXPIRED
+  REVOKED // downgraded by a reversal of the wash that earned it
+}
+
+model LoyaltyReward {
+  id                  String       @id @default(uuid()) @db.Uuid
+  vehicleId           String       @db.Uuid
+  earnedMonth         DateTime
+  validMonth          DateTime
+  status              RewardStatus @default(AVAILABLE)
+  earnedFromLedgerId  String       @unique @db.Uuid
+  redeemedWashOrderId String?      @db.Uuid
+  redeemedAt          DateTime?
+  expiredAt           DateTime?
+
+  vehicle          Vehicle            @relation(fields: [vehicleId], references: [id])
+  earnedFromLedger LoyaltyLedgerEntry @relation("RewardEarnedFrom", fields: [earnedFromLedgerId], references: [id])
+  paymentComponent PaymentComponent?
+
+  @@index([vehicleId, validMonth, status])
+  @@map("loyalty_rewards")
+}
+
+// -------------------------------------------------------------------- prepaid
+
+model PrepaidWallet {
+  id         String  @id @default(uuid()) @db.Uuid
+  customerId String  @unique @db.Uuid
+  balance    Decimal @default(0) @db.Decimal(12, 2)
+  currency   String  @default("LSL")
+
+  customer Customer                    @relation(fields: [customerId], references: [id])
+  ledger   PrepaidWalletLedgerEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("prepaid_wallets")
+}
+
+enum WalletLedgerEntryType {
+  DEPOSIT
+  DEBIT
+  ADJUSTMENT
+}
+
+model PrepaidWalletLedgerEntry {
+  id            String                 @id @default(uuid()) @db.Uuid
+  walletId      String                 @db.Uuid
+  entryType     WalletLedgerEntryType
+  amount        Decimal                @db.Decimal(12, 2) // signed
+  balanceAfter  Decimal                @db.Decimal(12, 2)
+  method        PaymentMethodCode?     // set on DEPOSIT entries; null for DEBIT/ADJUSTMENT
+  reference     String?
+  createdAt     DateTime               @default(now())
+  createdById   String                 @db.Uuid
+  deviceId      String?                @db.Uuid
+  clientEntryId String                 @unique
+
+  wallet    PrepaidWallet @relation(fields: [walletId], references: [id])
+  createdBy User          @relation(fields: [createdById], references: [id])
+  device    Device?       @relation(fields: [deviceId], references: [id])
+
+  paymentComponent PaymentComponent?
+
+  @@map("prepaid_wallet_ledger")
+}
+
+enum PackageScope {
+  ANY_VEHICLE_OF_CUSTOMER
+  SPECIFIC_VEHICLE
+}
+
+model PrepaidPackage {
+  id                 String        @id @default(uuid()) @db.Uuid
+  name               String
+  eligibleTiers      String[] // e.g. ["standard","deluxe"]
+  washCount          Int
+  price              Decimal       @db.Decimal(12, 2)
+  validityDays       Int
+  applicableScope    PackageScope  @default(ANY_VEHICLE_OF_CUSTOMER)
+  active             Boolean       @default(true)
+
+  purchases PrepaidPackagePurchase[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("prepaid_packages")
+}
+
+model PrepaidPackagePurchase {
+  id               String    @id @default(uuid()) @db.Uuid
+  packageId        String    @db.Uuid
+  customerId       String    @db.Uuid
+  vehicleId        String?   @db.Uuid // set when applicableScope = SPECIFIC_VEHICLE
+  purchasedAt      DateTime  @default(now())
+  expiresAt        DateTime
+  remainingCount   Int
+  purchasePaymentId String?  @db.Uuid
+
+  package  PrepaidPackage @relation(fields: [packageId], references: [id])
+  customer Customer       @relation(fields: [customerId], references: [id])
+  vehicle  Vehicle?       @relation(fields: [vehicleId], references: [id])
+
+  usage PrepaidPackageUsage[]
+
+  @@map("prepaid_package_purchases")
+}
+
+model PrepaidPackageUsage {
+  id            String   @id @default(uuid()) @db.Uuid
+  purchaseId    String   @db.Uuid
+  washOrderId   String   @db.Uuid
+  vehicleId     String   @db.Uuid
+  usedAt        DateTime @default(now())
+  usedById      String   @db.Uuid
+  clientEntryId String   @unique
+
+  purchase  PrepaidPackagePurchase @relation(fields: [purchaseId], references: [id])
+  washOrder WashOrder              @relation(fields: [washOrderId], references: [id])
+  vehicle   Vehicle                @relation(fields: [vehicleId], references: [id])
+  usedBy    User                   @relation(fields: [usedById], references: [id])
+
+  paymentComponent PaymentComponent?
+
+  @@map("prepaid_package_usage")
+}
+
+// ------------------------------------------------------------------------ sms
+
+enum SmsStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+}
+
+model SmsMessage {
+  id               String    @id @default(uuid()) @db.Uuid
+  messageKey       String    @unique // e.g. "wash:{id}:complete"
+  customerId       String?   @db.Uuid
+  washOrderId      String?   @db.Uuid
+  phone            String
+  templateCode     String
+  renderedBody     String
+  status           SmsStatus @default(QUEUED)
+  attemptCount     Int       @default(0)
+  nextAttemptAt    DateTime?
+  providerMessageId String?
+  lastError        String?
+  createdAt        DateTime  @default(now())
+
+  customer  Customer?  @relation(fields: [customerId], references: [id])
+  washOrder WashOrder? @relation(fields: [washOrderId], references: [id])
+
+  @@map("sms_messages")
+}
+
+// ------------------------------------------------------------- cash collections
+
+enum CollectionResult {
+  MATCHED
+  SHORT
+  OVER
+}
+
+model CashCollection {
+  id                    String            @id @default(uuid()) @db.Uuid
+  branchId              String            @db.Uuid
+  periodStartAt         DateTime
+  periodEndAt           DateTime
+  expectedCash          Decimal           @db.Decimal(12, 2)
+  countedCash           Decimal           @db.Decimal(12, 2)
+  variance              Decimal           @db.Decimal(12, 2)
+  result                CollectionResult
+  varianceReason        String?
+  collectedById         String            @db.Uuid
+  approvedById          String?           @db.Uuid
+  witness               String?
+  notes                 String?
+  createdAt             DateTime          @default(now())
+  reversedByCollectionId String?          @unique @db.Uuid
+
+  branch      Branch @relation(fields: [branchId], references: [id])
+  collectedBy User   @relation("CollectionCollectedBy", fields: [collectedById], references: [id])
+  approvedBy  User?  @relation("CollectionApprovedBy", fields: [approvedById], references: [id])
+
+  reversedByCollection CashCollection?  @relation("CollectionReversal", fields: [reversedByCollectionId], references: [id])
+  reversalOf           CashCollection?  @relation("CollectionReversal")
+
+  @@map("cash_collections")
+}
+
+// ------------------------------------------------------------------- expenses
+
+model ExpenseCategory {
+  id     String  @id @default(uuid()) @db.Uuid
+  name   String  @unique
+  active Boolean @default(true)
+
+  expenses Expense[]
+
+  @@map("expense_categories")
+}
+
+enum ExpensePaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  OTHER
+}
+
+model Expense {
+  id                  String                @id @default(uuid()) @db.Uuid
+  branchId            String                @db.Uuid
+  categoryId          String                @db.Uuid
+  description         String
+  amount              Decimal               @db.Decimal(12, 2)
+  paymentMethod       ExpensePaymentMethod
+  receiptFilePath     String?
+  createdById         String                @db.Uuid
+  createdAt           DateTime              @default(now())
+  reversedByExpenseId String?               @unique @db.Uuid
+
+  branch      Branch          @relation(fields: [branchId], references: [id])
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id])
+  createdBy   User            @relation(fields: [createdById], references: [id])
+
+  reversedByExpense Expense? @relation("ExpenseReversal", fields: [reversedByExpenseId], references: [id])
+  reversalOf        Expense? @relation("ExpenseReversal")
+
+  @@map("expenses")
+}
+
+// ---------------------------------------------------------------------- sync
+
+enum SyncBatchStatus {
+  ACCEPTED
+  PARTIAL
+  REJECTED
+}
+
+model SyncBatch {
+  id          String          @id @default(uuid()) @db.Uuid
+  deviceId    String          @db.Uuid
+  submittedAt DateTime        @default(now())
+  recordCount Int
+  status      SyncBatchStatus
+  submittedById String        @db.Uuid
+
+  device      Device        @relation(fields: [deviceId], references: [id])
+  submittedBy User          @relation(fields: [submittedById], references: [id])
+  conflicts   SyncConflict[]
+
+  @@map("sync_batches")
+}
+
+enum ConflictType {
+  BALANCE_WOULD_GO_NEGATIVE
+  STALE_REFERENCE
+  PERMISSION_DENIED
+  OTHER
+}
+
+enum ConflictStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
+
+model SyncConflict {
+  id             String         @id @default(uuid()) @db.Uuid
+  syncBatchId    String         @db.Uuid
+  entityType     String
+  entityId       String
+  conflictType   ConflictType
+  payloadSnapshot Json
+  status         ConflictStatus @default(PENDING)
+  resolvedById   String?        @db.Uuid
+  resolvedAt     DateTime?
+  resolutionNotes String?
+  createdAt      DateTime       @default(now())
+
+  syncBatch  SyncBatch @relation(fields: [syncBatchId], references: [id])
+  resolvedBy User?     @relation(fields: [resolvedById], references: [id])
+
+  @@map("sync_conflicts")
+}
+
+// ------------------------------------------------------------------- backups
+
+enum BackupStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+model BackupRun {
+  id                String       @id @default(uuid()) @db.Uuid
+  startedAt         DateTime     @default(now())
+  finishedAt        DateTime?
+  status            BackupStatus @default(RUNNING)
+  fileName          String?
+  fileSizeBytes     BigInt?
+  sha256Checksum    String?
+  driveFileId       String?
+  errorMessage      String?
+  retentionExpiresAt DateTime?
+
+  @@map("backup_runs")
+}
+
+// --------------------------------------------------------------------- audit
+
+model AuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  branchId       String?  @db.Uuid
+  userId         String?  @db.Uuid
+  deviceId       String?  @db.Uuid
+  action         String
+  entityType     String
+  entityId       String?
+  beforeSnapshot Json?
+  afterSnapshot  Json?
+  ipAddress      String?
+  createdAt      DateTime @default(now())
+
+  branch Branch? @relation(fields: [branchId], references: [id])
+  user   User?   @relation(fields: [userId], references: [id])
+  device Device? @relation(fields: [deviceId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
+
+// --------------------------------------------------------------- idempotency
+
+enum IdempotencyStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model IdempotencyKey {
+  key              String            @id
+  endpoint         String
+  requestHash      String
+  status           IdempotencyStatus @default(IN_PROGRESS)
+  responseSnapshot Json?
+  createdAt        DateTime          @default(now())
+  completedAt      DateTime?
+
+  @@map("idempotency_keys")
+}

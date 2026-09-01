@@ -1,0 +1,6 @@
+# Root-level ignores; apps/mobile and apps/backend also have their own .gitignore
+.env
+*.env
+!.env.example
+.DS_Store
+Thumbs.db
