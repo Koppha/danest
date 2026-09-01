@@ -478,6 +478,53 @@ class OfflinePosRepository {
     };
   }
 
+  // ---------------------------------------------------------- collections
+
+  /// Always queued, never computed locally: computeExpected() on the server
+  /// aggregates every device's transactions since the last cutoff, which a
+  /// single offline device fundamentally cannot know. `countedAt` records
+  /// when the attendant actually did the count — the server uses that as
+  /// the period end once this syncs, not whenever the request happens to
+  /// land, so a late sync doesn't pull in transactions the attendant never
+  /// saw.
+  Future<void> confirmCollection({
+    required String branchId,
+    required double countedCash,
+    String? varianceReason,
+    String? witness,
+    String? notes,
+    required DateTime countedAt,
+  }) async {
+    final id = _uuid.v4();
+    await _db
+        .into(_db.localCashCollections)
+        .insert(
+          LocalCashCollectionsCompanion.insert(
+            id: id,
+            branchId: branchId,
+            countedCash: countedCash,
+            varianceReason: Value(varianceReason),
+            witness: Value(witness),
+            notes: Value(notes),
+            countedAt: countedAt,
+          ),
+        );
+    await _enqueueOrPush(
+      entityType: 'collection',
+      entityId: id,
+      opType: 'create',
+      path: '/collections',
+      payload: {
+        'id': id,
+        'countedCash': countedCash,
+        'varianceReason': ?varianceReason,
+        'witness': ?witness,
+        'notes': ?notes,
+        'countedAt': countedAt.toIso8601String(),
+      },
+    );
+  }
+
   // ------------------------------------------------------------- prepaid
 
   Future<void> _cachePrepaidOverview(String customerId, Map<String, dynamic> overview) async {

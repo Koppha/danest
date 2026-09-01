@@ -72,6 +72,8 @@ class SyncService {
         return '/expenses';
       case 'prepaid_deposit':
         return '/prepaid/deposits';
+      case 'collection':
+        return '/collections';
     }
     throw StateError('Unknown sync op: ${op.entityType}/${op.opType}');
   }
