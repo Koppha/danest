@@ -23,8 +23,8 @@ void main() {
           LocalWashOrdersCompanion.insert(
             id: 'w1',
             branchId: 'b',
-            vehicleId: 'v',
-            customerId: 'c',
+            vehicleId: 'v1',
+            customerId: 'c1',
             status: 'READY',
             totalAmount: 60,
             createdAt: DateTime.now(),
@@ -107,13 +107,40 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Free wash is hidden offline but Ecocash/M-Pesa remain available', (tester) async {
+  testWidgets('Free wash stays hidden offline when no reward is cached, same as online', (tester) async {
     await openSheet(tester, extraOverrides: [connectivityProvider.overrideWith(_AlwaysOffline.new)]);
 
     expect(find.text('Free wash'), findsNothing);
     expect(find.text('Ecocash'), findsOneWidget);
     expect(find.text('M-Pesa'), findsOneWidget);
-    expect(find.textContaining('free washes are unavailable'), findsOneWidget);
+    expect(find.textContaining('as of last sync'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Free wash is offered and redeemable offline when cached as available, and marks the cache spent', (tester) async {
+    await db.into(db.localLoyaltySummaries).insert(
+          LocalLoyaltySummariesCompanion.insert(vehicleId: 'v1', qualifyingCount: 5, hasAvailableReward: true, asOf: DateTime.now()),
+        );
+    await openSheet(tester, extraOverrides: [connectivityProvider.overrideWith(_AlwaysOffline.new)]);
+
+    expect(find.text('Free wash'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Free wash'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'FINISH WASH'));
+    await tester.pumpAndSettle();
+
+    final components = await db.select(db.localPaymentComponents).get();
+    expect(components, hasLength(1));
+    expect(components.single.method, 'LOYALTY_FREE_WASH');
+
+    // Optimistically marked spent so this device can't redeem it twice.
+    final loyalty = await (db.select(
+      db.localLoyaltySummaries,
+    )..where((s) => s.vehicleId.equals('v1'))).getSingle();
+    expect(loyalty.hasAvailableReward, isFalse);
+
+    final pending = await db.select(db.pendingSyncOps).get();
+    expect(pending, hasLength(1));
     expect(tester.takeException(), isNull);
   });
 }

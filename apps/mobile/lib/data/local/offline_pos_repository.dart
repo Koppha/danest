@@ -744,17 +744,53 @@ class OfflinePosRepository {
     String washOrderId,
     List<Map<String, dynamic>> components,
   ) async {
+    final wash = await (_db.select(
+      _db.localWashOrders,
+    )..where((w) => w.id.equals(washOrderId))).getSingle();
+
     if (!_isOnline) {
+      // WALLET/PACKAGE/LOYALTY_FREE_WASH are provisionally allowed offline
+      // against the cached balance/count/flag — the server remains
+      // authoritative and can still reject at sync time (e.g. a different
+      // device already spent it first); that rejection surfaces in Sync
+      // Issues rather than failing silently. This local check only catches
+      // the obvious case (this device's own cache already shows nothing
+      // left) and stops the same device from redeeming/spending twice.
       for (final c in components) {
-        if (!offlineSafePaymentMethods.contains(c['method'])) {
-          throw OfflinePaymentNotAllowedException(c['method'] as String);
+        final method = c['method'] as String;
+        if (offlineSafePaymentMethods.contains(method)) continue;
+        final amount = (c['amount'] as num).toDouble();
+        switch (method) {
+          case 'WALLET':
+            final wallet = await (_db.select(
+              _db.localPrepaidWallets,
+            )..where((w) => w.customerId.equals(wash.customerId))).getSingleOrNull();
+            if (wallet == null || wallet.balance < amount) {
+              throw OfflineInsufficientCachedBalanceException(method, 'cached prepaid balance is insufficient');
+            }
+          case 'PACKAGE':
+            final purchase = await (_db.select(_db.localPrepaidPackagePurchases)..where(
+                  (p) =>
+                      p.customerId.equals(wash.customerId) &
+                      p.remainingCount.isBiggerThanValue(0) &
+                      p.expiresAt.isBiggerThanValue(DateTime.now()),
+                )).getSingleOrNull();
+            if (purchase == null) {
+              throw OfflineInsufficientCachedBalanceException(method, 'no cached package with washes remaining');
+            }
+          case 'LOYALTY_FREE_WASH':
+            final loyalty = await (_db.select(
+              _db.localLoyaltySummaries,
+            )..where((s) => s.vehicleId.equals(wash.vehicleId))).getSingleOrNull();
+            if (loyalty == null || !loyalty.hasAvailableReward) {
+              throw OfflineInsufficientCachedBalanceException(method, 'no free wash cached as available');
+            }
+          default:
+            throw OfflinePaymentNotAllowedException(method);
         }
       }
     }
 
-    final wash = await (_db.select(
-      _db.localWashOrders,
-    )..where((w) => w.id.equals(washOrderId))).getSingle();
     final paymentId = _uuid.v4();
     await _db.batch((batch) {
       batch.insert(
@@ -787,6 +823,49 @@ class OfflinePosRepository {
         where: (w) => w.id.equals(washOrderId),
       );
     });
+
+    if (!_isOnline) {
+      // Optimistically apply the same spend to the cache that was just
+      // provisionally checked, so this device can't redeem/spend the same
+      // resource twice before reconnecting. The server is still the source
+      // of truth once this syncs.
+      for (final c in components) {
+        final method = c['method'] as String;
+        final amount = (c['amount'] as num).toDouble();
+        if (method == 'WALLET') {
+          final wallet = await (_db.select(
+            _db.localPrepaidWallets,
+          )..where((w) => w.customerId.equals(wash.customerId))).getSingleOrNull();
+          if (wallet != null) {
+            await (_db.update(
+              _db.localPrepaidWallets,
+            )..where((w) => w.customerId.equals(wash.customerId))).write(
+              LocalPrepaidWalletsCompanion(balance: Value(wallet.balance - amount)),
+            );
+          }
+        } else if (method == 'PACKAGE') {
+          final purchase = await (_db.select(_db.localPrepaidPackagePurchases)..where(
+                (p) =>
+                    p.customerId.equals(wash.customerId) &
+                    p.remainingCount.isBiggerThanValue(0) &
+                    p.expiresAt.isBiggerThanValue(DateTime.now()),
+              )).getSingleOrNull();
+          if (purchase != null) {
+            await (_db.update(
+              _db.localPrepaidPackagePurchases,
+            )..where((p) => p.id.equals(purchase.id))).write(
+              LocalPrepaidPackagePurchasesCompanion(remainingCount: Value(purchase.remainingCount - 1)),
+            );
+          }
+        } else if (method == 'LOYALTY_FREE_WASH') {
+          await (_db.update(
+            _db.localLoyaltySummaries,
+          )..where((s) => s.vehicleId.equals(wash.vehicleId))).write(
+            const LocalLoyaltySummariesCompanion(hasAvailableReward: Value(false)),
+          );
+        }
+      }
+    }
 
     await _enqueueOrPush(
       entityType: 'wash_order',
@@ -879,6 +958,20 @@ class OfflinePaymentNotAllowedException implements Exception {
   @override
   String toString() =>
       'Cannot accept $method offline — it needs a live balance check. Use cash, card, mobile money, or bank transfer, or reconnect first.';
+}
+
+/// Thrown when a WALLET/PACKAGE/LOYALTY_FREE_WASH spend is attempted offline
+/// but this device's own cache already shows nothing left to spend. Distinct
+/// from [OfflinePaymentNotAllowedException] (categorically blocked) — this
+/// one is a provisional local check; the server can still reject it (a
+/// different device may have spent it first) or allow it (this device's
+/// cache may be stale), and that only gets resolved once this syncs.
+class OfflineInsufficientCachedBalanceException implements Exception {
+  final String method;
+  final String detail;
+  OfflineInsufficientCachedBalanceException(this.method, this.detail);
+  @override
+  String toString() => 'Cannot accept $method offline — $detail. Reconnect to verify, or use cash, card, mobile money, or bank transfer.';
 }
 
 final offlinePosRepositoryProvider = Provider<OfflinePosRepository>(

@@ -80,6 +80,8 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
       if (mounted) Navigator.of(context).pop();
     } on OfflinePaymentNotAllowedException catch (e) {
       setState(() => _error = e.toString());
+    } on OfflineInsufficientCachedBalanceException catch (e) {
+      setState(() => _error = e.toString());
     } catch (e) {
       setState(() => _error = 'Could not complete the payment: $e');
     } finally {
@@ -91,10 +93,15 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
   Widget build(BuildContext context) {
     final isOnline = widget.ref.watch(connectivityProvider);
     final hasFreeWash = _loyalty?.hasAvailableReward ?? false;
+    // LOYALTY_FREE_WASH is allowed offline once eligibleMethods has already
+    // gated it on the cached hasAvailableReward flag above — finishWash()
+    // re-checks the same cache and blocks if it's actually empty.
     final eligibleMethods = _methods.where((m) => m.$1 != 'LOYALTY_FREE_WASH' || hasFreeWash);
     final availableMethods = isOnline
         ? eligibleMethods.toList()
-        : eligibleMethods.where((m) => offlineSafePaymentMethods.contains(_backendMethod(m.$1))).toList();
+        : eligibleMethods
+            .where((m) => m.$1 == 'LOYALTY_FREE_WASH' || offlineSafePaymentMethods.contains(_backendMethod(m.$1)))
+            .toList();
 
     return SafeArea(
       child: Padding(
@@ -119,7 +126,7 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
                       Icon(Icons.cloud_off, size: 14, color: DnColors.amber),
                       SizedBox(width: 6),
                       Expanded(
-                        child: Text('Offline — free washes are unavailable until reconnected', style: TextStyle(fontSize: 12, color: DnColors.amber)),
+                        child: Text('Offline — balances shown are as of last sync and will be verified once reconnected', style: TextStyle(fontSize: 12, color: DnColors.amber)),
                       ),
                     ],
                   ),

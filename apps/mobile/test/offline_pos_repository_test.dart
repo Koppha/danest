@@ -90,7 +90,7 @@ void main() {
     expect(payments.length, 1);
   });
 
-  test('finishing a wash offline with a wallet payment is rejected — it needs a live balance check', () async {
+  test('finishing a wash offline with a wallet payment is rejected when nothing is cached for that customer', () async {
     await db.into(db.localWashOrders).insert(
           LocalWashOrdersCompanion.insert(id: 'wash-1', branchId: 'b', vehicleId: 'v', customerId: 'c', status: 'READY', totalAmount: 60, createdAt: DateTime.now()),
         );
@@ -99,7 +99,7 @@ void main() {
       repo.finishWash('wash-1', [
         {'method': 'WALLET', 'amount': 60},
       ]),
-      throwsA(isA<OfflinePaymentNotAllowedException>()),
+      throwsA(isA<OfflineInsufficientCachedBalanceException>()),
     );
 
     // The wash must be left untouched, not partially completed.
@@ -107,7 +107,41 @@ void main() {
     expect(orders.first.status, 'READY');
   });
 
-  test('finishing a wash offline with a loyalty free wash is rejected the same way', () async {
+  test('finishing a wash offline with a wallet payment succeeds when the cached balance covers it, and debits the cache', () async {
+    await db.into(db.localWashOrders).insert(
+          LocalWashOrdersCompanion.insert(id: 'wash-1', branchId: 'b', vehicleId: 'v', customerId: 'c', status: 'READY', totalAmount: 60, createdAt: DateTime.now()),
+        );
+    await db.into(db.localPrepaidWallets).insert(
+          LocalPrepaidWalletsCompanion.insert(customerId: 'c', balance: 100, asOf: DateTime.now()),
+        );
+
+    await repo.finishWash('wash-1', [
+      {'method': 'WALLET', 'amount': 60},
+    ]);
+
+    final orders = await db.select(db.localWashOrders).get();
+    expect(orders.first.status, 'COMPLETED');
+    final wallet = await db.select(db.localPrepaidWallets).getSingle();
+    expect(wallet.balance, 40); // debited so this device can't spend it twice
+  });
+
+  test('finishing a wash offline with a wallet payment is rejected when the cached balance is insufficient', () async {
+    await db.into(db.localWashOrders).insert(
+          LocalWashOrdersCompanion.insert(id: 'wash-1', branchId: 'b', vehicleId: 'v', customerId: 'c', status: 'READY', totalAmount: 60, createdAt: DateTime.now()),
+        );
+    await db.into(db.localPrepaidWallets).insert(
+          LocalPrepaidWalletsCompanion.insert(customerId: 'c', balance: 30, asOf: DateTime.now()),
+        );
+
+    await expectLater(
+      repo.finishWash('wash-1', [
+        {'method': 'WALLET', 'amount': 60},
+      ]),
+      throwsA(isA<OfflineInsufficientCachedBalanceException>()),
+    );
+  });
+
+  test('finishing a wash offline with a loyalty free wash is rejected when nothing is cached as available', () async {
     await db.into(db.localWashOrders).insert(
           LocalWashOrdersCompanion.insert(id: 'wash-1', branchId: 'b', vehicleId: 'v', customerId: 'c', status: 'READY', totalAmount: 60, createdAt: DateTime.now()),
         );
@@ -116,7 +150,69 @@ void main() {
       repo.finishWash('wash-1', [
         {'method': 'LOYALTY_FREE_WASH', 'amount': 60},
       ]),
-      throwsA(isA<OfflinePaymentNotAllowedException>()),
+      throwsA(isA<OfflineInsufficientCachedBalanceException>()),
+    );
+  });
+
+  test('finishing a wash offline with a loyalty free wash succeeds when cached as available, and marks it spent', () async {
+    await db.into(db.localWashOrders).insert(
+          LocalWashOrdersCompanion.insert(id: 'wash-1', branchId: 'b', vehicleId: 'v', customerId: 'c', status: 'READY', totalAmount: 60, createdAt: DateTime.now()),
+        );
+    await db.into(db.localLoyaltySummaries).insert(
+          LocalLoyaltySummariesCompanion.insert(vehicleId: 'v', qualifyingCount: 5, hasAvailableReward: true, asOf: DateTime.now()),
+        );
+
+    await repo.finishWash('wash-1', [
+      {'method': 'LOYALTY_FREE_WASH', 'amount': 60},
+    ]);
+
+    final orders = await db.select(db.localWashOrders).get();
+    expect(orders.first.status, 'COMPLETED');
+    final loyalty = await db.select(db.localLoyaltySummaries).getSingle();
+    expect(loyalty.hasAvailableReward, isFalse); // spent, so this device can't redeem it twice
+  });
+
+  test('finishing a wash offline with a package payment succeeds when a cached purchase has washes remaining, and decrements it', () async {
+    await db.into(db.localWashOrders).insert(
+          LocalWashOrdersCompanion.insert(id: 'wash-1', branchId: 'b', vehicleId: 'v', customerId: 'c', status: 'READY', totalAmount: 60, createdAt: DateTime.now()),
+        );
+    await db.into(db.localPrepaidPackagePurchases).insert(
+          LocalPrepaidPackagePurchasesCompanion.insert(
+            id: 'pp-1',
+            packageId: 'pkg-1',
+            customerId: 'c',
+            expiresAt: DateTime.now().add(const Duration(days: 10)),
+            remainingCount: 2,
+          ),
+        );
+
+    await repo.finishWash('wash-1', [
+      {'method': 'PACKAGE', 'amount': 0},
+    ]);
+
+    final purchase = await db.select(db.localPrepaidPackagePurchases).getSingle();
+    expect(purchase.remainingCount, 1);
+  });
+
+  test('finishing a wash offline with a package payment is rejected when the cached purchase has no washes remaining', () async {
+    await db.into(db.localWashOrders).insert(
+          LocalWashOrdersCompanion.insert(id: 'wash-1', branchId: 'b', vehicleId: 'v', customerId: 'c', status: 'READY', totalAmount: 60, createdAt: DateTime.now()),
+        );
+    await db.into(db.localPrepaidPackagePurchases).insert(
+          LocalPrepaidPackagePurchasesCompanion.insert(
+            id: 'pp-1',
+            packageId: 'pkg-1',
+            customerId: 'c',
+            expiresAt: DateTime.now().add(const Duration(days: 10)),
+            remainingCount: 0,
+          ),
+        );
+
+    await expectLater(
+      repo.finishWash('wash-1', [
+        {'method': 'PACKAGE', 'amount': 0},
+      ]),
+      throwsA(isA<OfflineInsufficientCachedBalanceException>()),
     );
   });
 
