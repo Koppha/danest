@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/session.dart';
+import '../../data/local/offline_pos_repository.dart';
 import '../../data/models/models.dart';
-import '../../data/remote/pos_repository.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
 
@@ -12,7 +12,7 @@ final customersSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
 final customersListProvider = FutureProvider.autoDispose<List<Customer>>((ref) {
   final query = ref.watch(customersSearchProvider);
-  return ref.watch(posRepositoryProvider).searchCustomers(query);
+  return ref.watch(offlinePosRepositoryProvider).searchCustomers(query);
 });
 
 class CustomersScreen extends ConsumerStatefulWidget {
@@ -147,7 +147,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
           ElevatedButton(
             onPressed: () async {
               final branchId = ref.read(sessionProvider).user?.branchId ?? '';
-              await ref.read(posRepositoryProvider).createCustomer(
+              await ref.read(offlinePosRepositoryProvider).createCustomer(
                     fullName: nameController.text.trim(),
                     phone: phoneController.text.trim(),
                     branchId: branchId,
