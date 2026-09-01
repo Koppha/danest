@@ -8,11 +8,15 @@ import 'package:de_nest/data/remote/pos_repository.dart';
 import 'package:de_nest/features/customers/customers_screen.dart';
 
 class _FakePosRepository extends PosRepository {
-  _FakePosRepository() : super(Dio());
-  final List<Customer> created = [];
+  _FakePosRepository({List<Customer>? seed}) : created = seed ?? [], super(Dio());
+  final List<Customer> created;
 
   @override
-  Future<List<Customer>> searchCustomers(String query) async => List.of(created);
+  Future<List<Customer>> searchCustomers(String query) async {
+    if (query.isEmpty) return List.of(created);
+    final q = query.toLowerCase();
+    return created.where((c) => c.fullName.toLowerCase().contains(q)).toList();
+  }
 
   @override
   Future<Customer> createCustomer({required String fullName, required String phone, required String branchId}) async {
@@ -46,6 +50,33 @@ void main() {
     expect(fakeRepo.created, hasLength(1));
     expect(fakeRepo.created.single.fullName, 'Palesa Nkosi');
     expect(find.text('Palesa Nkosi'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Typing a query filters results live, without pressing Search or Enter', (tester) async {
+    final fakeRepo = _FakePosRepository(seed: [
+      Customer(id: 'c1', fullName: 'Kopano', phone: '+26662227247'),
+      Customer(id: 'c2', fullName: 'Thabo Mokoena', phone: '+26658123456'),
+    ]);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [posRepositoryProvider.overrideWithValue(fakeRepo)],
+        child: const MaterialApp(home: Scaffold(body: CustomersScreen())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kopano'), findsOneWidget);
+    expect(find.text('Thabo Mokoena'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, 'kopano');
+    // Before the debounce fires, stale results must not linger unfiltered.
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kopano'), findsOneWidget);
+    expect(find.text('Thabo Mokoena'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/session.dart';
 import '../../data/models/models.dart';
 import '../../data/remote/pos_repository.dart';
 import '../../design_system/theme.dart';
@@ -17,10 +20,77 @@ class _PrepaidScreenState extends ConsumerState<PrepaidScreen> {
   Map<String, dynamic>? _overview;
   final _searchController = TextEditingController();
   List<Customer> _results = [];
+  Timer? _debounce;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _search();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onQueryChanged(String value) {
+    _debounce?.cancel();
+    if (value.trim().isEmpty) {
+      setState(() => _results = []);
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 350), _search);
+  }
 
   Future<void> _search() async {
-    final results = await ref.read(posRepositoryProvider).searchCustomers(_searchController.text.trim());
-    setState(() => _results = results);
+    final query = _searchController.text.trim();
+    setState(() => _loading = true);
+    try {
+      final results = await ref.read(posRepositoryProvider).searchCustomers(query);
+      if (!mounted || query != _searchController.text.trim()) return;
+      setState(() => _results = results);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _showAddCustomerDialog() {
+    final nameController = TextEditingController();
+    final phoneController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        scrollable: true,
+        title: const Text('Add customer'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Full name')),
+            const SizedBox(height: 8),
+            TextField(controller: phoneController, decoration: const InputDecoration(labelText: 'Phone number')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              final branchId = ref.read(sessionProvider).user?.branchId ?? '';
+              final customer = await ref.read(posRepositoryProvider).createCustomer(
+                    fullName: nameController.text.trim(),
+                    phone: phoneController.text.trim(),
+                    branchId: branchId,
+                  );
+              if (ctx.mounted) Navigator.pop(ctx);
+              await _search();
+              await _select(customer);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _select(Customer c) async {
@@ -80,7 +150,7 @@ class _PrepaidScreenState extends ConsumerState<PrepaidScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,20 +161,30 @@ class _PrepaidScreenState extends ConsumerState<PrepaidScreen> {
                 child: TextField(
                   controller: _searchController,
                   decoration: const InputDecoration(hintText: 'Search customer', prefixIcon: Icon(Icons.search)),
+                  onChanged: _onQueryChanged,
                   onSubmitted: (_) => _search(),
                 ),
               ),
               const SizedBox(width: 10),
-              ElevatedButton(onPressed: _search, child: const Text('Search')),
+              OutlinedButton.icon(
+                onPressed: _showAddCustomerDialog,
+                icon: const Icon(Icons.person_add_alt_1, size: 16),
+                label: const Text('Add customer'),
+              ),
             ],
           ),
           const SizedBox(height: 12),
-          ..._results.map((c) => ListTile(
-                title: Text(c.fullName),
-                subtitle: Text(c.phone),
-                onTap: () => _select(c),
-                selected: _selected?.id == c.id,
-              )),
+          if (_loading)
+            const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Center(child: CircularProgressIndicator()))
+          else if (_results.isEmpty)
+            const DnEmptyState(icon: Icons.people_outline, title: 'No customers found', hint: 'Try a different search, or tap "Add customer" above.')
+          else
+            ..._results.map((c) => ListTile(
+                  title: Text(c.fullName),
+                  subtitle: Text(c.phone),
+                  onTap: () => _select(c),
+                  selected: _selected?.id == c.id,
+                )),
           if (_selected != null && _overview != null) ...[
             const SizedBox(height: 12),
             DnCard(

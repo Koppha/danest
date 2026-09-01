@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -26,11 +28,36 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
   final Set<String> _selectedExtraIds = {};
   bool _searching = false;
   LoyaltySummary? _loyalty;
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onQueryChanged);
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.removeListener(_onQueryChanged);
+    super.dispose();
+  }
+
+  void _onQueryChanged() {
+    _debounce?.cancel();
+    if (_searchController.text.trim().isEmpty) {
+      setState(() => _results = []);
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 350), _search);
+  }
 
   Future<void> _search() async {
+    final query = _searchController.text.trim();
     setState(() => _searching = true);
     try {
-      final results = await ref.read(offlinePosRepositoryProvider).searchCustomers(_searchController.text.trim());
+      final results = await ref.read(offlinePosRepositoryProvider).searchCustomers(query);
+      if (!mounted || query != _searchController.text.trim()) return;
       setState(() {
         _results = results;
         _selectedCustomer = null;

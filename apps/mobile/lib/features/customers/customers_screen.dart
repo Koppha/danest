@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/session.dart';
@@ -13,11 +15,31 @@ final customersListProvider = FutureProvider.autoDispose<List<Customer>>((ref) {
   return ref.watch(posRepositoryProvider).searchCustomers(query);
 });
 
-class CustomersScreen extends ConsumerWidget {
+class CustomersScreen extends ConsumerStatefulWidget {
   const CustomersScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CustomersScreen> createState() => _CustomersScreenState();
+}
+
+class _CustomersScreenState extends ConsumerState<CustomersScreen> {
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onQueryChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      ref.read(customersSearchProvider.notifier).state = value.trim();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final customers = ref.watch(customersListProvider);
 
     return Column(
@@ -29,7 +51,8 @@ class CustomersScreen extends ConsumerWidget {
               Expanded(
                 child: TextField(
                   decoration: const InputDecoration(hintText: 'Search by name, phone, or registration', prefixIcon: Icon(Icons.search)),
-                  onSubmitted: (v) => ref.read(customersSearchProvider.notifier).state = v,
+                  onChanged: _onQueryChanged,
+                  onSubmitted: (v) => ref.read(customersSearchProvider.notifier).state = v.trim(),
                 ),
               ),
               const SizedBox(width: 10),
