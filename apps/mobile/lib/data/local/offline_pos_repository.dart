@@ -1129,6 +1129,25 @@ class OfflinePosRepository {
   /// Live count of unsynced operations, for a badge in the app shell.
   Stream<int> watchPendingCount() =>
       _db.select(_db.pendingSyncOps).watch().map((rows) => rows.length);
+
+  // ---------------------------------------------------------- sync issues
+
+  /// Ops the server genuinely rejected once this device reconnected (not
+  /// "still offline"/"still retrying") — e.g. a wallet/package/reward spent
+  /// by another device first, or a username someone else already took. See
+  /// SyncService.pushAll for how a row lands here.
+  Stream<List<PendingSyncOp>> watchFailedSyncOps() {
+    final query = _db.select(_db.pendingSyncOps)..where((o) => o.status.equals('FAILED'));
+    return query.watch();
+  }
+
+  Stream<int> watchFailedSyncCount() => watchFailedSyncOps().map((rows) => rows.length);
+
+  /// The admin has resolved this manually (e.g. refunded the customer,
+  /// picked a new username) — remove it from the outbox for good.
+  Future<void> dismissSyncIssue(int rowId) async {
+    await (_db.delete(_db.pendingSyncOps)..where((o) => o.rowId.equals(rowId))).go();
+  }
 }
 
 class OfflinePaymentNotAllowedException implements Exception {

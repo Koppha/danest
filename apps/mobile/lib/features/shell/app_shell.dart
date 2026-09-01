@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/session.dart';
+import '../../data/local/offline_pos_repository.dart';
 import '../../data/remote/auth_repository.dart';
 import '../../design_system/theme.dart';
 import 'sync_status.dart';
+
+final failedSyncCountProvider = StreamProvider.autoDispose<int>(
+  (ref) => ref.watch(offlinePosRepositoryProvider).watchFailedSyncCount(),
+);
 
 class NavItem {
   final String path;
@@ -29,6 +34,7 @@ const _adminNav = [
   NavItem('/admin/users', 'Users', Icons.badge_outlined),
   NavItem('/admin/settings', 'Settings', Icons.settings_outlined),
   NavItem('/admin/audit', 'Audit & SMS', Icons.shield_outlined),
+  NavItem('/admin/sync-issues', 'Sync Issues', Icons.sync_problem_outlined),
 ];
 
 class AppShell extends ConsumerWidget {
@@ -145,13 +151,14 @@ class _NavDrawer extends StatelessWidget {
   }
 }
 
-class _RailItem extends StatelessWidget {
+class _RailItem extends ConsumerWidget {
   final NavItem item;
   final bool selected;
   const _RailItem({required this.item, required this.selected});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final badgeCount = item.path == '/admin/sync-issues' ? ref.watch(failedSyncCountProvider).valueOrNull ?? 0 : 0;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       child: Material(
@@ -166,7 +173,15 @@ class _RailItem extends StatelessWidget {
               children: [
                 Icon(item.icon, size: 18, color: selected ? Colors.white : const Color(0xFFB4C6DE)),
                 const SizedBox(width: 10),
-                Text(item.label, style: TextStyle(color: selected ? Colors.white : const Color(0xFFB4C6DE), fontSize: 13.5)),
+                Expanded(
+                  child: Text(item.label, style: TextStyle(color: selected ? Colors.white : const Color(0xFFB4C6DE), fontSize: 13.5)),
+                ),
+                if (badgeCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(color: DnColors.amber, borderRadius: BorderRadius.circular(999)),
+                    child: Text('$badgeCount', style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w700)),
+                  ),
               ],
             ),
           ),

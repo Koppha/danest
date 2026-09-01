@@ -16,6 +16,7 @@ import '../features/admin/expenses_screen.dart';
 import '../features/admin/settings_screen.dart';
 import '../features/admin/users_screen.dart';
 import '../features/admin/audit_screen.dart';
+import '../features/admin/sync_issues_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refreshListenable = _SessionRefreshListenable(ref);
@@ -48,6 +49,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/admin/settings', builder: (context, state) => const SettingsScreen()),
           GoRoute(path: '/admin/users', builder: (context, state) => const UsersScreen()),
           GoRoute(path: '/admin/audit', builder: (context, state) => const AuditScreen()),
+          GoRoute(path: '/admin/sync-issues', builder: (context, state) => const SyncIssuesScreen()),
         ],
       ),
     ],

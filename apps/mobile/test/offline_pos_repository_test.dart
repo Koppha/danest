@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -275,6 +276,41 @@ void main() {
     expect(listed, hasLength(1));
     expect(listed.single['pending'], isTrue);
     expect(listed.single['username'], 'newattendant');
+  });
+
+  test('watchFailedSyncOps only surfaces FAILED rows, and dismissSyncIssue removes one for good', () async {
+    await db.into(db.pendingSyncOps).insert(
+          PendingSyncOpsCompanion.insert(
+            entityType: 'user',
+            entityId: 'u-1',
+            opType: 'create',
+            payloadJson: '{}',
+            idempotencyKey: 'create:user:u-1:a',
+            status: const Value('FAILED'),
+            lastError: const Value('Username already taken'),
+          ),
+        );
+    final stillPendingId = await db.into(db.pendingSyncOps).insertReturning(
+          PendingSyncOpsCompanion.insert(
+            entityType: 'expense',
+            entityId: 'e-1',
+            opType: 'create',
+            payloadJson: '{}',
+            idempotencyKey: 'create:expense:e-1:b',
+          ),
+        );
+    expect(stillPendingId.status, 'PENDING'); // sanity: not surfaced as an issue
+
+    final failed = await repo.watchFailedSyncOps().first;
+    expect(failed, hasLength(1));
+    expect(failed.single.entityType, 'user');
+    expect(failed.single.lastError, 'Username already taken');
+
+    await repo.dismissSyncIssue(failed.single.rowId);
+
+    final remaining = await db.select(db.pendingSyncOps).get();
+    expect(remaining, hasLength(1));
+    expect(remaining.single.entityType, 'expense'); // the still-pending op is untouched
   });
 }
 
