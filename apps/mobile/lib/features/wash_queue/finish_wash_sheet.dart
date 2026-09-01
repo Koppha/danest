@@ -154,7 +154,7 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
                 onPressed: _submitting ? null : _submit,
                 child: _submitting
                     ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('FINISH WASH & SEND SMS'),
+                    : const Text('FINISH WASH'),
               ),
             ],
           ),

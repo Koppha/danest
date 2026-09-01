@@ -3,7 +3,6 @@ import { PrismaService } from '../../database/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { LoyaltyService } from '../loyalty/loyalty.service.js';
 import { PrepaidService } from '../prepaid/prepaid.service.js';
-import { SmsService } from '../sms/sms.service.js';
 import type { PaymentComponentInput } from './dto/finish-wash.dto.js';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user.js';
 
@@ -17,7 +16,6 @@ export class PaymentsService {
     private readonly audit: AuditService,
     private readonly loyalty: LoyaltyService,
     private readonly prepaid: PrepaidService,
-    private readonly sms: SmsService,
   ) {}
 
   /**
@@ -138,9 +136,8 @@ export class PaymentsService {
       const isFreeWashOnly = components.length === 1 && components[0].method === 'LOYALTY_FREE_WASH';
       const qualifies = Number(washOrder.totalAmount) > 0 && !isFreeWashOnly && components.some((c) => QUALIFYING_METHODS.has(c.method) && c.amount > 0);
 
-      let loyaltyResult: { earned: boolean; count: number } = { earned: false, count: 0 };
       if (qualifies) {
-        loyaltyResult = await this.loyalty.creditQualifyingWash(tx, {
+        await this.loyalty.creditQualifyingWash(tx, {
           vehicleId: washOrder.vehicleId,
           washOrderId,
           at: new Date(),
@@ -148,28 +145,6 @@ export class PaymentsService {
           deviceId: actor.deviceId,
         });
       }
-
-      const vehicle = await tx.vehicle.findUniqueOrThrow({ where: { id: washOrder.vehicleId } });
-      const customer = await tx.customer.findUniqueOrThrow({ where: { id: washOrder.customerId } });
-      const redeemed = isFreeWashOnly;
-      const remaining = Math.max(0, 5 - loyaltyResult.count);
-
-      const body = redeemed
-        ? `De Nest Car Wash: Your car ${vehicle.regNumberDisplay} is ready for collection. Your free monthly wash was used today. Thank you.`
-        : loyaltyResult.earned
-          ? `De Nest Car Wash: Your car ${vehicle.regNumberDisplay} is ready for collection. Congratulations! This car has earned a free wash for completing 5 paid washes this month.`
-          : qualifies && remaining > 0
-            ? `De Nest Car Wash: Your car ${vehicle.regNumberDisplay} has finished being washed and is ready for collection. You need ${remaining} more paid wash${remaining === 1 ? '' : 'es'} this month to earn a free wash. Thank you.`
-            : `De Nest Car Wash: Your car ${vehicle.regNumberDisplay} has finished being washed and is ready for collection. Thank you.`;
-
-      await this.sms.enqueue(tx, {
-        messageKey: `wash:${washOrderId}:complete`,
-        phone: customer.phone,
-        templateCode: 'WASH_COMPLETE',
-        body,
-        customerId: customer.id,
-        washOrderId,
-      });
 
       await this.audit.record({
         branchId: actor.branchId,

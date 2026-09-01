@@ -2,6 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { WashStatus } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { LoyaltyService } from '../loyalty/loyalty.service.js';
+import { SmsService } from '../sms/sms.service.js';
 import { isLegalTransition } from './wash-state-machine.js';
 import type { CreateWashOrderDto } from './dto/create-wash-order.dto.js';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user.js';
@@ -11,6 +13,8 @@ export class WashOrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly loyalty: LoyaltyService,
+    private readonly sms: SmsService,
   ) {}
 
   listQueue(branchId: string) {
@@ -90,17 +94,39 @@ export class WashOrdersService {
 
   /** Non-terminal transitions only (WAITING<->WASHING<->READY); cancel() handles CANCELLED separately. */
   async transition(id: string, toStatus: Extract<WashStatus, 'WASHING' | 'READY'>, actor: AuthenticatedUser) {
-    const wash = await this.prisma.washOrder.findUniqueOrThrow({ where: { id } });
+    const wash = await this.prisma.washOrder.findUniqueOrThrow({ where: { id }, include: { vehicle: true, customer: true } });
     if (!isLegalTransition(wash.status, toStatus)) {
       throw new BadRequestException(`Cannot move a wash from ${wash.status} to ${toStatus}`);
     }
 
-    const updated = await this.prisma.washOrder.update({
-      where: { id },
-      data: {
-        status: toStatus,
-        statusHistory: { create: { fromStatus: wash.status, toStatus, changedById: actor.userId, deviceId: actor.deviceId } },
-      },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.washOrder.update({
+        where: { id },
+        data: {
+          status: toStatus,
+          statusHistory: { create: { fromStatus: wash.status, toStatus, changedById: actor.userId, deviceId: actor.deviceId } },
+        },
+      });
+
+      if (toStatus === 'READY') {
+        const loyaltySummary = await this.loyalty.summaryForVehicle(wash.vehicleId);
+        const body = loyaltySummary.availableReward
+          ? `De Nest Car Wash: Your car ${wash.vehicle.regNumberDisplay} is ready for collection. You have a free wash available on your next visit!`
+          : loyaltySummary.remaining > 0
+            ? `De Nest Car Wash: Your car ${wash.vehicle.regNumberDisplay} is ready for collection. You need ${loyaltySummary.remaining} more paid wash${loyaltySummary.remaining === 1 ? '' : 'es'} this month to earn a free wash. Thank you.`
+            : `De Nest Car Wash: Your car ${wash.vehicle.regNumberDisplay} is ready for collection. Thank you.`;
+
+        await this.sms.enqueue(tx, {
+          messageKey: `wash:${id}:ready`,
+          phone: wash.customer.phone,
+          templateCode: 'WASH_READY',
+          body,
+          customerId: wash.customerId,
+          washOrderId: id,
+        });
+      }
+
+      return result;
     });
 
     await this.audit.record({

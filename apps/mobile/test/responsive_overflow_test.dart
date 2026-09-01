@@ -116,7 +116,7 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    final buttonBottom = tester.getBottomLeft(find.widgetWithText(ElevatedButton, 'FINISH WASH & SEND SMS')).dy;
+    final buttonBottom = tester.getBottomLeft(find.widgetWithText(ElevatedButton, 'FINISH WASH')).dy;
     expect(buttonBottom, lessThanOrEqualTo(700 - 80));
     expect(tester.takeException(), isNull);
   });
@@ -140,7 +140,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Finish & send SMS'), findsOneWidget);
+    expect(find.text('Finish wash'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

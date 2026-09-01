@@ -88,12 +88,12 @@ class _QueueCard extends StatelessWidget {
                   if (order.status == 'WASHING')
                     OutlinedButton(
                       onPressed: () => _transition(context, 'READY'),
-                      child: const Text('Mark ready', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
+                      child: const Text('Mark ready & send SMS', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
                     ),
                   if (order.status == 'READY')
                     ElevatedButton(
                       onPressed: () => showFinishWashSheet(context, ref, order),
-                      child: const Text('Finish & send SMS', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
+                      child: const Text('Finish wash', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
                     ),
                 ],
               ),

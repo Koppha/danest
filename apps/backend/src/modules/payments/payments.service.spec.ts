@@ -37,8 +37,6 @@ function makeFakePrisma(washOrder: any) {
       }),
       findUniqueOrThrow: vi.fn(async () => ({ ...state.washOrder, payment: { ...state.payment, components: state.paymentComponents } })),
     },
-    vehicle: { findUniqueOrThrow: vi.fn(async () => ({ id: state.washOrder.vehicleId, regNumberDisplay: 'ABC 123' })) },
-    customer: { findUniqueOrThrow: vi.fn(async () => ({ id: state.washOrder.customerId, phone: '+26658123456' })) },
   };
 
   const prisma = {
@@ -67,8 +65,7 @@ function buildService(prisma: any) {
     findApplicablePurchase: vi.fn(),
     useForWash: vi.fn(),
   } as any;
-  const sms = { enqueue: vi.fn(async () => ({ id: 'sms-1' })) } as any;
-  return { service: new PaymentsService(prisma, audit, loyalty, prepaid, sms), loyalty, prepaid, sms };
+  return { service: new PaymentsService(prisma, audit, loyalty, prepaid), loyalty, prepaid };
 }
 
 const baseWashOrder = {
@@ -102,7 +99,7 @@ describe('PaymentsService.finishWash', () => {
 
   it('accepts a valid split payment, completes the wash, and credits loyalty once', async () => {
     const { prisma, state } = makeFakePrisma(baseWashOrder);
-    const { service, loyalty, sms } = buildService(prisma);
+    const { service, loyalty } = buildService(prisma);
 
     const result = await service.finishWash(
       'wash-1',
@@ -116,7 +113,6 @@ describe('PaymentsService.finishWash', () => {
     expect(state.washOrder.status).toBe('COMPLETED');
     expect(state.paymentComponents.length).toBe(2);
     expect(loyalty.creditQualifyingWash).toHaveBeenCalledTimes(1);
-    expect(sms.enqueue).toHaveBeenCalledTimes(1);
     expect(result.payment.components.length).toBe(2);
   });
 
@@ -132,16 +128,14 @@ describe('PaymentsService.finishWash', () => {
 
   it('is idempotent: calling finishWash again on an already-COMPLETED wash does not re-run side effects', async () => {
     const { prisma, state } = makeFakePrisma(baseWashOrder);
-    const { service, loyalty, sms } = buildService(prisma);
+    const { service, loyalty } = buildService(prisma);
 
     await service.finishWash('wash-1', [{ method: 'CASH', amount: 100 }], actor);
     expect(state.washOrder.status).toBe('COMPLETED');
 
     loyalty.creditQualifyingWash.mockClear();
-    sms.enqueue.mockClear();
 
     await service.finishWash('wash-1', [{ method: 'CASH', amount: 100 }], actor);
     expect(loyalty.creditQualifyingWash).not.toHaveBeenCalled();
-    expect(sms.enqueue).not.toHaveBeenCalled();
   });
 });

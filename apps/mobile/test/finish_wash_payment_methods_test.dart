@@ -97,7 +97,7 @@ void main() {
     expect(find.widgetWithText(TextField, 'Reference number'), findsOneWidget);
 
     await tester.enterText(find.widgetWithText(TextField, 'Reference number'), 'ECO123');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'FINISH WASH & SEND SMS'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'FINISH WASH'));
     await tester.pumpAndSettle();
 
     final components = await db.select(db.localPaymentComponents).get();
