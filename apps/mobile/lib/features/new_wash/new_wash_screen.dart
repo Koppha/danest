@@ -89,7 +89,7 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
       child: LayoutBuilder(builder: (context, constraints) {
         final wide = constraints.maxWidth > 900;
         final left = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             DnCard(
               child: Column(
@@ -277,7 +277,7 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
             ),
           );
         }
-        return Column(children: [left, const SizedBox(height: 16), summary]);
+        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [left, const SizedBox(height: 16), summary]);
       }),
     );
   }

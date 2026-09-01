@@ -1,11 +1,15 @@
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:de_nest/core/connectivity.dart';
+import 'package:de_nest/data/local/app_database.dart';
+import 'package:de_nest/data/local/database_provider.dart';
 import 'package:de_nest/data/models/models.dart';
 import 'package:de_nest/design_system/widgets.dart';
 import 'package:de_nest/features/dashboard/dashboard_screen.dart' show queueProvider;
+import 'package:de_nest/features/new_wash/new_wash_screen.dart';
 import 'package:de_nest/features/reports/reports_screen.dart';
 import 'package:de_nest/features/wash_queue/finish_wash_sheet.dart';
 import 'package:de_nest/features/wash_queue/wash_queue_screen.dart';
@@ -98,6 +102,31 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Finish & send SMS'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('New Wash cards (including Wash Summary) are all the same width in the single-column layout', (tester) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    await _setSurfaceSize(tester, const Size(845, 1200));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [appDatabaseProvider.overrideWithValue(db)],
+        child: const MaterialApp(home: Scaffold(body: NewWashScreen())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final widths = tester.widgetList<Card>(find.byType(Card)).map((card) {
+      final element = find.byWidget(card).evaluate().single;
+      return (element.renderObject as RenderBox).size.width;
+    }).toList();
+
+    expect(widths, isNotEmpty);
+    for (final width in widths) {
+      expect(width, closeTo(widths.first, 0.5));
+    }
     expect(tester.takeException(), isNull);
   });
 
