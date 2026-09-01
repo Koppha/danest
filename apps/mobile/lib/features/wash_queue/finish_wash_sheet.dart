@@ -44,6 +44,18 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
   final _referenceController = TextEditingController();
   bool _submitting = false;
   String? _error;
+  LoyaltySummary? _loyalty;
+
+  @override
+  void initState() {
+    super.initState();
+    final vehicleId = widget.order.vehicle?.id;
+    if (vehicleId != null) {
+      widget.ref.read(offlinePosRepositoryProvider).loyaltySummary(vehicleId).then((summary) {
+        if (mounted) setState(() => _loyalty = summary);
+      });
+    }
+  }
 
   bool get _referenceRequired => _method == 'ECOCASH' || _method == 'MPESA';
 
@@ -78,7 +90,11 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
   @override
   Widget build(BuildContext context) {
     final isOnline = widget.ref.watch(connectivityProvider);
-    final availableMethods = isOnline ? _methods : _methods.where((m) => offlineSafePaymentMethods.contains(_backendMethod(m.$1))).toList();
+    final hasFreeWash = _loyalty?.hasAvailableReward ?? false;
+    final eligibleMethods = _methods.where((m) => m.$1 != 'LOYALTY_FREE_WASH' || hasFreeWash);
+    final availableMethods = isOnline
+        ? eligibleMethods.toList()
+        : eligibleMethods.where((m) => offlineSafePaymentMethods.contains(_backendMethod(m.$1))).toList();
 
     return SafeArea(
       child: Padding(

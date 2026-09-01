@@ -63,7 +63,10 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('only Cash, Ecocash, M-Pesa, Card and Free wash are offered', (tester) async {
+  testWidgets('only Cash, Ecocash, M-Pesa, Card and Free wash (when earned) are offered', (tester) async {
+    await db.into(db.localLoyaltySummaries).insert(
+          LocalLoyaltySummariesCompanion.insert(vehicleId: 'v1', qualifyingCount: 5, hasAvailableReward: true, asOf: DateTime.now()),
+        );
     await openSheet(tester);
 
     for (final label in ['Cash', 'Ecocash', 'M-Pesa', 'Card', 'Free wash']) {
@@ -72,6 +75,17 @@ void main() {
     for (final removed in ['Mobile money', 'Bank transfer', 'Prepaid balance', 'Wash package']) {
       expect(find.text(removed), findsNothing);
     }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Free wash is hidden when the vehicle has no reward available', (tester) async {
+    // No loyalty summary seeded — vehicle hasn't earned a free wash yet.
+    await openSheet(tester);
+
+    for (final label in ['Cash', 'Ecocash', 'M-Pesa', 'Card']) {
+      expect(find.text(label), findsOneWidget);
+    }
+    expect(find.text('Free wash'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
