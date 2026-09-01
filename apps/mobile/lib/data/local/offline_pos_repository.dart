@@ -478,6 +478,126 @@ class OfflinePosRepository {
     };
   }
 
+  // ------------------------------------------------------------- prepaid
+
+  Future<void> _cachePrepaidOverview(String customerId, Map<String, dynamic> overview) async {
+    await _db
+        .into(_db.localPrepaidWallets)
+        .insertOnConflictUpdate(
+          LocalPrepaidWalletsCompanion.insert(
+            customerId: customerId,
+            balance: double.parse(overview['balance'].toString()),
+            asOf: DateTime.now(),
+          ),
+        );
+    final packages = overview['packages'] as List<dynamic>;
+    await _db.batch((batch) {
+      for (final p in packages) {
+        final map = p as Map<String, dynamic>;
+        final pkg = map['package'] as Map<String, dynamic>;
+        batch.insert(
+          _db.localPrepaidPackages,
+          LocalPrepaidPackagesCompanion.insert(
+            id: pkg['id'] as String,
+            name: pkg['name'] as String,
+            eligibleTiers: (pkg['eligibleTiers'] as List<dynamic>).join(','),
+            washCount: pkg['washCount'] as int,
+            price: double.parse(pkg['price'].toString()),
+            validityDays: pkg['validityDays'] as int,
+            applicableScope: pkg['applicableScope'] as String,
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+        batch.insert(
+          _db.localPrepaidPackagePurchases,
+          LocalPrepaidPackagePurchasesCompanion.insert(
+            id: map['id'] as String,
+            packageId: pkg['id'] as String,
+            customerId: map['customerId'] as String,
+            vehicleId: Value(map['vehicleId'] as String?),
+            expiresAt: DateTime.parse(map['expiresAt'] as String),
+            remainingCount: map['remainingCount'] as int,
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+    });
+  }
+
+  Future<Map<String, dynamic>> _cachedPrepaidOverview(String customerId) async {
+    final wallet = await (_db.select(
+      _db.localPrepaidWallets,
+    )..where((w) => w.customerId.equals(customerId))).getSingleOrNull();
+    final purchases = await (_db.select(
+      _db.localPrepaidPackagePurchases,
+    )..where((p) => p.customerId.equals(customerId) & p.expiresAt.isBiggerThanValue(DateTime.now()))).get();
+    final packageRows = await _db.select(_db.localPrepaidPackages).get();
+    final packagesById = {for (final pk in packageRows) pk.id: pk};
+    return {
+      'balance': wallet?.balance ?? 0,
+      'packages': purchases.map((p) {
+        final pkg = packagesById[p.packageId];
+        return {
+          'id': p.id,
+          'packageId': p.packageId,
+          'customerId': p.customerId,
+          'vehicleId': p.vehicleId,
+          'expiresAt': p.expiresAt.toIso8601String(),
+          'remainingCount': p.remainingCount,
+          'package': {
+            'id': p.packageId,
+            'name': pkg?.name ?? 'Unknown',
+            'eligibleTiers': pkg == null || pkg.eligibleTiers.isEmpty ? <String>[] : pkg.eligibleTiers.split(','),
+          },
+        };
+      }).toList(),
+    };
+  }
+
+  /// Online: fetch live + refresh the wallet/package cache used for offline
+  /// spend eligibility checks. Offline: serve from that cache.
+  Future<Map<String, dynamic>> prepaidOverview(String customerId) async {
+    if (_isOnline) {
+      try {
+        final resp = await _dio.get('/prepaid/customers/$customerId/overview');
+        final overview = resp.data as Map<String, dynamic>;
+        await _cachePrepaidOverview(customerId, overview);
+        return overview;
+      } on DioException {
+        // Fall through to cache.
+      }
+    }
+    return _cachedPrepaidOverview(customerId);
+  }
+
+  /// Deposits are purely additive (never a double-spend risk), so this is
+  /// always allowed offline: bump the cached balance immediately and queue
+  /// the real deposit — already idempotent server-side on clientEntryId.
+  Future<void> depositToWallet({
+    required String customerId,
+    required double amount,
+    required String method,
+  }) async {
+    final clientEntryId = _uuid.v4();
+    final wallet = await (_db.select(
+      _db.localPrepaidWallets,
+    )..where((w) => w.customerId.equals(customerId))).getSingleOrNull();
+    final newBalance = (wallet?.balance ?? 0) + amount;
+    await _db
+        .into(_db.localPrepaidWallets)
+        .insertOnConflictUpdate(
+          LocalPrepaidWalletsCompanion.insert(customerId: customerId, balance: newBalance, asOf: DateTime.now()),
+        );
+    await _enqueueOrPush(
+      entityType: 'prepaid_deposit',
+      entityId: clientEntryId,
+      opType: 'create',
+      path: '/prepaid/deposits',
+      payload: {'customerId': customerId, 'amount': amount, 'method': method, 'clientEntryId': clientEntryId},
+      idempotencyKey: 'deposit:$clientEntryId',
+    );
+  }
+
   // ----------------------------------------------------------- wash queue
 
   Future<WashOrder> startWash({

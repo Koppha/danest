@@ -70,6 +70,8 @@ class SyncService {
         if (op.opType == 'finish') return '/wash-orders/${op.entityId}/finish';
       case 'expense':
         return '/expenses';
+      case 'prepaid_deposit':
+        return '/prepaid/deposits';
     }
     throw StateError('Unknown sync op: ${op.entityType}/${op.opType}');
   }

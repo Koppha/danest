@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/session.dart';
+import '../../data/local/offline_pos_repository.dart';
 import '../../data/models/models.dart';
-import '../../data/remote/pos_repository.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
 
@@ -48,7 +48,7 @@ class _PrepaidScreenState extends ConsumerState<PrepaidScreen> {
     final query = _searchController.text.trim();
     setState(() => _loading = true);
     try {
-      final results = await ref.read(posRepositoryProvider).searchCustomers(query);
+      final results = await ref.read(offlinePosRepositoryProvider).searchCustomers(query);
       if (!mounted || query != _searchController.text.trim()) return;
       setState(() => _results = results);
     } finally {
@@ -77,7 +77,7 @@ class _PrepaidScreenState extends ConsumerState<PrepaidScreen> {
           ElevatedButton(
             onPressed: () async {
               final branchId = ref.read(sessionProvider).user?.branchId ?? '';
-              final customer = await ref.read(posRepositoryProvider).createCustomer(
+              final customer = await ref.read(offlinePosRepositoryProvider).createCustomer(
                     fullName: nameController.text.trim(),
                     phone: phoneController.text.trim(),
                     branchId: branchId,
@@ -94,7 +94,7 @@ class _PrepaidScreenState extends ConsumerState<PrepaidScreen> {
   }
 
   Future<void> _select(Customer c) async {
-    final overview = await ref.read(posRepositoryProvider).prepaidOverview(c.id);
+    final overview = await ref.read(offlinePosRepositoryProvider).prepaidOverview(c.id);
     setState(() {
       _selected = c;
       _overview = overview;
@@ -134,7 +134,7 @@ class _PrepaidScreenState extends ConsumerState<PrepaidScreen> {
               onPressed: () async {
                 final amount = double.tryParse(amountController.text) ?? 0;
                 if (amount <= 0) return;
-                await ref.read(posRepositoryProvider).depositToWallet(customerId: _selected!.id, amount: amount, method: method);
+                await ref.read(offlinePosRepositoryProvider).depositToWallet(customerId: _selected!.id, amount: amount, method: method);
                 if (mounted) {
                   Navigator.pop(ctx);
                   _select(_selected!);
