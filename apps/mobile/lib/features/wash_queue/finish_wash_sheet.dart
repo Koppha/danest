@@ -6,15 +6,21 @@ import '../../data/local/offline_pos_repository.dart';
 import '../../design_system/theme.dart';
 import '../dashboard/dashboard_screen.dart' show queueProvider;
 
+// UI-level payment choices. Ecocash and M-Pesa are both recorded on the
+// backend as the generic MOBILE_MONEY method (see _backendMethod below) —
+// the reference number captures which provider was actually used.
 const _methods = [
   ('CASH', 'Cash', Icons.payments_outlined),
+  ('ECOCASH', 'Ecocash', Icons.smartphone),
+  ('MPESA', 'M-Pesa', Icons.smartphone),
   ('CARD', 'Card', Icons.credit_card),
-  ('MOBILE_MONEY', 'Mobile money', Icons.smartphone),
-  ('BANK_TRANSFER', 'Bank transfer', Icons.account_balance),
-  ('WALLET', 'Prepaid balance', Icons.account_balance_wallet_outlined),
-  ('PACKAGE', 'Wash package', Icons.inventory_2_outlined),
   ('LOYALTY_FREE_WASH', 'Free wash', Icons.card_giftcard),
 ];
+
+String _backendMethod(String uiMethod) => switch (uiMethod) {
+  'ECOCASH' || 'MPESA' => 'MOBILE_MONEY',
+  _ => uiMethod,
+};
 
 Future<void> showFinishWashSheet(BuildContext context, WidgetRef ref, WashOrder order) {
   return showModalBottomSheet(
@@ -39,7 +45,7 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
   bool _submitting = false;
   String? _error;
 
-  bool get _referenceRequired => _method == 'MOBILE_MONEY' || _method == 'BANK_TRANSFER';
+  bool get _referenceRequired => _method == 'ECOCASH' || _method == 'MPESA';
 
   Future<void> _submit() async {
     if (_referenceRequired && _referenceController.text.trim().isEmpty) {
@@ -53,7 +59,7 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
     try {
       await widget.ref.read(offlinePosRepositoryProvider).finishWash(widget.order.id, [
         {
-          'method': _method,
+          'method': _backendMethod(_method),
           'amount': widget.order.totalAmount,
           if (_referenceController.text.trim().isNotEmpty) 'externalReference': _referenceController.text.trim(),
         },
@@ -72,7 +78,7 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
   @override
   Widget build(BuildContext context) {
     final isOnline = widget.ref.watch(connectivityProvider);
-    final availableMethods = isOnline ? _methods : _methods.where((m) => offlineSafePaymentMethods.contains(m.$1)).toList();
+    final availableMethods = isOnline ? _methods : _methods.where((m) => offlineSafePaymentMethods.contains(_backendMethod(m.$1))).toList();
 
     return SafeArea(
       child: Padding(
@@ -97,7 +103,7 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
                       Icon(Icons.cloud_off, size: 14, color: DnColors.amber),
                       SizedBox(width: 6),
                       Expanded(
-                        child: Text('Offline — prepaid balance, packages and free washes are unavailable until reconnected', style: TextStyle(fontSize: 12, color: DnColors.amber)),
+                        child: Text('Offline — free washes are unavailable until reconnected', style: TextStyle(fontSize: 12, color: DnColors.amber)),
                       ),
                     ],
                   ),
