@@ -52,7 +52,7 @@ class ExpensesScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      Text('M${(e['amount'] as num).toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text('M${double.parse(e['amount'].toString()).toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),

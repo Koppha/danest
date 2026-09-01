@@ -54,7 +54,7 @@ class TransactionsScreen extends ConsumerWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text('M${(t['totalAmount'] as num).toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text('M${double.parse(t['totalAmount'].toString()).toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
                           if (t['voided'] == true) const Text('VOIDED', style: TextStyle(color: DnColors.red, fontSize: 11)),
                         ],
                       ),
