@@ -147,10 +147,20 @@ class LocalWashOrderItems extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// Only qualifying-without-a-live-check methods are allowed offline: CASH,
-/// CARD, MOBILE_MONEY, BANK_TRANSFER. WALLET/PACKAGE/LOYALTY_FREE_WASH
-/// require an online balance/validity check and are disabled in the UI
-/// when offline — see NewWash/FinishWash screens.
+/// One row per status change (including the initial WAITING on creation) —
+/// a full audit trail of a wash order's lifecycle.
+class LocalWashStatusHistory extends Table {
+  TextColumn get id => text()();
+  TextColumn get washOrderId => text()();
+  TextColumn get fromStatus => text().nullable()();
+  TextColumn get toStatus => text()();
+  TextColumn get changedById => text()();
+  DateTimeColumn get changedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 class LocalPayments extends Table {
   TextColumn get id => text()();
   TextColumn get washOrderId => text()();
@@ -367,6 +377,7 @@ class LocalUsers extends Table {
   LocalLoyaltyRewards,
   LocalWashOrders,
   LocalWashOrderItems,
+  LocalWashStatusHistory,
   LocalPayments,
   LocalPaymentComponents,
   PendingSyncOps,
@@ -387,7 +398,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -440,6 +451,9 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(localPrepaidWalletLedger);
             await m.createTable(localPrepaidPackageUsage);
             await m.addColumn(localPrepaidPackagePurchases, localPrepaidPackagePurchases.purchasedAt);
+          }
+          if (from < 7) {
+            await m.createTable(localWashStatusHistory);
           }
         },
       );

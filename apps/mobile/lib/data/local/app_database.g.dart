@@ -4320,6 +4320,440 @@ class LocalWashOrderItemsCompanion extends UpdateCompanion<LocalWashOrderItem> {
   }
 }
 
+class $LocalWashStatusHistoryTable extends LocalWashStatusHistory
+    with TableInfo<$LocalWashStatusHistoryTable, LocalWashStatusHistoryData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalWashStatusHistoryTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _washOrderIdMeta = const VerificationMeta(
+    'washOrderId',
+  );
+  @override
+  late final GeneratedColumn<String> washOrderId = GeneratedColumn<String>(
+    'wash_order_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fromStatusMeta = const VerificationMeta(
+    'fromStatus',
+  );
+  @override
+  late final GeneratedColumn<String> fromStatus = GeneratedColumn<String>(
+    'from_status',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _toStatusMeta = const VerificationMeta(
+    'toStatus',
+  );
+  @override
+  late final GeneratedColumn<String> toStatus = GeneratedColumn<String>(
+    'to_status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _changedByIdMeta = const VerificationMeta(
+    'changedById',
+  );
+  @override
+  late final GeneratedColumn<String> changedById = GeneratedColumn<String>(
+    'changed_by_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _changedAtMeta = const VerificationMeta(
+    'changedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> changedAt = GeneratedColumn<DateTime>(
+    'changed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    washOrderId,
+    fromStatus,
+    toStatus,
+    changedById,
+    changedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_wash_status_history';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalWashStatusHistoryData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('wash_order_id')) {
+      context.handle(
+        _washOrderIdMeta,
+        washOrderId.isAcceptableOrUnknown(
+          data['wash_order_id']!,
+          _washOrderIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_washOrderIdMeta);
+    }
+    if (data.containsKey('from_status')) {
+      context.handle(
+        _fromStatusMeta,
+        fromStatus.isAcceptableOrUnknown(data['from_status']!, _fromStatusMeta),
+      );
+    }
+    if (data.containsKey('to_status')) {
+      context.handle(
+        _toStatusMeta,
+        toStatus.isAcceptableOrUnknown(data['to_status']!, _toStatusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_toStatusMeta);
+    }
+    if (data.containsKey('changed_by_id')) {
+      context.handle(
+        _changedByIdMeta,
+        changedById.isAcceptableOrUnknown(
+          data['changed_by_id']!,
+          _changedByIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_changedByIdMeta);
+    }
+    if (data.containsKey('changed_at')) {
+      context.handle(
+        _changedAtMeta,
+        changedAt.isAcceptableOrUnknown(data['changed_at']!, _changedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocalWashStatusHistoryData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalWashStatusHistoryData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      washOrderId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}wash_order_id'],
+      )!,
+      fromStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}from_status'],
+      ),
+      toStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}to_status'],
+      )!,
+      changedById: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}changed_by_id'],
+      )!,
+      changedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}changed_at'],
+      )!,
+    );
+  }
+
+  @override
+  $LocalWashStatusHistoryTable createAlias(String alias) {
+    return $LocalWashStatusHistoryTable(attachedDatabase, alias);
+  }
+}
+
+class LocalWashStatusHistoryData extends DataClass
+    implements Insertable<LocalWashStatusHistoryData> {
+  final String id;
+  final String washOrderId;
+  final String? fromStatus;
+  final String toStatus;
+  final String changedById;
+  final DateTime changedAt;
+  const LocalWashStatusHistoryData({
+    required this.id,
+    required this.washOrderId,
+    this.fromStatus,
+    required this.toStatus,
+    required this.changedById,
+    required this.changedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['wash_order_id'] = Variable<String>(washOrderId);
+    if (!nullToAbsent || fromStatus != null) {
+      map['from_status'] = Variable<String>(fromStatus);
+    }
+    map['to_status'] = Variable<String>(toStatus);
+    map['changed_by_id'] = Variable<String>(changedById);
+    map['changed_at'] = Variable<DateTime>(changedAt);
+    return map;
+  }
+
+  LocalWashStatusHistoryCompanion toCompanion(bool nullToAbsent) {
+    return LocalWashStatusHistoryCompanion(
+      id: Value(id),
+      washOrderId: Value(washOrderId),
+      fromStatus: fromStatus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fromStatus),
+      toStatus: Value(toStatus),
+      changedById: Value(changedById),
+      changedAt: Value(changedAt),
+    );
+  }
+
+  factory LocalWashStatusHistoryData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalWashStatusHistoryData(
+      id: serializer.fromJson<String>(json['id']),
+      washOrderId: serializer.fromJson<String>(json['washOrderId']),
+      fromStatus: serializer.fromJson<String?>(json['fromStatus']),
+      toStatus: serializer.fromJson<String>(json['toStatus']),
+      changedById: serializer.fromJson<String>(json['changedById']),
+      changedAt: serializer.fromJson<DateTime>(json['changedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'washOrderId': serializer.toJson<String>(washOrderId),
+      'fromStatus': serializer.toJson<String?>(fromStatus),
+      'toStatus': serializer.toJson<String>(toStatus),
+      'changedById': serializer.toJson<String>(changedById),
+      'changedAt': serializer.toJson<DateTime>(changedAt),
+    };
+  }
+
+  LocalWashStatusHistoryData copyWith({
+    String? id,
+    String? washOrderId,
+    Value<String?> fromStatus = const Value.absent(),
+    String? toStatus,
+    String? changedById,
+    DateTime? changedAt,
+  }) => LocalWashStatusHistoryData(
+    id: id ?? this.id,
+    washOrderId: washOrderId ?? this.washOrderId,
+    fromStatus: fromStatus.present ? fromStatus.value : this.fromStatus,
+    toStatus: toStatus ?? this.toStatus,
+    changedById: changedById ?? this.changedById,
+    changedAt: changedAt ?? this.changedAt,
+  );
+  LocalWashStatusHistoryData copyWithCompanion(
+    LocalWashStatusHistoryCompanion data,
+  ) {
+    return LocalWashStatusHistoryData(
+      id: data.id.present ? data.id.value : this.id,
+      washOrderId: data.washOrderId.present
+          ? data.washOrderId.value
+          : this.washOrderId,
+      fromStatus: data.fromStatus.present
+          ? data.fromStatus.value
+          : this.fromStatus,
+      toStatus: data.toStatus.present ? data.toStatus.value : this.toStatus,
+      changedById: data.changedById.present
+          ? data.changedById.value
+          : this.changedById,
+      changedAt: data.changedAt.present ? data.changedAt.value : this.changedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalWashStatusHistoryData(')
+          ..write('id: $id, ')
+          ..write('washOrderId: $washOrderId, ')
+          ..write('fromStatus: $fromStatus, ')
+          ..write('toStatus: $toStatus, ')
+          ..write('changedById: $changedById, ')
+          ..write('changedAt: $changedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    washOrderId,
+    fromStatus,
+    toStatus,
+    changedById,
+    changedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalWashStatusHistoryData &&
+          other.id == this.id &&
+          other.washOrderId == this.washOrderId &&
+          other.fromStatus == this.fromStatus &&
+          other.toStatus == this.toStatus &&
+          other.changedById == this.changedById &&
+          other.changedAt == this.changedAt);
+}
+
+class LocalWashStatusHistoryCompanion
+    extends UpdateCompanion<LocalWashStatusHistoryData> {
+  final Value<String> id;
+  final Value<String> washOrderId;
+  final Value<String?> fromStatus;
+  final Value<String> toStatus;
+  final Value<String> changedById;
+  final Value<DateTime> changedAt;
+  final Value<int> rowid;
+  const LocalWashStatusHistoryCompanion({
+    this.id = const Value.absent(),
+    this.washOrderId = const Value.absent(),
+    this.fromStatus = const Value.absent(),
+    this.toStatus = const Value.absent(),
+    this.changedById = const Value.absent(),
+    this.changedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalWashStatusHistoryCompanion.insert({
+    required String id,
+    required String washOrderId,
+    this.fromStatus = const Value.absent(),
+    required String toStatus,
+    required String changedById,
+    this.changedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       washOrderId = Value(washOrderId),
+       toStatus = Value(toStatus),
+       changedById = Value(changedById);
+  static Insertable<LocalWashStatusHistoryData> custom({
+    Expression<String>? id,
+    Expression<String>? washOrderId,
+    Expression<String>? fromStatus,
+    Expression<String>? toStatus,
+    Expression<String>? changedById,
+    Expression<DateTime>? changedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (washOrderId != null) 'wash_order_id': washOrderId,
+      if (fromStatus != null) 'from_status': fromStatus,
+      if (toStatus != null) 'to_status': toStatus,
+      if (changedById != null) 'changed_by_id': changedById,
+      if (changedAt != null) 'changed_at': changedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalWashStatusHistoryCompanion copyWith({
+    Value<String>? id,
+    Value<String>? washOrderId,
+    Value<String?>? fromStatus,
+    Value<String>? toStatus,
+    Value<String>? changedById,
+    Value<DateTime>? changedAt,
+    Value<int>? rowid,
+  }) {
+    return LocalWashStatusHistoryCompanion(
+      id: id ?? this.id,
+      washOrderId: washOrderId ?? this.washOrderId,
+      fromStatus: fromStatus ?? this.fromStatus,
+      toStatus: toStatus ?? this.toStatus,
+      changedById: changedById ?? this.changedById,
+      changedAt: changedAt ?? this.changedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (washOrderId.present) {
+      map['wash_order_id'] = Variable<String>(washOrderId.value);
+    }
+    if (fromStatus.present) {
+      map['from_status'] = Variable<String>(fromStatus.value);
+    }
+    if (toStatus.present) {
+      map['to_status'] = Variable<String>(toStatus.value);
+    }
+    if (changedById.present) {
+      map['changed_by_id'] = Variable<String>(changedById.value);
+    }
+    if (changedAt.present) {
+      map['changed_at'] = Variable<DateTime>(changedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalWashStatusHistoryCompanion(')
+          ..write('id: $id, ')
+          ..write('washOrderId: $washOrderId, ')
+          ..write('fromStatus: $fromStatus, ')
+          ..write('toStatus: $toStatus, ')
+          ..write('changedById: $changedById, ')
+          ..write('changedAt: $changedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $LocalPaymentsTable extends LocalPayments
     with TableInfo<$LocalPaymentsTable, LocalPayment> {
   @override
@@ -10508,6 +10942,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $LocalWashOrderItemsTable localWashOrderItems =
       $LocalWashOrderItemsTable(this);
+  late final $LocalWashStatusHistoryTable localWashStatusHistory =
+      $LocalWashStatusHistoryTable(this);
   late final $LocalPaymentsTable localPayments = $LocalPaymentsTable(this);
   late final $LocalPaymentComponentsTable localPaymentComponents =
       $LocalPaymentComponentsTable(this);
@@ -10545,6 +10981,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     localLoyaltyRewards,
     localWashOrders,
     localWashOrderItems,
+    localWashStatusHistory,
     localPayments,
     localPaymentComponents,
     pendingSyncOps,
@@ -12862,6 +13299,250 @@ typedef $$LocalWashOrderItemsTableProcessedTableManager =
         >,
       ),
       LocalWashOrderItem,
+      PrefetchHooks Function()
+    >;
+typedef $$LocalWashStatusHistoryTableCreateCompanionBuilder =
+    LocalWashStatusHistoryCompanion Function({
+      required String id,
+      required String washOrderId,
+      Value<String?> fromStatus,
+      required String toStatus,
+      required String changedById,
+      Value<DateTime> changedAt,
+      Value<int> rowid,
+    });
+typedef $$LocalWashStatusHistoryTableUpdateCompanionBuilder =
+    LocalWashStatusHistoryCompanion Function({
+      Value<String> id,
+      Value<String> washOrderId,
+      Value<String?> fromStatus,
+      Value<String> toStatus,
+      Value<String> changedById,
+      Value<DateTime> changedAt,
+      Value<int> rowid,
+    });
+
+class $$LocalWashStatusHistoryTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalWashStatusHistoryTable> {
+  $$LocalWashStatusHistoryTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get washOrderId => $composableBuilder(
+    column: $table.washOrderId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fromStatus => $composableBuilder(
+    column: $table.fromStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get toStatus => $composableBuilder(
+    column: $table.toStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get changedById => $composableBuilder(
+    column: $table.changedById,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get changedAt => $composableBuilder(
+    column: $table.changedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocalWashStatusHistoryTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalWashStatusHistoryTable> {
+  $$LocalWashStatusHistoryTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get washOrderId => $composableBuilder(
+    column: $table.washOrderId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fromStatus => $composableBuilder(
+    column: $table.fromStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get toStatus => $composableBuilder(
+    column: $table.toStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get changedById => $composableBuilder(
+    column: $table.changedById,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get changedAt => $composableBuilder(
+    column: $table.changedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalWashStatusHistoryTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalWashStatusHistoryTable> {
+  $$LocalWashStatusHistoryTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get washOrderId => $composableBuilder(
+    column: $table.washOrderId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get fromStatus => $composableBuilder(
+    column: $table.fromStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get toStatus =>
+      $composableBuilder(column: $table.toStatus, builder: (column) => column);
+
+  GeneratedColumn<String> get changedById => $composableBuilder(
+    column: $table.changedById,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get changedAt =>
+      $composableBuilder(column: $table.changedAt, builder: (column) => column);
+}
+
+class $$LocalWashStatusHistoryTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalWashStatusHistoryTable,
+          LocalWashStatusHistoryData,
+          $$LocalWashStatusHistoryTableFilterComposer,
+          $$LocalWashStatusHistoryTableOrderingComposer,
+          $$LocalWashStatusHistoryTableAnnotationComposer,
+          $$LocalWashStatusHistoryTableCreateCompanionBuilder,
+          $$LocalWashStatusHistoryTableUpdateCompanionBuilder,
+          (
+            LocalWashStatusHistoryData,
+            BaseReferences<
+              _$AppDatabase,
+              $LocalWashStatusHistoryTable,
+              LocalWashStatusHistoryData
+            >,
+          ),
+          LocalWashStatusHistoryData,
+          PrefetchHooks Function()
+        > {
+  $$LocalWashStatusHistoryTableTableManager(
+    _$AppDatabase db,
+    $LocalWashStatusHistoryTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalWashStatusHistoryTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$LocalWashStatusHistoryTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$LocalWashStatusHistoryTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> washOrderId = const Value.absent(),
+                Value<String?> fromStatus = const Value.absent(),
+                Value<String> toStatus = const Value.absent(),
+                Value<String> changedById = const Value.absent(),
+                Value<DateTime> changedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalWashStatusHistoryCompanion(
+                id: id,
+                washOrderId: washOrderId,
+                fromStatus: fromStatus,
+                toStatus: toStatus,
+                changedById: changedById,
+                changedAt: changedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String washOrderId,
+                Value<String?> fromStatus = const Value.absent(),
+                required String toStatus,
+                required String changedById,
+                Value<DateTime> changedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalWashStatusHistoryCompanion.insert(
+                id: id,
+                washOrderId: washOrderId,
+                fromStatus: fromStatus,
+                toStatus: toStatus,
+                changedById: changedById,
+                changedAt: changedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocalWashStatusHistoryTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalWashStatusHistoryTable,
+      LocalWashStatusHistoryData,
+      $$LocalWashStatusHistoryTableFilterComposer,
+      $$LocalWashStatusHistoryTableOrderingComposer,
+      $$LocalWashStatusHistoryTableAnnotationComposer,
+      $$LocalWashStatusHistoryTableCreateCompanionBuilder,
+      $$LocalWashStatusHistoryTableUpdateCompanionBuilder,
+      (
+        LocalWashStatusHistoryData,
+        BaseReferences<
+          _$AppDatabase,
+          $LocalWashStatusHistoryTable,
+          LocalWashStatusHistoryData
+        >,
+      ),
+      LocalWashStatusHistoryData,
       PrefetchHooks Function()
     >;
 typedef $$LocalPaymentsTableCreateCompanionBuilder =
@@ -16252,6 +16933,11 @@ class $AppDatabaseManager {
       $$LocalWashOrdersTableTableManager(_db, _db.localWashOrders);
   $$LocalWashOrderItemsTableTableManager get localWashOrderItems =>
       $$LocalWashOrderItemsTableTableManager(_db, _db.localWashOrderItems);
+  $$LocalWashStatusHistoryTableTableManager get localWashStatusHistory =>
+      $$LocalWashStatusHistoryTableTableManager(
+        _db,
+        _db.localWashStatusHistory,
+      );
   $$LocalPaymentsTableTableManager get localPayments =>
       $$LocalPaymentsTableTableManager(_db, _db.localPayments);
   $$LocalPaymentComponentsTableTableManager get localPaymentComponents =>
