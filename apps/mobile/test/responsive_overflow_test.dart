@@ -7,7 +7,7 @@ import 'package:de_nest/data/local/app_database.dart';
 import 'package:de_nest/data/local/database_provider.dart';
 import 'package:de_nest/data/models/models.dart';
 import 'package:de_nest/design_system/widgets.dart';
-import 'package:de_nest/features/dashboard/dashboard_screen.dart' show queueProvider;
+import 'package:de_nest/features/dashboard/dashboard_screen.dart' show DashboardScreen, dashboardSummaryProvider, queueProvider;
 import 'package:de_nest/data/local/reports_repository.dart';
 import 'package:de_nest/features/new_wash/new_wash_screen.dart';
 import 'package:de_nest/features/reports/reports_screen.dart';
@@ -165,6 +165,70 @@ void main() {
       ProviderScope(overrides: overrides, child: const MaterialApp(home: Scaffold(body: ReportsScreen()))),
     );
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  Future<void> expectAllCardsSameWidth(WidgetTester tester) async {
+    final widths = tester.widgetList<Card>(find.byType(Card)).map((card) {
+      final element = find.byWidget(card).evaluate().single;
+      return (element.renderObject as RenderBox).size.width;
+    }).toList();
+
+    expect(widths, isNotEmpty);
+    for (final width in widths) {
+      expect(width, closeTo(widths.first, 0.5));
+    }
+  }
+
+  testWidgets('Reports screen KPI tiles and section cards are all the same width on a phone', (tester) async {
+    // KPI tiles (DnKpi) sit in a single-column grid at this width; the
+    // "Sales by payment method" and "Net operating cash" cards below them
+    // are plain DnCards outside that grid — both kinds must fill the same
+    // width, not just match each other within their own group.
+    final summary = ReportsSummary(
+      totalSales: 6000,
+      totalCompletedWashes: 1,
+      totalFreeWashes: 0,
+      totalPrepaidDeposits: 0,
+      salesByMethod: const {'Cash': 6000},
+      netOperatingCash: 6000,
+    );
+    await _setSurfaceSize(tester, const Size(390, 900));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [reportsSummaryProvider.overrideWith((ref) async => summary)],
+        child: const MaterialApp(home: Scaffold(body: ReportsScreen())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await expectAllCardsSameWidth(tester);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Dashboard KPI tiles and the queue card are all the same width on a phone', (tester) async {
+    await _setSurfaceSize(tester, const Size(390, 900));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          queueProvider.overrideWith((ref) async => const []),
+          dashboardSummaryProvider.overrideWith(
+            (ref) async => ReportsSummary(
+              totalSales: 0,
+              totalCompletedWashes: 0,
+              totalFreeWashes: 0,
+              totalPrepaidDeposits: 0,
+              salesByMethod: const {},
+              netOperatingCash: 0,
+            ),
+          ),
+        ],
+        child: const MaterialApp(home: Scaffold(body: DashboardScreen())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await expectAllCardsSameWidth(tester);
     expect(tester.takeException(), isNull);
   });
 }

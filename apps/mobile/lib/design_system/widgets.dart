@@ -46,6 +46,12 @@ class DnLoyaltyMeter extends StatelessWidget {
   }
 }
 
+/// Always fills the width its parent offers rather than sizing to its own
+/// content — a Card sizes to content by default, so two DnCards with
+/// different amounts of text would otherwise end up different widths any
+/// time they sit in a Column that doesn't force CrossAxisAlignment.stretch
+/// (most of them don't). Sitting inside an Expanded/Flexible (a Row column,
+/// a grid cell) still constrains it to that share of the space as normal.
 class DnCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -53,7 +59,7 @@ class DnCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(child: Padding(padding: padding, child: child));
+    return SizedBox(width: double.infinity, child: Card(child: Padding(padding: padding, child: child)));
   }
 }
 

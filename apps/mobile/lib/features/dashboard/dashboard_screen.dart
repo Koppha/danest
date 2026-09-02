@@ -38,7 +38,14 @@ class DashboardScreen extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Dashboard', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const Expanded(
+                  child: Text(
+                    'Dashboard',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 ElevatedButton.icon(
                   onPressed: () => context.go('/new-wash'),
                   icon: const Icon(Icons.add, size: 18),
