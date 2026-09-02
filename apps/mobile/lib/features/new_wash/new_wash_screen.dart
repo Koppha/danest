@@ -46,8 +46,18 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
     super.dispose();
   }
 
+  // Invalidating the current pick belongs here — the moment the user
+  // actually types something new — not inside _search()'s async result
+  // handler. That handler can still run *after* a debounced timer armed
+  // by an earlier keystroke finally fires, which used to null out
+  // whatever the user had since picked, even though nothing about their
+  // selection was actually wrong.
   void _onQueryChanged() {
     _debounce?.cancel();
+    setState(() {
+      _selectedCustomer = null;
+      _selectedVehicle = null;
+    });
     if (_searchController.text.trim().isEmpty) {
       setState(() => _results = []);
       return;
@@ -61,11 +71,7 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
     try {
       final results = await ref.read(offlinePosRepositoryProvider).searchCustomers(query);
       if (!mounted || query != _searchController.text.trim()) return;
-      setState(() {
-        _results = results;
-        _selectedCustomer = null;
-        _selectedVehicle = null;
-      });
+      setState(() => _results = results);
     } finally {
       if (mounted) setState(() => _searching = false);
     }
