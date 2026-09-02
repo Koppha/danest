@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/connectivity.dart';
 import '../../core/session.dart';
-import '../../data/local/offline_pos_repository.dart';
-import '../../data/remote/api_client.dart';
+import '../../data/local/app_database.dart';
+import '../../data/local/auth_repository.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
 
 const _roles = ['ATTENDANT', 'SUPERVISOR', 'ADMINISTRATOR', 'OWNER'];
 
-final usersProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
-  return ref.watch(offlinePosRepositoryProvider).listUsers();
-});
+final usersProvider = FutureProvider.autoDispose<List<LocalUser>>((ref) => ref.watch(authRepositoryProvider).listUsers());
 
 class UsersScreen extends ConsumerWidget {
   const UsersScreen({super.key});
@@ -19,43 +16,25 @@ class UsersScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final users = ref.watch(usersProvider);
-    final isOnline = ref.watch(connectivityProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddUserDialog(context, ref),
+        onPressed: () => _showUserDialog(context, ref),
         icon: const Icon(Icons.person_add_alt_1),
         label: const Text('Add user'),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Users', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                const Text('Staff accounts and roles for this branch.', style: TextStyle(color: DnColors.muted)),
-                if (!isOnline) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(color: DnColors.amberSoft, borderRadius: BorderRadius.circular(8)),
-                    child: const Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.cloud_off, size: 14, color: DnColors.amber),
-                        SizedBox(width: 6),
-                        Expanded(
-                          child: Text('Offline — new accounts can be created but won\'t be able to log in until this device reconnects and syncs. Activating/deactivating existing accounts needs a connection.', style: TextStyle(fontSize: 12, color: DnColors.amber)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                Text('Users', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                SizedBox(height: 4),
+                Text('Staff accounts and roles.', style: TextStyle(color: DnColors.muted)),
               ],
             ),
           ),
@@ -69,10 +48,7 @@ class UsersScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
                   itemCount: list.length,
                   itemBuilder: (context, i) {
-                    final u = list[i] as Map<String, dynamic>;
-                    final role = (u['role'] as Map<String, dynamic>)['name'] as String;
-                    final active = u['active'] as bool;
-                    final pending = u['pending'] == true;
+                    final u = list[i];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: DnCard(
@@ -84,28 +60,23 @@ class UsersScreen extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(u['fullName'] as String, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis, maxLines: 1),
-                                  Text('${u['username']} · $role', style: const TextStyle(color: DnColors.muted, fontSize: 12), overflow: TextOverflow.ellipsis, maxLines: 1),
+                                  Text(u.fullName, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis, maxLines: 1),
+                                  Text('${u.username} · ${u.role}', style: const TextStyle(color: DnColors.muted, fontSize: 12), overflow: TextOverflow.ellipsis, maxLines: 1),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            if (pending)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(color: DnColors.amberSoft, borderRadius: BorderRadius.circular(6)),
-                                child: const Text('Pending sync', style: TextStyle(fontSize: 11, color: DnColors.amber, fontWeight: FontWeight.w600)),
-                              )
-                            else
-                              Switch(
-                                value: active,
-                                onChanged: isOnline
-                                    ? (v) async {
-                                        await ref.read(apiClientProvider).patch('/users/${u['id']}', data: {'active': v});
-                                        ref.invalidate(usersProvider);
-                                      }
-                                    : null,
-                              ),
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 20),
+                              tooltip: 'Edit',
+                              onPressed: () => _showUserDialog(context, ref, existing: u),
+                            ),
+                            Switch(
+                              value: u.active,
+                              onChanged: (v) async {
+                                await ref.read(authRepositoryProvider).setActive(userId: u.id, active: v, actorId: ref.read(sessionProvider).user!.id);
+                                ref.invalidate(usersProvider);
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -122,32 +93,33 @@ class UsersScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddUserDialog(BuildContext context, WidgetRef ref) {
-    final nameController = TextEditingController();
-    final usernameController = TextEditingController();
+  void _showUserDialog(BuildContext context, WidgetRef ref, {LocalUser? existing}) {
+    final nameController = TextEditingController(text: existing?.fullName ?? '');
+    final usernameController = TextEditingController(text: existing?.username ?? '');
     final passwordController = TextEditingController();
     final pinController = TextEditingController();
-    String role = 'ATTENDANT';
+    String role = existing?.role ?? 'ATTENDANT';
     bool obscurePassword = true;
+    String? error;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Add user'),
+          title: Text(existing == null ? 'Add user' : 'Edit user'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Full name')),
                 const SizedBox(height: 8),
-                TextField(controller: usernameController, decoration: const InputDecoration(labelText: 'Username')),
+                TextField(controller: usernameController, enabled: existing == null, decoration: const InputDecoration(labelText: 'Username')),
                 const SizedBox(height: 8),
                 TextField(
                   controller: passwordController,
                   obscureText: obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: existing == null ? 'Password' : 'New password (leave blank to keep unchanged)',
                     suffixIcon: IconButton(
                       icon: Icon(obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                       onPressed: () => setDialogState(() => obscurePassword = !obscurePassword),
@@ -155,7 +127,11 @@ class UsersScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextField(controller: pinController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'PIN (optional, for overrides)')),
+                TextField(
+                  controller: pinController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: existing == null ? 'PIN (optional, for overrides)' : 'New PIN (leave blank to keep unchanged)'),
+                ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   initialValue: role,
@@ -163,6 +139,10 @@ class UsersScreen extends ConsumerWidget {
                   items: _roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
                   onChanged: (v) => setDialogState(() => role = v ?? role),
                 ),
+                if (error != null) ...[
+                  const SizedBox(height: 8),
+                  Text(error!, style: const TextStyle(color: DnColors.red)),
+                ],
               ],
             ),
           ),
@@ -170,18 +150,40 @@ class UsersScreen extends ConsumerWidget {
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () async {
-                if (nameController.text.trim().isEmpty || usernameController.text.trim().isEmpty || passwordController.text.length < 8) return;
-                final branchId = ref.read(sessionProvider).user?.branchId ?? '';
-                await ref.read(offlinePosRepositoryProvider).createUser(
-                      branchId: branchId,
-                      fullName: nameController.text.trim(),
-                      username: usernameController.text.trim(),
-                      password: passwordController.text,
-                      role: role,
-                      pin: pinController.text.trim().isEmpty ? null : pinController.text.trim(),
-                    );
-                ref.invalidate(usersProvider);
-                if (ctx.mounted) Navigator.pop(ctx);
+                final actorId = ref.read(sessionProvider).user!.id;
+                final name = nameController.text.trim();
+                final username = usernameController.text.trim();
+                final newPassword = passwordController.text;
+                final newPin = pinController.text.trim();
+                if (name.isEmpty || (existing == null && (username.isEmpty || newPassword.length < 8))) return;
+                if (newPassword.isNotEmpty && newPassword.length < 8) {
+                  setDialogState(() => error = 'Password must be at least 8 characters');
+                  return;
+                }
+                try {
+                  if (existing == null) {
+                    await ref.read(authRepositoryProvider).createUser(
+                          fullName: name,
+                          username: username,
+                          password: newPassword,
+                          role: role,
+                          pin: newPin.isEmpty ? null : newPin,
+                          actorId: actorId,
+                        );
+                  } else {
+                    await ref.read(authRepositoryProvider).updateUser(userId: existing.id, fullName: name, role: role, actorId: actorId);
+                    if (newPassword.isNotEmpty) {
+                      await ref.read(authRepositoryProvider).setPassword(userId: existing.id, newPassword: newPassword, actorId: actorId);
+                    }
+                    if (newPin.isNotEmpty) {
+                      await ref.read(authRepositoryProvider).setPin(userId: existing.id, newPin: newPin, actorId: actorId);
+                    }
+                  }
+                  ref.invalidate(usersProvider);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                } on UsernameTakenException catch (e) {
+                  setDialogState(() => error = e.toString());
+                }
               },
               child: const Text('Save'),
             ),

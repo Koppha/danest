@@ -81,24 +81,6 @@ void main() {
     expect(outbox.single.opType, 'update');
   });
 
-  test('creating a user offline stores it as pending (with the plaintext password, until synced) and lists it as pending', () async {
-    await repo.createUser(branchId: 'branch-1', fullName: 'New Attendant', username: 'newattendant', password: 'supersecret1', role: 'ATTENDANT');
-
-    final pendingUsers = await db.select(db.localPendingUsers).get();
-    expect(pendingUsers, hasLength(1));
-    expect(pendingUsers.single.password, 'supersecret1');
-
-    final outbox = await db.select(db.pendingSyncOps).get();
-    expect(outbox, hasLength(1));
-    expect(outbox.single.entityType, 'user');
-    expect(outbox.single.opType, 'create');
-
-    final listed = await repo.listUsers();
-    expect(listed, hasLength(1));
-    expect(listed.single['pending'], isTrue);
-    expect(listed.single['username'], 'newattendant');
-  });
-
   test('watchFailedSyncOps only surfaces FAILED rows, and dismissSyncIssue removes one for good', () async {
     await db.into(db.pendingSyncOps).insert(
           PendingSyncOpsCompanion.insert(

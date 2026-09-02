@@ -6,6 +6,11 @@ import '../../data/local/offline_pos_repository.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
 
+extension on Map<String, dynamic> {
+  bool get isReversal => this['reversalOfExpenseId'] != null;
+  bool get isReversed => this['reversedByExpenseId'] != null;
+}
+
 final expensesProvider = FutureProvider.autoDispose<List<dynamic>>(
   (ref) => ref.watch(offlinePosRepositoryProvider).listExpenses(),
 );
@@ -38,6 +43,7 @@ class ExpensesScreen extends ConsumerWidget {
             itemBuilder: (context, i) {
               final e = list[i] as Map<String, dynamic>;
               final category = e['category'] as Map<String, dynamic>;
+              final amount = (e['amount'] as num).toInt();
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: DnCard(
@@ -52,7 +58,23 @@ class ExpensesScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      Text('M${formatMoney((e['amount'] as num).toInt())}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        '${amount < 0 ? '-' : ''}M${formatMoney(amount.abs())}',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: amount < 0 ? DnColors.red : null),
+                      ),
+                      if (e.isReversed) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: DnColors.redSoft, borderRadius: BorderRadius.circular(6)),
+                          child: const Text('Reversed', style: TextStyle(fontSize: 11, color: DnColors.red, fontWeight: FontWeight.w600)),
+                        ),
+                      ] else if (!e.isReversal)
+                        IconButton(
+                          icon: const Icon(Icons.undo, size: 20),
+                          tooltip: 'Reverse',
+                          onPressed: () => _showReverseDialog(context, ref, e['id'] as String),
+                        ),
                     ],
                   ),
                 ),
@@ -130,6 +152,34 @@ class ExpensesScreen extends ConsumerWidget {
           ),
         );
       }),
+    );
+  }
+
+  void _showReverseDialog(BuildContext context, WidgetRef ref, String expenseId) {
+    final reasonController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reverse expense'),
+        content: TextField(
+          controller: reasonController,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Reason'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              if (reasonController.text.trim().isEmpty) return;
+              final actorId = ref.read(sessionProvider).user!.id;
+              await ref.read(offlinePosRepositoryProvider).reverseExpense(expenseId, reason: reasonController.text.trim(), actorId: actorId);
+              ref.invalidate(expensesProvider);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Reverse'),
+          ),
+        ],
+      ),
     );
   }
 }

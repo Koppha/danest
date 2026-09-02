@@ -379,4 +379,41 @@ void main() {
       expect(await prepaid.walletBalance('c1'), 10000); // not refunded twice
     });
   });
+
+  group('audit trail', () {
+    test('finishing a wash records a WASH_ORDER_COMPLETED entry', () async {
+      final id = await startBasicWash();
+      await repo.finishWash(id, [
+        {'method': 'CASH', 'amount': 6000},
+      ], actorId: 'u1');
+
+      final entries = await (db.select(db.localAuditLog)..where((e) => e.entityId.equals(id))).get();
+      expect(entries.map((e) => e.action), contains('WASH_ORDER_COMPLETED'));
+      expect(entries.firstWhere((e) => e.action == 'WASH_ORDER_COMPLETED').actorId, 'u1');
+    });
+
+    test('cancelling a wash records a WASH_ORDER_CANCELLED entry with the approver attached', () async {
+      final id = await startBasicWash();
+      await repo.cancel(id, 'customer left', actorId: 'u1', approvedByUserId: 's1');
+
+      final entries = await (db.select(db.localAuditLog)..where((e) => e.entityId.equals(id))).get();
+      final entry = entries.singleWhere((e) => e.action == 'WASH_ORDER_CANCELLED');
+      expect(entry.actorId, 'u1');
+      expect(entry.metadataJson, contains('s1'));
+    });
+
+    test('voiding a payment records a PAYMENT_VOIDED entry with the approver attached', () async {
+      final id = await startBasicWash();
+      await repo.finishWash(id, [
+        {'method': 'CASH', 'amount': 6000},
+      ], actorId: 'u1');
+
+      await repo.voidPayment(id, 'refund requested', actorId: 'u1', approvedByUserId: 's1');
+
+      final entries = await (db.select(db.localAuditLog)..where((e) => e.entityId.equals(id))).get();
+      final entry = entries.singleWhere((e) => e.action == 'PAYMENT_VOIDED');
+      expect(entry.actorId, 'u1');
+      expect(entry.metadataJson, contains('s1'));
+    });
+  });
 }

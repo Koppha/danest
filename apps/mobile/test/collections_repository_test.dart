@@ -118,6 +118,16 @@ void main() {
       expect(collectionResultFor(countedCash: collection.countedCash, expected: 6000), 'MATCHED');
     });
 
+    test('confirming records a CASH_COLLECTION_CONFIRMED audit entry', () async {
+      await finishCashWash();
+      final collection = await collections.confirm(countedCash: 6000, countedAt: DateTime.now(), actorId: 'u1');
+
+      final entries = await (db.select(db.localAuditLog)..where((e) => e.entityId.equals(collection.id))).get();
+      expect(entries, hasLength(1));
+      expect(entries.single.action, 'CASH_COLLECTION_CONFIRMED');
+      expect(entries.single.actorId, 'u1');
+    });
+
     test('a mismatch without a reason is rejected', () async {
       await finishCashWash();
       await expectLater(

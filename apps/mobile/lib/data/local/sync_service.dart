@@ -35,9 +35,6 @@ class SyncService {
         );
         await _dio.request(path, data: payload, options: options);
         await (_db.delete(_db.pendingSyncOps)..where((o) => o.rowId.equals(op.rowId))).go();
-        if (op.entityType == 'user' && op.opType == 'create') {
-          await (_db.delete(_db.localPendingUsers)..where((u) => u.id.equals(op.entityId))).go();
-        }
         pushed++;
       } on DioException catch (e) {
         final status = e.response?.statusCode;

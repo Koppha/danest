@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/session.dart';
 import '../models/models.dart';
 import 'app_database.dart';
+import 'audit_log.dart';
 import 'database_provider.dart';
 import 'loyalty_repository.dart';
 import 'prepaid_repository.dart';
@@ -216,6 +217,14 @@ class WashOrdersRepository {
       );
       await _appendHistory(washOrderId: washOrderId, from: wash.status, to: 'CANCELLED', actorId: actorId);
     });
+    await recordAudit(
+      _db,
+      action: AuditAction.washOrderCancelled,
+      actorId: actorId,
+      entityType: 'WashOrder',
+      entityId: washOrderId,
+      metadata: {'reason': reason, 'approvedByUserId': approvedByUserId, 'fromStatus': wash.status},
+    );
   }
 
   /// The full finish/payment orchestration. Not gated on the wash being
@@ -319,6 +328,15 @@ class WashOrdersRepository {
       await _loyalty.creditQualifyingWash(vehicleId: wash.vehicleId, washOrderId: washOrderId, at: DateTime.now(), actorId: actorId);
     }
 
+    await recordAudit(
+      _db,
+      action: AuditAction.washOrderCompleted,
+      actorId: actorId,
+      entityType: 'WashOrder',
+      entityId: washOrderId,
+      metadata: {'totalAmount': wash.totalAmount, 'methods': components.map((c) => c['method']).toList()},
+    );
+
     final updated = await (_db.select(_db.localWashOrders)..where((w) => w.id.equals(washOrderId))).getSingle();
     return _toWashOrder(updated);
   }
@@ -365,6 +383,15 @@ class WashOrdersRepository {
         if (usage != null) await _prepaid.refundPackageUsage(usage.purchaseId);
       }
     }
+
+    await recordAudit(
+      _db,
+      action: AuditAction.paymentVoided,
+      actorId: actorId,
+      entityType: 'WashOrder',
+      entityId: washOrderId,
+      metadata: {'reason': reason, 'approvedByUserId': approvedByUserId, 'paymentId': payment.id},
+    );
   }
 }
 

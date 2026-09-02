@@ -228,10 +228,14 @@ class LocalExpenses extends Table {
   TextColumn get branchId => text()();
   TextColumn get categoryId => text()();
   TextColumn get description => text()();
-  IntColumn get amount => integer()(); // cents
+  IntColumn get amount => integer()(); // cents; negative on a reversal row, so sums net out automatically
   TextColumn get paymentMethod => text()();
   DateTimeColumn get createdAt => dateTime()();
   BoolColumn get dirty => boolean().withDefault(const Constant(false))();
+  // Set on the original once reversed, pointing at the compensating row.
+  TextColumn get reversedByExpenseId => text().nullable()();
+  // Set on the compensating row itself, pointing back at the original.
+  TextColumn get reversalOfExpenseId => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -337,15 +341,19 @@ class LocalCashCollections extends Table {
 /// Users created offline. Holds the plaintext password only until it syncs
 /// — password hashing is server-only (argon2), so this account cannot log
 /// in anywhere until the create request actually reaches the server.
-class LocalPendingUsers extends Table {
+/// A single, append-only who-did-what trail spanning every module. The
+/// domain ledgers (loyalty, prepaid, wash status history) already record
+/// their own state changes in full detail; this exists for what those
+/// don't cover — account management, PIN-gated reversals, cash counts —
+/// so one screen can show a unified history instead of five.
+class LocalAuditLog extends Table {
   TextColumn get id => text()();
-  TextColumn get branchId => text()();
-  TextColumn get fullName => text()();
-  TextColumn get username => text()();
-  TextColumn get password => text()();
-  TextColumn get role => text()();
-  TextColumn get pin => text().nullable()();
-  DateTimeColumn get createdAt => dateTime()();
+  TextColumn get actorId => text().nullable()(); // null only for pre-login system events
+  TextColumn get action => text()(); // see AuditAction for the canonical list
+  TextColumn get entityType => text().nullable()();
+  TextColumn get entityId => text().nullable()();
+  TextColumn get metadataJson => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -392,15 +400,15 @@ class LocalUsers extends Table {
   LocalPrepaidPackagePurchases,
   LocalPrepaidPackageUsage,
   LocalCashCollections,
-  LocalPendingUsers,
   LocalUsers,
+  LocalAuditLog,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   // Default storage truncates DateTime to whole-second unix timestamps,
   // which let two events in the same second compare as equal instead of
@@ -419,7 +427,10 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(localPrepaidWallets);
             await m.createTable(localPrepaidPackagePurchases);
             await m.createTable(localCashCollections);
-            await m.createTable(localPendingUsers);
+            // LocalPendingUsers used to be created here; it's dropped
+            // unconditionally in the `from < 9` step below (deleteTable is
+            // a no-op if it was never created), so there's nothing to do
+            // for it at this step any more.
           }
           if (from < 3) {
             await m.createTable(localUsers);
@@ -466,6 +477,15 @@ class AppDatabase extends _$AppDatabase {
           if (from < 8) {
             await m.addColumn(localPayments, localPayments.voided);
             await m.addColumn(localPayments, localPayments.voidedAt);
+          }
+          if (from < 9) {
+            // Superseded by LocalUsers, which AuthRepository has written
+            // directly to (bcrypt hash and all) since Phase 0 — nothing
+            // reads this table any more.
+            await m.deleteTable('local_pending_users');
+            await m.createTable(localAuditLog);
+            await m.addColumn(localExpenses, localExpenses.reversedByExpenseId);
+            await m.addColumn(localExpenses, localExpenses.reversalOfExpenseId);
           }
         },
       );

@@ -117,4 +117,117 @@ void main() {
       await expectLater(repo.verifyPinOverride(pin: '1234', currentUserId: id), throwsA(isA<InvalidPinOverrideException>()));
     });
   });
+
+  group('user management', () {
+    test('createUser makes a real, immediately-usable account — no pending/sync state involved', () async {
+      await repo.createFirstOwner(fullName: 'De Nest Owner', username: 'owner', password: 'supersecret1');
+      final owner = container.read(sessionProvider).user!.id;
+
+      final created = await repo.createUser(fullName: 'New Attendant', username: 'newattendant', password: 'supersecret1', role: 'ATTENDANT', actorId: owner);
+      expect(created.role, 'ATTENDANT');
+
+      container.read(sessionProvider.notifier).signOut();
+      await repo.login('newattendant', 'supersecret1'); // works right away, no sync step needed
+      expect(container.read(sessionProvider).user?.username, 'newattendant');
+
+      final row = await (db.select(db.localUsers)..where((u) => u.username.equals('newattendant'))).getSingle();
+      expect(row.passwordHash, isNot('supersecret1'));
+    });
+
+    test('createUser rejects a username that is already taken', () async {
+      await repo.createFirstOwner(fullName: 'De Nest Owner', username: 'owner', password: 'supersecret1');
+      final owner = container.read(sessionProvider).user!.id;
+
+      await expectLater(
+        repo.createUser(fullName: 'Someone Else', username: 'owner', password: 'supersecret1', role: 'ATTENDANT', actorId: owner),
+        throwsA(isA<UsernameTakenException>()),
+      );
+    });
+
+    test('setActive(false) deactivates a user, who then cannot log in even with the right password', () async {
+      await repo.createFirstOwner(fullName: 'De Nest Owner', username: 'owner', password: 'supersecret1');
+      final owner = container.read(sessionProvider).user!.id;
+      final attendant = await repo.createUser(fullName: 'Attendant', username: 'attendant', password: 'supersecret1', role: 'ATTENDANT', actorId: owner);
+
+      await repo.setActive(userId: attendant.id, active: false, actorId: owner);
+      container.read(sessionProvider.notifier).signOut();
+
+      await expectLater(repo.login('attendant', 'supersecret1'), throwsA(isA<InvalidCredentialsException>()));
+    });
+
+    test('setPassword replaces the password — the old one stops working, the new one works', () async {
+      await repo.createFirstOwner(fullName: 'De Nest Owner', username: 'owner', password: 'supersecret1');
+      final owner = container.read(sessionProvider).user!.id;
+      final attendant = await repo.createUser(fullName: 'Attendant', username: 'attendant', password: 'supersecret1', role: 'ATTENDANT', actorId: owner);
+
+      await repo.setPassword(userId: attendant.id, newPassword: 'brandnewpassword', actorId: owner);
+      container.read(sessionProvider.notifier).signOut();
+
+      await expectLater(repo.login('attendant', 'supersecret1'), throwsA(isA<InvalidCredentialsException>()));
+      await repo.login('attendant', 'brandnewpassword');
+      expect(container.read(sessionProvider).user?.username, 'attendant');
+    });
+
+    test('setPin replaces the PIN used for override verification', () async {
+      await repo.createFirstOwner(fullName: 'De Nest Owner', username: 'owner', password: 'supersecret1');
+      final owner = container.read(sessionProvider).user!.id;
+      final supervisor = await repo.createUser(fullName: 'Supervisor', username: 'supervisor', password: 'supersecret1', role: 'SUPERVISOR', pin: '1111', actorId: owner);
+
+      await repo.setPin(userId: supervisor.id, newPin: '2222', actorId: owner);
+
+      await expectLater(repo.verifyPinOverride(pin: '1111', currentUserId: supervisor.id), throwsA(isA<InvalidPinOverrideException>()));
+      final approvedBy = await repo.verifyPinOverride(pin: '2222', currentUserId: supervisor.id);
+      expect(approvedBy, supervisor.id);
+    });
+
+    test('updateUser changes fullName and role', () async {
+      await repo.createFirstOwner(fullName: 'De Nest Owner', username: 'owner', password: 'supersecret1');
+      final owner = container.read(sessionProvider).user!.id;
+      final attendant = await repo.createUser(fullName: 'Attendant', username: 'attendant', password: 'supersecret1', role: 'ATTENDANT', actorId: owner);
+
+      await repo.updateUser(userId: attendant.id, fullName: 'Senior Attendant', role: 'SUPERVISOR', actorId: owner);
+
+      final row = await (db.select(db.localUsers)..where((u) => u.id.equals(attendant.id))).getSingle();
+      expect(row.fullName, 'Senior Attendant');
+      expect(row.role, 'SUPERVISOR');
+    });
+
+    test('listUsers returns every local account', () async {
+      await repo.createFirstOwner(fullName: 'De Nest Owner', username: 'owner', password: 'supersecret1');
+      final owner = container.read(sessionProvider).user!.id;
+      await repo.createUser(fullName: 'Attendant', username: 'attendant', password: 'supersecret1', role: 'ATTENDANT', actorId: owner);
+
+      final users = await repo.listUsers();
+      expect(users.map((u) => u.username), containsAll(['owner', 'attendant']));
+    });
+  });
+
+  group('audit trail', () {
+    test('creating the first owner records a USER_CREATED entry', () async {
+      await repo.createFirstOwner(fullName: 'De Nest Owner', username: 'owner', password: 'supersecret1');
+      final entries = await db.select(db.localAuditLog).get();
+      expect(entries.map((e) => e.action), contains('USER_CREATED'));
+    });
+
+    test('createUser records a USER_CREATED entry attributed to whoever created the account', () async {
+      await repo.createFirstOwner(fullName: 'De Nest Owner', username: 'owner', password: 'supersecret1');
+      final owner = container.read(sessionProvider).user!.id;
+      final attendant = await repo.createUser(fullName: 'Attendant', username: 'attendant', password: 'supersecret1', role: 'ATTENDANT', actorId: owner);
+
+      final entries = await (db.select(db.localAuditLog)..where((e) => e.entityId.equals(attendant.id))).get();
+      expect(entries, hasLength(1));
+      expect(entries.single.action, 'USER_CREATED');
+      expect(entries.single.actorId, owner);
+    });
+
+    test('logging in records a USER_LOGGED_IN entry', () async {
+      await repo.createFirstOwner(fullName: 'De Nest Owner', username: 'owner', password: 'supersecret1');
+      container.read(sessionProvider.notifier).signOut();
+
+      await repo.login('owner', 'supersecret1');
+
+      final entries = await db.select(db.localAuditLog).get();
+      expect(entries.map((e) => e.action), contains('USER_LOGGED_IN'));
+    });
+  });
 }

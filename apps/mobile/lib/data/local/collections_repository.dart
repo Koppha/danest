@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import 'app_database.dart';
+import 'audit_log.dart';
 import 'database_provider.dart';
 
 const _uuid = Uuid();
@@ -183,6 +184,14 @@ class CollectionsRepository {
             countedAt: countedAt,
           ),
         );
+    await recordAudit(
+      _db,
+      action: AuditAction.cashCollectionConfirmed,
+      actorId: actorId,
+      entityType: 'CashCollection',
+      entityId: collectionId,
+      metadata: {'countedCash': countedCash, 'expected': expected.expected, 'result': result},
+    );
     return (await (_db.select(_db.localCashCollections)..where((c) => c.id.equals(collectionId))).getSingle());
   }
 

@@ -10,14 +10,26 @@ import '../../core/money.dart';
 import '../models/models.dart';
 import '../remote/api_client.dart';
 import 'app_database.dart';
+import 'audit_log.dart';
 import 'database_provider.dart';
 
 const _uuid = Uuid();
 
+class ExpenseNotFoundException implements Exception {
+  @override
+  String toString() => 'Expense not found';
+}
+
+class ExpenseAlreadyReversedException implements Exception {
+  @override
+  String toString() => 'This expense was already reversed';
+}
+
 /// Local-first repository for customers, vehicles, the reference catalog,
-/// expenses, users, and cash collections. Wash orders/payments live in
-/// [WashOrdersRepository], loyalty in [LoyaltyRepository], and prepaid
-/// wallet/packages in [PrepaidRepository] — those needed the real
+/// and expenses. Wash orders/payments live in [WashOrdersRepository],
+/// loyalty in [LoyaltyRepository], prepaid wallet/packages in
+/// [PrepaidRepository], cash collections in [CollectionsRepository], and
+/// the local user directory in [AuthRepository] — those needed the real
 /// authoritative business logic (not a provisional offline guess), so they
 /// were split out rather than grown here.
 class OfflinePosRepository {
@@ -412,6 +424,8 @@ class OfflinePosRepository {
             'amount': r.amount,
             'paymentMethod': r.paymentMethod,
             'category': {'id': r.categoryId, 'name': categoryNames[r.categoryId] ?? 'Unknown'},
+            'reversedByExpenseId': r.reversedByExpenseId,
+            'reversalOfExpenseId': r.reversalOfExpenseId,
           },
         )
         .toList();
@@ -491,80 +505,44 @@ class OfflinePosRepository {
     };
   }
 
-  // --------------------------------------------------------------- users
+  /// Reverses an expense with a compensating negative-amount row rather
+  /// than editing or deleting the original — collections math already
+  /// nets these out automatically (see [CollectionsRepository]), and
+  /// nothing is ever silently lost from the ledger. Insert-plus-link runs
+  /// in one transaction, unlike the backend this was ported from, which
+  /// left a window where the reversal row could exist without the
+  /// original ever being marked reversed (or vice versa) if the second
+  /// write failed.
+  Future<void> reverseExpense(String expenseId, {required String reason, required String actorId}) async {
+    final original = await (_db.select(_db.localExpenses)..where((e) => e.id.equals(expenseId))).getSingleOrNull();
+    if (original == null) throw ExpenseNotFoundException();
+    if (original.reversedByExpenseId != null) throw ExpenseAlreadyReversedException();
 
-  /// Online rows come straight from the server; any not-yet-synced
-  /// [LocalPendingUsers] rows are appended and marked `pending: true` (the
-  /// row is deleted once its create op actually reaches the server — see
-  /// the cleanup in [_pushOne] and [SyncService.pushAll]), so a
-  /// just-created account is visible immediately even before syncing.
-  Future<List<Map<String, dynamic>>> listUsers() async {
-    List<Map<String, dynamic>> synced = [];
-    if (_isOnline) {
-      try {
-        final resp = await _dio.get('/users');
-        synced = (resp.data as List).cast<Map<String, dynamic>>();
-      } on DioException {
-        // Fall through to whatever's pending locally.
-      }
-    }
-    final pendingRows = await _db.select(_db.localPendingUsers).get();
-    final pending = pendingRows
-        .map(
-          (u) => {
-            'id': u.id,
-            'fullName': u.fullName,
-            'username': u.username,
-            'active': true,
-            'role': {'name': u.role},
-            'pending': true,
-          },
-        )
-        .toList();
-    return [...synced, ...pending];
-  }
-
-  /// Password hashing (argon2) is server-only, so the account can't log in
-  /// anywhere until this create op actually reaches the server — the
-  /// plaintext password sits in the outbox/[LocalPendingUsers] only until
-  /// then, same trust model as every other offline payload in local SQLite.
-  Future<void> createUser({
-    required String branchId,
-    required String fullName,
-    required String username,
-    required String password,
-    required String role,
-    String? pin,
-  }) async {
-    final id = _uuid.v4();
-    await _db
-        .into(_db.localPendingUsers)
-        .insert(
-          LocalPendingUsersCompanion.insert(
-            id: id,
-            branchId: branchId,
-            fullName: fullName,
-            username: username,
-            password: password,
-            role: role,
-            pin: Value(pin),
-            createdAt: DateTime.now(),
-          ),
-        );
-    await _enqueueOrPush(
-      entityType: 'user',
-      entityId: id,
-      opType: 'create',
-      path: '/users',
-      payload: {
-        'id': id,
-        'branchId': branchId,
-        'fullName': fullName,
-        'username': username,
-        'password': password,
-        'role': role,
-        if (pin != null) 'pin': pin,
-      },
+    final reversalId = _uuid.v4();
+    await _db.transaction(() async {
+      await _db.into(_db.localExpenses).insert(
+            LocalExpensesCompanion.insert(
+              id: reversalId,
+              branchId: original.branchId,
+              categoryId: original.categoryId,
+              description: 'Reversal: $reason',
+              amount: -original.amount,
+              paymentMethod: original.paymentMethod,
+              createdAt: DateTime.now(),
+              reversalOfExpenseId: Value(expenseId),
+            ),
+          );
+      await (_db.update(_db.localExpenses)..where((e) => e.id.equals(expenseId))).write(
+        LocalExpensesCompanion(reversedByExpenseId: Value(reversalId)),
+      );
+    });
+    await recordAudit(
+      _db,
+      action: AuditAction.expenseReversed,
+      actorId: actorId,
+      entityType: 'Expense',
+      entityId: expenseId,
+      metadata: {'reason': reason, 'amount': original.amount},
     );
   }
 
@@ -628,12 +606,6 @@ class OfflinePosRepository {
       await (_db.delete(
         _db.pendingSyncOps,
       )..where((o) => o.idempotencyKey.equals(idempotencyKey))).go();
-      if (entityType == 'user' && opType == 'create') {
-        final userId = payload['id'] as String?;
-        if (userId != null) {
-          await (_db.delete(_db.localPendingUsers)..where((u) => u.id.equals(userId))).go();
-        }
-      }
     } on DioException {
       // Leave queued; SyncService will retry on the next sweep.
     }

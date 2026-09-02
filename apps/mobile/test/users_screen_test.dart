@@ -3,43 +3,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:de_nest/core/connectivity.dart';
 import 'package:de_nest/core/session.dart';
 import 'package:de_nest/data/local/app_database.dart';
 import 'package:de_nest/data/local/database_provider.dart';
 import 'package:de_nest/features/admin/users_screen.dart';
 
-class _AlwaysOffline extends ConnectivityNotifier {
-  @override
-  bool build() => false;
-}
-
 class _FakeSession extends SessionNotifier {
   @override
-  SessionState build() => const SessionState(
-        user: DnUser(id: 'u1', username: 'owner', fullName: 'De Nest Owner', role: 'OWNER'),
-        loading: false,
-      );
+  SessionState build() => const SessionState(user: DnUser(id: 'u1', username: 'owner', fullName: 'De Nest Owner', role: 'OWNER'), loading: false);
 }
 
 void main() {
-  testWidgets('Creating a user offline queues it and shows it as pending sync, not toggleable', (tester) async {
+  testWidgets('Adding a user creates it instantly (no pending/sync state), and the active switch works locally', (tester) async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(db.close);
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          appDatabaseProvider.overrideWithValue(db),
-          connectivityProvider.overrideWith(_AlwaysOffline.new),
-          sessionProvider.overrideWith(_FakeSession.new),
-        ],
+        overrides: [appDatabaseProvider.overrideWithValue(db), sessionProvider.overrideWith(_FakeSession.new)],
         child: const MaterialApp(home: Scaffold(body: UsersScreen())),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining("won't be able to log in until"), findsOneWidget);
+    expect(find.textContaining('Pending sync'), findsNothing);
 
     await tester.tap(find.widgetWithText(FloatingActionButton, 'Add user'));
     await tester.pumpAndSettle();
@@ -47,20 +34,22 @@ void main() {
     await tester.enterText(find.widgetWithText(TextField, 'Full name'), 'New Attendant');
     await tester.enterText(find.widgetWithText(TextField, 'Username'), 'newattendant');
     await tester.enterText(find.widgetWithText(TextField, 'Password'), 'supersecret1');
+    await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'Save'));
     await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
     await tester.pumpAndSettle();
 
     expect(find.text('New Attendant'), findsOneWidget);
-    expect(find.text('Pending sync'), findsOneWidget);
-    expect(find.byType(Switch), findsNothing);
+    expect(find.textContaining('Pending sync'), findsNothing);
+    // Created for real, immediately — a plaintext password never touches storage.
+    final row = await (db.select(db.localUsers)..where((u) => u.username.equals('newattendant'))).getSingle();
+    expect(row.passwordHash, isNot('supersecret1'));
+    expect(row.active, isTrue);
 
-    final pendingUsers = await db.select(db.localPendingUsers).get();
-    expect(pendingUsers, hasLength(1));
-    expect(pendingUsers.single.username, 'newattendant');
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
 
-    final outbox = await db.select(db.pendingSyncOps).get();
-    expect(outbox, hasLength(1));
-    expect(outbox.single.entityType, 'user');
+    final updated = await (db.select(db.localUsers)..where((u) => u.username.equals('newattendant'))).getSingle();
+    expect(updated.active, isFalse);
 
     expect(tester.takeException(), isNull);
   });
