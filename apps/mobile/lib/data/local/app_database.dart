@@ -57,9 +57,11 @@ class LocalVehicles extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// Cached, read-only display of the vehicle's monthly loyalty progress —
-/// redemption of a free wash still requires connectivity (the reward's
-/// validity must be checked live), this is for showing the badge meter.
+/// Cached, read-only display of the vehicle's monthly loyalty progress.
+/// Superseded by LocalLoyaltyLedger/LocalLoyaltyRewards (the real,
+/// always-locally-computable source of truth now that there's no server
+/// round-trip to avoid) — kept only so old rows don't linger as dead data;
+/// nothing reads or writes it anymore.
 class LocalLoyaltySummaries extends Table {
   TextColumn get vehicleId => text()();
   IntColumn get qualifyingCount => integer()();
@@ -68,6 +70,48 @@ class LocalLoyaltySummaries extends Table {
 
   @override
   Set<Column> get primaryKey => {vehicleId};
+}
+
+/// Append-only — "qualifying count" is never a stored counter, always
+/// recomputed by scanning this ledger. That's what makes crediting or
+/// reversing the same wash twice safe to retry: `(washOrderId, eventType)`
+/// can only ever appear once for the wash-linked event types
+/// (WASH_CREDITED/WASH_REVERSED/REWARD_EARNED); MANAGER_ADJUSTMENT and
+/// REWARD_REDEEMED rows aren't wash-order-keyed the same way and don't rely
+/// on this constraint (multiple NULLs don't collide under it).
+class LocalLoyaltyLedger extends Table {
+  TextColumn get id => text()();
+  TextColumn get vehicleId => text()();
+  TextColumn get washOrderId => text().nullable()();
+  TextColumn get eventType =>
+      text()(); // WASH_CREDITED | WASH_REVERSED | REWARD_EARNED | REWARD_REDEEMED | REWARD_EXPIRED | MANAGER_ADJUSTMENT
+  DateTimeColumn get periodMonth => dateTime()(); // first-of-month
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get createdById => text()();
+  TextColumn get notes => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+        {washOrderId, eventType},
+      ];
+}
+
+class LocalLoyaltyRewards extends Table {
+  TextColumn get id => text()();
+  TextColumn get vehicleId => text()();
+  DateTimeColumn get earnedMonth => dateTime()();
+  DateTimeColumn get validMonth => dateTime()();
+  TextColumn get status => text().withDefault(const Constant('AVAILABLE'))(); // AVAILABLE | REDEEMED | EXPIRED | REVOKED
+  TextColumn get earnedFromLedgerId => text()();
+  TextColumn get redeemedWashOrderId => text().nullable()();
+  DateTimeColumn get redeemedAt => dateTime().nullable()();
+  DateTimeColumn get expiredAt => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }
 
 enum WashSyncStatus { pending, syncing, synced, failed }
@@ -283,6 +327,8 @@ class LocalUsers extends Table {
   LocalCustomers,
   LocalVehicles,
   LocalLoyaltySummaries,
+  LocalLoyaltyLedger,
+  LocalLoyaltyRewards,
   LocalWashOrders,
   LocalWashOrderItems,
   LocalPayments,
@@ -303,7 +349,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -347,6 +393,10 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(localPrepaidWallets);
             await m.deleteTable(localCashCollections.actualTableName);
             await m.createTable(localCashCollections);
+          }
+          if (from < 5) {
+            await m.createTable(localLoyaltyLedger);
+            await m.createTable(localLoyaltyRewards);
           }
         },
       );

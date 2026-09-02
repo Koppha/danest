@@ -1986,6 +1986,1126 @@ class LocalLoyaltySummariesCompanion
   }
 }
 
+class $LocalLoyaltyLedgerTable extends LocalLoyaltyLedger
+    with TableInfo<$LocalLoyaltyLedgerTable, LocalLoyaltyLedgerData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalLoyaltyLedgerTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _vehicleIdMeta = const VerificationMeta(
+    'vehicleId',
+  );
+  @override
+  late final GeneratedColumn<String> vehicleId = GeneratedColumn<String>(
+    'vehicle_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _washOrderIdMeta = const VerificationMeta(
+    'washOrderId',
+  );
+  @override
+  late final GeneratedColumn<String> washOrderId = GeneratedColumn<String>(
+    'wash_order_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _eventTypeMeta = const VerificationMeta(
+    'eventType',
+  );
+  @override
+  late final GeneratedColumn<String> eventType = GeneratedColumn<String>(
+    'event_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _periodMonthMeta = const VerificationMeta(
+    'periodMonth',
+  );
+  @override
+  late final GeneratedColumn<DateTime> periodMonth = GeneratedColumn<DateTime>(
+    'period_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _createdByIdMeta = const VerificationMeta(
+    'createdById',
+  );
+  @override
+  late final GeneratedColumn<String> createdById = GeneratedColumn<String>(
+    'created_by_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    vehicleId,
+    washOrderId,
+    eventType,
+    periodMonth,
+    createdAt,
+    createdById,
+    notes,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_loyalty_ledger';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalLoyaltyLedgerData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('vehicle_id')) {
+      context.handle(
+        _vehicleIdMeta,
+        vehicleId.isAcceptableOrUnknown(data['vehicle_id']!, _vehicleIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_vehicleIdMeta);
+    }
+    if (data.containsKey('wash_order_id')) {
+      context.handle(
+        _washOrderIdMeta,
+        washOrderId.isAcceptableOrUnknown(
+          data['wash_order_id']!,
+          _washOrderIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('event_type')) {
+      context.handle(
+        _eventTypeMeta,
+        eventType.isAcceptableOrUnknown(data['event_type']!, _eventTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_eventTypeMeta);
+    }
+    if (data.containsKey('period_month')) {
+      context.handle(
+        _periodMonthMeta,
+        periodMonth.isAcceptableOrUnknown(
+          data['period_month']!,
+          _periodMonthMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_periodMonthMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('created_by_id')) {
+      context.handle(
+        _createdByIdMeta,
+        createdById.isAcceptableOrUnknown(
+          data['created_by_id']!,
+          _createdByIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdByIdMeta);
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {washOrderId, eventType},
+  ];
+  @override
+  LocalLoyaltyLedgerData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalLoyaltyLedgerData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      vehicleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vehicle_id'],
+      )!,
+      washOrderId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}wash_order_id'],
+      ),
+      eventType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}event_type'],
+      )!,
+      periodMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}period_month'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      createdById: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by_id'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+    );
+  }
+
+  @override
+  $LocalLoyaltyLedgerTable createAlias(String alias) {
+    return $LocalLoyaltyLedgerTable(attachedDatabase, alias);
+  }
+}
+
+class LocalLoyaltyLedgerData extends DataClass
+    implements Insertable<LocalLoyaltyLedgerData> {
+  final String id;
+  final String vehicleId;
+  final String? washOrderId;
+  final String eventType;
+  final DateTime periodMonth;
+  final DateTime createdAt;
+  final String createdById;
+  final String? notes;
+  const LocalLoyaltyLedgerData({
+    required this.id,
+    required this.vehicleId,
+    this.washOrderId,
+    required this.eventType,
+    required this.periodMonth,
+    required this.createdAt,
+    required this.createdById,
+    this.notes,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['vehicle_id'] = Variable<String>(vehicleId);
+    if (!nullToAbsent || washOrderId != null) {
+      map['wash_order_id'] = Variable<String>(washOrderId);
+    }
+    map['event_type'] = Variable<String>(eventType);
+    map['period_month'] = Variable<DateTime>(periodMonth);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['created_by_id'] = Variable<String>(createdById);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    return map;
+  }
+
+  LocalLoyaltyLedgerCompanion toCompanion(bool nullToAbsent) {
+    return LocalLoyaltyLedgerCompanion(
+      id: Value(id),
+      vehicleId: Value(vehicleId),
+      washOrderId: washOrderId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(washOrderId),
+      eventType: Value(eventType),
+      periodMonth: Value(periodMonth),
+      createdAt: Value(createdAt),
+      createdById: Value(createdById),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+    );
+  }
+
+  factory LocalLoyaltyLedgerData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalLoyaltyLedgerData(
+      id: serializer.fromJson<String>(json['id']),
+      vehicleId: serializer.fromJson<String>(json['vehicleId']),
+      washOrderId: serializer.fromJson<String?>(json['washOrderId']),
+      eventType: serializer.fromJson<String>(json['eventType']),
+      periodMonth: serializer.fromJson<DateTime>(json['periodMonth']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      createdById: serializer.fromJson<String>(json['createdById']),
+      notes: serializer.fromJson<String?>(json['notes']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'vehicleId': serializer.toJson<String>(vehicleId),
+      'washOrderId': serializer.toJson<String?>(washOrderId),
+      'eventType': serializer.toJson<String>(eventType),
+      'periodMonth': serializer.toJson<DateTime>(periodMonth),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'createdById': serializer.toJson<String>(createdById),
+      'notes': serializer.toJson<String?>(notes),
+    };
+  }
+
+  LocalLoyaltyLedgerData copyWith({
+    String? id,
+    String? vehicleId,
+    Value<String?> washOrderId = const Value.absent(),
+    String? eventType,
+    DateTime? periodMonth,
+    DateTime? createdAt,
+    String? createdById,
+    Value<String?> notes = const Value.absent(),
+  }) => LocalLoyaltyLedgerData(
+    id: id ?? this.id,
+    vehicleId: vehicleId ?? this.vehicleId,
+    washOrderId: washOrderId.present ? washOrderId.value : this.washOrderId,
+    eventType: eventType ?? this.eventType,
+    periodMonth: periodMonth ?? this.periodMonth,
+    createdAt: createdAt ?? this.createdAt,
+    createdById: createdById ?? this.createdById,
+    notes: notes.present ? notes.value : this.notes,
+  );
+  LocalLoyaltyLedgerData copyWithCompanion(LocalLoyaltyLedgerCompanion data) {
+    return LocalLoyaltyLedgerData(
+      id: data.id.present ? data.id.value : this.id,
+      vehicleId: data.vehicleId.present ? data.vehicleId.value : this.vehicleId,
+      washOrderId: data.washOrderId.present
+          ? data.washOrderId.value
+          : this.washOrderId,
+      eventType: data.eventType.present ? data.eventType.value : this.eventType,
+      periodMonth: data.periodMonth.present
+          ? data.periodMonth.value
+          : this.periodMonth,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      createdById: data.createdById.present
+          ? data.createdById.value
+          : this.createdById,
+      notes: data.notes.present ? data.notes.value : this.notes,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalLoyaltyLedgerData(')
+          ..write('id: $id, ')
+          ..write('vehicleId: $vehicleId, ')
+          ..write('washOrderId: $washOrderId, ')
+          ..write('eventType: $eventType, ')
+          ..write('periodMonth: $periodMonth, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('createdById: $createdById, ')
+          ..write('notes: $notes')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    vehicleId,
+    washOrderId,
+    eventType,
+    periodMonth,
+    createdAt,
+    createdById,
+    notes,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalLoyaltyLedgerData &&
+          other.id == this.id &&
+          other.vehicleId == this.vehicleId &&
+          other.washOrderId == this.washOrderId &&
+          other.eventType == this.eventType &&
+          other.periodMonth == this.periodMonth &&
+          other.createdAt == this.createdAt &&
+          other.createdById == this.createdById &&
+          other.notes == this.notes);
+}
+
+class LocalLoyaltyLedgerCompanion
+    extends UpdateCompanion<LocalLoyaltyLedgerData> {
+  final Value<String> id;
+  final Value<String> vehicleId;
+  final Value<String?> washOrderId;
+  final Value<String> eventType;
+  final Value<DateTime> periodMonth;
+  final Value<DateTime> createdAt;
+  final Value<String> createdById;
+  final Value<String?> notes;
+  final Value<int> rowid;
+  const LocalLoyaltyLedgerCompanion({
+    this.id = const Value.absent(),
+    this.vehicleId = const Value.absent(),
+    this.washOrderId = const Value.absent(),
+    this.eventType = const Value.absent(),
+    this.periodMonth = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.createdById = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalLoyaltyLedgerCompanion.insert({
+    required String id,
+    required String vehicleId,
+    this.washOrderId = const Value.absent(),
+    required String eventType,
+    required DateTime periodMonth,
+    this.createdAt = const Value.absent(),
+    required String createdById,
+    this.notes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       vehicleId = Value(vehicleId),
+       eventType = Value(eventType),
+       periodMonth = Value(periodMonth),
+       createdById = Value(createdById);
+  static Insertable<LocalLoyaltyLedgerData> custom({
+    Expression<String>? id,
+    Expression<String>? vehicleId,
+    Expression<String>? washOrderId,
+    Expression<String>? eventType,
+    Expression<DateTime>? periodMonth,
+    Expression<DateTime>? createdAt,
+    Expression<String>? createdById,
+    Expression<String>? notes,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vehicleId != null) 'vehicle_id': vehicleId,
+      if (washOrderId != null) 'wash_order_id': washOrderId,
+      if (eventType != null) 'event_type': eventType,
+      if (periodMonth != null) 'period_month': periodMonth,
+      if (createdAt != null) 'created_at': createdAt,
+      if (createdById != null) 'created_by_id': createdById,
+      if (notes != null) 'notes': notes,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalLoyaltyLedgerCompanion copyWith({
+    Value<String>? id,
+    Value<String>? vehicleId,
+    Value<String?>? washOrderId,
+    Value<String>? eventType,
+    Value<DateTime>? periodMonth,
+    Value<DateTime>? createdAt,
+    Value<String>? createdById,
+    Value<String?>? notes,
+    Value<int>? rowid,
+  }) {
+    return LocalLoyaltyLedgerCompanion(
+      id: id ?? this.id,
+      vehicleId: vehicleId ?? this.vehicleId,
+      washOrderId: washOrderId ?? this.washOrderId,
+      eventType: eventType ?? this.eventType,
+      periodMonth: periodMonth ?? this.periodMonth,
+      createdAt: createdAt ?? this.createdAt,
+      createdById: createdById ?? this.createdById,
+      notes: notes ?? this.notes,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (vehicleId.present) {
+      map['vehicle_id'] = Variable<String>(vehicleId.value);
+    }
+    if (washOrderId.present) {
+      map['wash_order_id'] = Variable<String>(washOrderId.value);
+    }
+    if (eventType.present) {
+      map['event_type'] = Variable<String>(eventType.value);
+    }
+    if (periodMonth.present) {
+      map['period_month'] = Variable<DateTime>(periodMonth.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (createdById.present) {
+      map['created_by_id'] = Variable<String>(createdById.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalLoyaltyLedgerCompanion(')
+          ..write('id: $id, ')
+          ..write('vehicleId: $vehicleId, ')
+          ..write('washOrderId: $washOrderId, ')
+          ..write('eventType: $eventType, ')
+          ..write('periodMonth: $periodMonth, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('createdById: $createdById, ')
+          ..write('notes: $notes, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LocalLoyaltyRewardsTable extends LocalLoyaltyRewards
+    with TableInfo<$LocalLoyaltyRewardsTable, LocalLoyaltyReward> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalLoyaltyRewardsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _vehicleIdMeta = const VerificationMeta(
+    'vehicleId',
+  );
+  @override
+  late final GeneratedColumn<String> vehicleId = GeneratedColumn<String>(
+    'vehicle_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _earnedMonthMeta = const VerificationMeta(
+    'earnedMonth',
+  );
+  @override
+  late final GeneratedColumn<DateTime> earnedMonth = GeneratedColumn<DateTime>(
+    'earned_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _validMonthMeta = const VerificationMeta(
+    'validMonth',
+  );
+  @override
+  late final GeneratedColumn<DateTime> validMonth = GeneratedColumn<DateTime>(
+    'valid_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('AVAILABLE'),
+  );
+  static const VerificationMeta _earnedFromLedgerIdMeta =
+      const VerificationMeta('earnedFromLedgerId');
+  @override
+  late final GeneratedColumn<String> earnedFromLedgerId =
+      GeneratedColumn<String>(
+        'earned_from_ledger_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _redeemedWashOrderIdMeta =
+      const VerificationMeta('redeemedWashOrderId');
+  @override
+  late final GeneratedColumn<String> redeemedWashOrderId =
+      GeneratedColumn<String>(
+        'redeemed_wash_order_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _redeemedAtMeta = const VerificationMeta(
+    'redeemedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> redeemedAt = GeneratedColumn<DateTime>(
+    'redeemed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _expiredAtMeta = const VerificationMeta(
+    'expiredAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> expiredAt = GeneratedColumn<DateTime>(
+    'expired_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    vehicleId,
+    earnedMonth,
+    validMonth,
+    status,
+    earnedFromLedgerId,
+    redeemedWashOrderId,
+    redeemedAt,
+    expiredAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_loyalty_rewards';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalLoyaltyReward> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('vehicle_id')) {
+      context.handle(
+        _vehicleIdMeta,
+        vehicleId.isAcceptableOrUnknown(data['vehicle_id']!, _vehicleIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_vehicleIdMeta);
+    }
+    if (data.containsKey('earned_month')) {
+      context.handle(
+        _earnedMonthMeta,
+        earnedMonth.isAcceptableOrUnknown(
+          data['earned_month']!,
+          _earnedMonthMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_earnedMonthMeta);
+    }
+    if (data.containsKey('valid_month')) {
+      context.handle(
+        _validMonthMeta,
+        validMonth.isAcceptableOrUnknown(data['valid_month']!, _validMonthMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_validMonthMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('earned_from_ledger_id')) {
+      context.handle(
+        _earnedFromLedgerIdMeta,
+        earnedFromLedgerId.isAcceptableOrUnknown(
+          data['earned_from_ledger_id']!,
+          _earnedFromLedgerIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_earnedFromLedgerIdMeta);
+    }
+    if (data.containsKey('redeemed_wash_order_id')) {
+      context.handle(
+        _redeemedWashOrderIdMeta,
+        redeemedWashOrderId.isAcceptableOrUnknown(
+          data['redeemed_wash_order_id']!,
+          _redeemedWashOrderIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('redeemed_at')) {
+      context.handle(
+        _redeemedAtMeta,
+        redeemedAt.isAcceptableOrUnknown(data['redeemed_at']!, _redeemedAtMeta),
+      );
+    }
+    if (data.containsKey('expired_at')) {
+      context.handle(
+        _expiredAtMeta,
+        expiredAt.isAcceptableOrUnknown(data['expired_at']!, _expiredAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocalLoyaltyReward map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalLoyaltyReward(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      vehicleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vehicle_id'],
+      )!,
+      earnedMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}earned_month'],
+      )!,
+      validMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}valid_month'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      earnedFromLedgerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}earned_from_ledger_id'],
+      )!,
+      redeemedWashOrderId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}redeemed_wash_order_id'],
+      ),
+      redeemedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}redeemed_at'],
+      ),
+      expiredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}expired_at'],
+      ),
+    );
+  }
+
+  @override
+  $LocalLoyaltyRewardsTable createAlias(String alias) {
+    return $LocalLoyaltyRewardsTable(attachedDatabase, alias);
+  }
+}
+
+class LocalLoyaltyReward extends DataClass
+    implements Insertable<LocalLoyaltyReward> {
+  final String id;
+  final String vehicleId;
+  final DateTime earnedMonth;
+  final DateTime validMonth;
+  final String status;
+  final String earnedFromLedgerId;
+  final String? redeemedWashOrderId;
+  final DateTime? redeemedAt;
+  final DateTime? expiredAt;
+  const LocalLoyaltyReward({
+    required this.id,
+    required this.vehicleId,
+    required this.earnedMonth,
+    required this.validMonth,
+    required this.status,
+    required this.earnedFromLedgerId,
+    this.redeemedWashOrderId,
+    this.redeemedAt,
+    this.expiredAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['vehicle_id'] = Variable<String>(vehicleId);
+    map['earned_month'] = Variable<DateTime>(earnedMonth);
+    map['valid_month'] = Variable<DateTime>(validMonth);
+    map['status'] = Variable<String>(status);
+    map['earned_from_ledger_id'] = Variable<String>(earnedFromLedgerId);
+    if (!nullToAbsent || redeemedWashOrderId != null) {
+      map['redeemed_wash_order_id'] = Variable<String>(redeemedWashOrderId);
+    }
+    if (!nullToAbsent || redeemedAt != null) {
+      map['redeemed_at'] = Variable<DateTime>(redeemedAt);
+    }
+    if (!nullToAbsent || expiredAt != null) {
+      map['expired_at'] = Variable<DateTime>(expiredAt);
+    }
+    return map;
+  }
+
+  LocalLoyaltyRewardsCompanion toCompanion(bool nullToAbsent) {
+    return LocalLoyaltyRewardsCompanion(
+      id: Value(id),
+      vehicleId: Value(vehicleId),
+      earnedMonth: Value(earnedMonth),
+      validMonth: Value(validMonth),
+      status: Value(status),
+      earnedFromLedgerId: Value(earnedFromLedgerId),
+      redeemedWashOrderId: redeemedWashOrderId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(redeemedWashOrderId),
+      redeemedAt: redeemedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(redeemedAt),
+      expiredAt: expiredAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expiredAt),
+    );
+  }
+
+  factory LocalLoyaltyReward.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalLoyaltyReward(
+      id: serializer.fromJson<String>(json['id']),
+      vehicleId: serializer.fromJson<String>(json['vehicleId']),
+      earnedMonth: serializer.fromJson<DateTime>(json['earnedMonth']),
+      validMonth: serializer.fromJson<DateTime>(json['validMonth']),
+      status: serializer.fromJson<String>(json['status']),
+      earnedFromLedgerId: serializer.fromJson<String>(
+        json['earnedFromLedgerId'],
+      ),
+      redeemedWashOrderId: serializer.fromJson<String?>(
+        json['redeemedWashOrderId'],
+      ),
+      redeemedAt: serializer.fromJson<DateTime?>(json['redeemedAt']),
+      expiredAt: serializer.fromJson<DateTime?>(json['expiredAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'vehicleId': serializer.toJson<String>(vehicleId),
+      'earnedMonth': serializer.toJson<DateTime>(earnedMonth),
+      'validMonth': serializer.toJson<DateTime>(validMonth),
+      'status': serializer.toJson<String>(status),
+      'earnedFromLedgerId': serializer.toJson<String>(earnedFromLedgerId),
+      'redeemedWashOrderId': serializer.toJson<String?>(redeemedWashOrderId),
+      'redeemedAt': serializer.toJson<DateTime?>(redeemedAt),
+      'expiredAt': serializer.toJson<DateTime?>(expiredAt),
+    };
+  }
+
+  LocalLoyaltyReward copyWith({
+    String? id,
+    String? vehicleId,
+    DateTime? earnedMonth,
+    DateTime? validMonth,
+    String? status,
+    String? earnedFromLedgerId,
+    Value<String?> redeemedWashOrderId = const Value.absent(),
+    Value<DateTime?> redeemedAt = const Value.absent(),
+    Value<DateTime?> expiredAt = const Value.absent(),
+  }) => LocalLoyaltyReward(
+    id: id ?? this.id,
+    vehicleId: vehicleId ?? this.vehicleId,
+    earnedMonth: earnedMonth ?? this.earnedMonth,
+    validMonth: validMonth ?? this.validMonth,
+    status: status ?? this.status,
+    earnedFromLedgerId: earnedFromLedgerId ?? this.earnedFromLedgerId,
+    redeemedWashOrderId: redeemedWashOrderId.present
+        ? redeemedWashOrderId.value
+        : this.redeemedWashOrderId,
+    redeemedAt: redeemedAt.present ? redeemedAt.value : this.redeemedAt,
+    expiredAt: expiredAt.present ? expiredAt.value : this.expiredAt,
+  );
+  LocalLoyaltyReward copyWithCompanion(LocalLoyaltyRewardsCompanion data) {
+    return LocalLoyaltyReward(
+      id: data.id.present ? data.id.value : this.id,
+      vehicleId: data.vehicleId.present ? data.vehicleId.value : this.vehicleId,
+      earnedMonth: data.earnedMonth.present
+          ? data.earnedMonth.value
+          : this.earnedMonth,
+      validMonth: data.validMonth.present
+          ? data.validMonth.value
+          : this.validMonth,
+      status: data.status.present ? data.status.value : this.status,
+      earnedFromLedgerId: data.earnedFromLedgerId.present
+          ? data.earnedFromLedgerId.value
+          : this.earnedFromLedgerId,
+      redeemedWashOrderId: data.redeemedWashOrderId.present
+          ? data.redeemedWashOrderId.value
+          : this.redeemedWashOrderId,
+      redeemedAt: data.redeemedAt.present
+          ? data.redeemedAt.value
+          : this.redeemedAt,
+      expiredAt: data.expiredAt.present ? data.expiredAt.value : this.expiredAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalLoyaltyReward(')
+          ..write('id: $id, ')
+          ..write('vehicleId: $vehicleId, ')
+          ..write('earnedMonth: $earnedMonth, ')
+          ..write('validMonth: $validMonth, ')
+          ..write('status: $status, ')
+          ..write('earnedFromLedgerId: $earnedFromLedgerId, ')
+          ..write('redeemedWashOrderId: $redeemedWashOrderId, ')
+          ..write('redeemedAt: $redeemedAt, ')
+          ..write('expiredAt: $expiredAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    vehicleId,
+    earnedMonth,
+    validMonth,
+    status,
+    earnedFromLedgerId,
+    redeemedWashOrderId,
+    redeemedAt,
+    expiredAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalLoyaltyReward &&
+          other.id == this.id &&
+          other.vehicleId == this.vehicleId &&
+          other.earnedMonth == this.earnedMonth &&
+          other.validMonth == this.validMonth &&
+          other.status == this.status &&
+          other.earnedFromLedgerId == this.earnedFromLedgerId &&
+          other.redeemedWashOrderId == this.redeemedWashOrderId &&
+          other.redeemedAt == this.redeemedAt &&
+          other.expiredAt == this.expiredAt);
+}
+
+class LocalLoyaltyRewardsCompanion extends UpdateCompanion<LocalLoyaltyReward> {
+  final Value<String> id;
+  final Value<String> vehicleId;
+  final Value<DateTime> earnedMonth;
+  final Value<DateTime> validMonth;
+  final Value<String> status;
+  final Value<String> earnedFromLedgerId;
+  final Value<String?> redeemedWashOrderId;
+  final Value<DateTime?> redeemedAt;
+  final Value<DateTime?> expiredAt;
+  final Value<int> rowid;
+  const LocalLoyaltyRewardsCompanion({
+    this.id = const Value.absent(),
+    this.vehicleId = const Value.absent(),
+    this.earnedMonth = const Value.absent(),
+    this.validMonth = const Value.absent(),
+    this.status = const Value.absent(),
+    this.earnedFromLedgerId = const Value.absent(),
+    this.redeemedWashOrderId = const Value.absent(),
+    this.redeemedAt = const Value.absent(),
+    this.expiredAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalLoyaltyRewardsCompanion.insert({
+    required String id,
+    required String vehicleId,
+    required DateTime earnedMonth,
+    required DateTime validMonth,
+    this.status = const Value.absent(),
+    required String earnedFromLedgerId,
+    this.redeemedWashOrderId = const Value.absent(),
+    this.redeemedAt = const Value.absent(),
+    this.expiredAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       vehicleId = Value(vehicleId),
+       earnedMonth = Value(earnedMonth),
+       validMonth = Value(validMonth),
+       earnedFromLedgerId = Value(earnedFromLedgerId);
+  static Insertable<LocalLoyaltyReward> custom({
+    Expression<String>? id,
+    Expression<String>? vehicleId,
+    Expression<DateTime>? earnedMonth,
+    Expression<DateTime>? validMonth,
+    Expression<String>? status,
+    Expression<String>? earnedFromLedgerId,
+    Expression<String>? redeemedWashOrderId,
+    Expression<DateTime>? redeemedAt,
+    Expression<DateTime>? expiredAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vehicleId != null) 'vehicle_id': vehicleId,
+      if (earnedMonth != null) 'earned_month': earnedMonth,
+      if (validMonth != null) 'valid_month': validMonth,
+      if (status != null) 'status': status,
+      if (earnedFromLedgerId != null)
+        'earned_from_ledger_id': earnedFromLedgerId,
+      if (redeemedWashOrderId != null)
+        'redeemed_wash_order_id': redeemedWashOrderId,
+      if (redeemedAt != null) 'redeemed_at': redeemedAt,
+      if (expiredAt != null) 'expired_at': expiredAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalLoyaltyRewardsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? vehicleId,
+    Value<DateTime>? earnedMonth,
+    Value<DateTime>? validMonth,
+    Value<String>? status,
+    Value<String>? earnedFromLedgerId,
+    Value<String?>? redeemedWashOrderId,
+    Value<DateTime?>? redeemedAt,
+    Value<DateTime?>? expiredAt,
+    Value<int>? rowid,
+  }) {
+    return LocalLoyaltyRewardsCompanion(
+      id: id ?? this.id,
+      vehicleId: vehicleId ?? this.vehicleId,
+      earnedMonth: earnedMonth ?? this.earnedMonth,
+      validMonth: validMonth ?? this.validMonth,
+      status: status ?? this.status,
+      earnedFromLedgerId: earnedFromLedgerId ?? this.earnedFromLedgerId,
+      redeemedWashOrderId: redeemedWashOrderId ?? this.redeemedWashOrderId,
+      redeemedAt: redeemedAt ?? this.redeemedAt,
+      expiredAt: expiredAt ?? this.expiredAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (vehicleId.present) {
+      map['vehicle_id'] = Variable<String>(vehicleId.value);
+    }
+    if (earnedMonth.present) {
+      map['earned_month'] = Variable<DateTime>(earnedMonth.value);
+    }
+    if (validMonth.present) {
+      map['valid_month'] = Variable<DateTime>(validMonth.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (earnedFromLedgerId.present) {
+      map['earned_from_ledger_id'] = Variable<String>(earnedFromLedgerId.value);
+    }
+    if (redeemedWashOrderId.present) {
+      map['redeemed_wash_order_id'] = Variable<String>(
+        redeemedWashOrderId.value,
+      );
+    }
+    if (redeemedAt.present) {
+      map['redeemed_at'] = Variable<DateTime>(redeemedAt.value);
+    }
+    if (expiredAt.present) {
+      map['expired_at'] = Variable<DateTime>(expiredAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalLoyaltyRewardsCompanion(')
+          ..write('id: $id, ')
+          ..write('vehicleId: $vehicleId, ')
+          ..write('earnedMonth: $earnedMonth, ')
+          ..write('validMonth: $validMonth, ')
+          ..write('status: $status, ')
+          ..write('earnedFromLedgerId: $earnedFromLedgerId, ')
+          ..write('redeemedWashOrderId: $redeemedWashOrderId, ')
+          ..write('redeemedAt: $redeemedAt, ')
+          ..write('expiredAt: $expiredAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $LocalWashOrdersTable extends LocalWashOrders
     with TableInfo<$LocalWashOrdersTable, LocalWashOrder> {
   @override
@@ -8211,6 +9331,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LocalVehiclesTable localVehicles = $LocalVehiclesTable(this);
   late final $LocalLoyaltySummariesTable localLoyaltySummaries =
       $LocalLoyaltySummariesTable(this);
+  late final $LocalLoyaltyLedgerTable localLoyaltyLedger =
+      $LocalLoyaltyLedgerTable(this);
+  late final $LocalLoyaltyRewardsTable localLoyaltyRewards =
+      $LocalLoyaltyRewardsTable(this);
   late final $LocalWashOrdersTable localWashOrders = $LocalWashOrdersTable(
     this,
   );
@@ -8245,6 +9369,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     localCustomers,
     localVehicles,
     localLoyaltySummaries,
+    localLoyaltyLedger,
+    localLoyaltyRewards,
     localWashOrders,
     localWashOrderItems,
     localPayments,
@@ -9371,6 +10497,584 @@ typedef $$LocalLoyaltySummariesTableProcessedTableManager =
         >,
       ),
       LocalLoyaltySummary,
+      PrefetchHooks Function()
+    >;
+typedef $$LocalLoyaltyLedgerTableCreateCompanionBuilder =
+    LocalLoyaltyLedgerCompanion Function({
+      required String id,
+      required String vehicleId,
+      Value<String?> washOrderId,
+      required String eventType,
+      required DateTime periodMonth,
+      Value<DateTime> createdAt,
+      required String createdById,
+      Value<String?> notes,
+      Value<int> rowid,
+    });
+typedef $$LocalLoyaltyLedgerTableUpdateCompanionBuilder =
+    LocalLoyaltyLedgerCompanion Function({
+      Value<String> id,
+      Value<String> vehicleId,
+      Value<String?> washOrderId,
+      Value<String> eventType,
+      Value<DateTime> periodMonth,
+      Value<DateTime> createdAt,
+      Value<String> createdById,
+      Value<String?> notes,
+      Value<int> rowid,
+    });
+
+class $$LocalLoyaltyLedgerTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalLoyaltyLedgerTable> {
+  $$LocalLoyaltyLedgerTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vehicleId => $composableBuilder(
+    column: $table.vehicleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get washOrderId => $composableBuilder(
+    column: $table.washOrderId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get eventType => $composableBuilder(
+    column: $table.eventType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get periodMonth => $composableBuilder(
+    column: $table.periodMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdById => $composableBuilder(
+    column: $table.createdById,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocalLoyaltyLedgerTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalLoyaltyLedgerTable> {
+  $$LocalLoyaltyLedgerTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vehicleId => $composableBuilder(
+    column: $table.vehicleId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get washOrderId => $composableBuilder(
+    column: $table.washOrderId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get eventType => $composableBuilder(
+    column: $table.eventType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get periodMonth => $composableBuilder(
+    column: $table.periodMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdById => $composableBuilder(
+    column: $table.createdById,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalLoyaltyLedgerTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalLoyaltyLedgerTable> {
+  $$LocalLoyaltyLedgerTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get vehicleId =>
+      $composableBuilder(column: $table.vehicleId, builder: (column) => column);
+
+  GeneratedColumn<String> get washOrderId => $composableBuilder(
+    column: $table.washOrderId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get eventType =>
+      $composableBuilder(column: $table.eventType, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get periodMonth => $composableBuilder(
+    column: $table.periodMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get createdById => $composableBuilder(
+    column: $table.createdById,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+}
+
+class $$LocalLoyaltyLedgerTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalLoyaltyLedgerTable,
+          LocalLoyaltyLedgerData,
+          $$LocalLoyaltyLedgerTableFilterComposer,
+          $$LocalLoyaltyLedgerTableOrderingComposer,
+          $$LocalLoyaltyLedgerTableAnnotationComposer,
+          $$LocalLoyaltyLedgerTableCreateCompanionBuilder,
+          $$LocalLoyaltyLedgerTableUpdateCompanionBuilder,
+          (
+            LocalLoyaltyLedgerData,
+            BaseReferences<
+              _$AppDatabase,
+              $LocalLoyaltyLedgerTable,
+              LocalLoyaltyLedgerData
+            >,
+          ),
+          LocalLoyaltyLedgerData,
+          PrefetchHooks Function()
+        > {
+  $$LocalLoyaltyLedgerTableTableManager(
+    _$AppDatabase db,
+    $LocalLoyaltyLedgerTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalLoyaltyLedgerTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocalLoyaltyLedgerTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LocalLoyaltyLedgerTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> vehicleId = const Value.absent(),
+                Value<String?> washOrderId = const Value.absent(),
+                Value<String> eventType = const Value.absent(),
+                Value<DateTime> periodMonth = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<String> createdById = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalLoyaltyLedgerCompanion(
+                id: id,
+                vehicleId: vehicleId,
+                washOrderId: washOrderId,
+                eventType: eventType,
+                periodMonth: periodMonth,
+                createdAt: createdAt,
+                createdById: createdById,
+                notes: notes,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String vehicleId,
+                Value<String?> washOrderId = const Value.absent(),
+                required String eventType,
+                required DateTime periodMonth,
+                Value<DateTime> createdAt = const Value.absent(),
+                required String createdById,
+                Value<String?> notes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalLoyaltyLedgerCompanion.insert(
+                id: id,
+                vehicleId: vehicleId,
+                washOrderId: washOrderId,
+                eventType: eventType,
+                periodMonth: periodMonth,
+                createdAt: createdAt,
+                createdById: createdById,
+                notes: notes,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocalLoyaltyLedgerTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalLoyaltyLedgerTable,
+      LocalLoyaltyLedgerData,
+      $$LocalLoyaltyLedgerTableFilterComposer,
+      $$LocalLoyaltyLedgerTableOrderingComposer,
+      $$LocalLoyaltyLedgerTableAnnotationComposer,
+      $$LocalLoyaltyLedgerTableCreateCompanionBuilder,
+      $$LocalLoyaltyLedgerTableUpdateCompanionBuilder,
+      (
+        LocalLoyaltyLedgerData,
+        BaseReferences<
+          _$AppDatabase,
+          $LocalLoyaltyLedgerTable,
+          LocalLoyaltyLedgerData
+        >,
+      ),
+      LocalLoyaltyLedgerData,
+      PrefetchHooks Function()
+    >;
+typedef $$LocalLoyaltyRewardsTableCreateCompanionBuilder =
+    LocalLoyaltyRewardsCompanion Function({
+      required String id,
+      required String vehicleId,
+      required DateTime earnedMonth,
+      required DateTime validMonth,
+      Value<String> status,
+      required String earnedFromLedgerId,
+      Value<String?> redeemedWashOrderId,
+      Value<DateTime?> redeemedAt,
+      Value<DateTime?> expiredAt,
+      Value<int> rowid,
+    });
+typedef $$LocalLoyaltyRewardsTableUpdateCompanionBuilder =
+    LocalLoyaltyRewardsCompanion Function({
+      Value<String> id,
+      Value<String> vehicleId,
+      Value<DateTime> earnedMonth,
+      Value<DateTime> validMonth,
+      Value<String> status,
+      Value<String> earnedFromLedgerId,
+      Value<String?> redeemedWashOrderId,
+      Value<DateTime?> redeemedAt,
+      Value<DateTime?> expiredAt,
+      Value<int> rowid,
+    });
+
+class $$LocalLoyaltyRewardsTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalLoyaltyRewardsTable> {
+  $$LocalLoyaltyRewardsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vehicleId => $composableBuilder(
+    column: $table.vehicleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get earnedMonth => $composableBuilder(
+    column: $table.earnedMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get validMonth => $composableBuilder(
+    column: $table.validMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get earnedFromLedgerId => $composableBuilder(
+    column: $table.earnedFromLedgerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get redeemedWashOrderId => $composableBuilder(
+    column: $table.redeemedWashOrderId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get redeemedAt => $composableBuilder(
+    column: $table.redeemedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get expiredAt => $composableBuilder(
+    column: $table.expiredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocalLoyaltyRewardsTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalLoyaltyRewardsTable> {
+  $$LocalLoyaltyRewardsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vehicleId => $composableBuilder(
+    column: $table.vehicleId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get earnedMonth => $composableBuilder(
+    column: $table.earnedMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get validMonth => $composableBuilder(
+    column: $table.validMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get earnedFromLedgerId => $composableBuilder(
+    column: $table.earnedFromLedgerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get redeemedWashOrderId => $composableBuilder(
+    column: $table.redeemedWashOrderId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get redeemedAt => $composableBuilder(
+    column: $table.redeemedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get expiredAt => $composableBuilder(
+    column: $table.expiredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalLoyaltyRewardsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalLoyaltyRewardsTable> {
+  $$LocalLoyaltyRewardsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get vehicleId =>
+      $composableBuilder(column: $table.vehicleId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get earnedMonth => $composableBuilder(
+    column: $table.earnedMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get validMonth => $composableBuilder(
+    column: $table.validMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get earnedFromLedgerId => $composableBuilder(
+    column: $table.earnedFromLedgerId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get redeemedWashOrderId => $composableBuilder(
+    column: $table.redeemedWashOrderId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get redeemedAt => $composableBuilder(
+    column: $table.redeemedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get expiredAt =>
+      $composableBuilder(column: $table.expiredAt, builder: (column) => column);
+}
+
+class $$LocalLoyaltyRewardsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalLoyaltyRewardsTable,
+          LocalLoyaltyReward,
+          $$LocalLoyaltyRewardsTableFilterComposer,
+          $$LocalLoyaltyRewardsTableOrderingComposer,
+          $$LocalLoyaltyRewardsTableAnnotationComposer,
+          $$LocalLoyaltyRewardsTableCreateCompanionBuilder,
+          $$LocalLoyaltyRewardsTableUpdateCompanionBuilder,
+          (
+            LocalLoyaltyReward,
+            BaseReferences<
+              _$AppDatabase,
+              $LocalLoyaltyRewardsTable,
+              LocalLoyaltyReward
+            >,
+          ),
+          LocalLoyaltyReward,
+          PrefetchHooks Function()
+        > {
+  $$LocalLoyaltyRewardsTableTableManager(
+    _$AppDatabase db,
+    $LocalLoyaltyRewardsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalLoyaltyRewardsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocalLoyaltyRewardsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$LocalLoyaltyRewardsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> vehicleId = const Value.absent(),
+                Value<DateTime> earnedMonth = const Value.absent(),
+                Value<DateTime> validMonth = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> earnedFromLedgerId = const Value.absent(),
+                Value<String?> redeemedWashOrderId = const Value.absent(),
+                Value<DateTime?> redeemedAt = const Value.absent(),
+                Value<DateTime?> expiredAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalLoyaltyRewardsCompanion(
+                id: id,
+                vehicleId: vehicleId,
+                earnedMonth: earnedMonth,
+                validMonth: validMonth,
+                status: status,
+                earnedFromLedgerId: earnedFromLedgerId,
+                redeemedWashOrderId: redeemedWashOrderId,
+                redeemedAt: redeemedAt,
+                expiredAt: expiredAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String vehicleId,
+                required DateTime earnedMonth,
+                required DateTime validMonth,
+                Value<String> status = const Value.absent(),
+                required String earnedFromLedgerId,
+                Value<String?> redeemedWashOrderId = const Value.absent(),
+                Value<DateTime?> redeemedAt = const Value.absent(),
+                Value<DateTime?> expiredAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalLoyaltyRewardsCompanion.insert(
+                id: id,
+                vehicleId: vehicleId,
+                earnedMonth: earnedMonth,
+                validMonth: validMonth,
+                status: status,
+                earnedFromLedgerId: earnedFromLedgerId,
+                redeemedWashOrderId: redeemedWashOrderId,
+                redeemedAt: redeemedAt,
+                expiredAt: expiredAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocalLoyaltyRewardsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalLoyaltyRewardsTable,
+      LocalLoyaltyReward,
+      $$LocalLoyaltyRewardsTableFilterComposer,
+      $$LocalLoyaltyRewardsTableOrderingComposer,
+      $$LocalLoyaltyRewardsTableAnnotationComposer,
+      $$LocalLoyaltyRewardsTableCreateCompanionBuilder,
+      $$LocalLoyaltyRewardsTableUpdateCompanionBuilder,
+      (
+        LocalLoyaltyReward,
+        BaseReferences<
+          _$AppDatabase,
+          $LocalLoyaltyRewardsTable,
+          LocalLoyaltyReward
+        >,
+      ),
+      LocalLoyaltyReward,
       PrefetchHooks Function()
     >;
 typedef $$LocalWashOrdersTableCreateCompanionBuilder =
@@ -12760,6 +14464,10 @@ class $AppDatabaseManager {
       $$LocalVehiclesTableTableManager(_db, _db.localVehicles);
   $$LocalLoyaltySummariesTableTableManager get localLoyaltySummaries =>
       $$LocalLoyaltySummariesTableTableManager(_db, _db.localLoyaltySummaries);
+  $$LocalLoyaltyLedgerTableTableManager get localLoyaltyLedger =>
+      $$LocalLoyaltyLedgerTableTableManager(_db, _db.localLoyaltyLedger);
+  $$LocalLoyaltyRewardsTableTableManager get localLoyaltyRewards =>
+      $$LocalLoyaltyRewardsTableTableManager(_db, _db.localLoyaltyRewards);
   $$LocalWashOrdersTableTableManager get localWashOrders =>
       $$LocalWashOrdersTableTableManager(_db, _db.localWashOrders);
   $$LocalWashOrderItemsTableTableManager get localWashOrderItems =>
