@@ -259,6 +259,24 @@ class LocalPendingUsers extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// The device's own local user directory — no server, so this is the
+/// permanent credential store, not a cache. `passwordHash`/`pinHash` are
+/// bcrypt hashes; plaintext credentials are never persisted.
+class LocalUsers extends Table {
+  TextColumn get id => text()();
+  TextColumn get fullName => text()();
+  TextColumn get username => text().unique()();
+  TextColumn get passwordHash => text()();
+  TextColumn get pinHash => text().nullable()();
+  TextColumn get role => text()(); // ATTENDANT | SUPERVISOR | ADMINISTRATOR | OWNER
+  BoolColumn get active => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get lastLoginAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(tables: [
   LocalWashServices,
   LocalWashExtras,
@@ -278,13 +296,14 @@ class LocalPendingUsers extends Table {
   LocalPrepaidPackagePurchases,
   LocalCashCollections,
   LocalPendingUsers,
+  LocalUsers,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -298,6 +317,9 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(localPrepaidPackagePurchases);
             await m.createTable(localCashCollections);
             await m.createTable(localPendingUsers);
+          }
+          if (from < 3) {
+            await m.createTable(localUsers);
           }
         },
       );

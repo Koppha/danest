@@ -17,9 +17,7 @@ class _AlwaysOffline extends ConnectivityNotifier {
 class _FakeSession extends SessionNotifier {
   @override
   SessionState build() => const SessionState(
-        user: DnUser(id: 'u1', username: 'owner', fullName: 'De Nest Owner', role: 'OWNER', branchId: 'branch-1'),
-        accessToken: 'token',
-        refreshToken: 'refresh',
+        user: DnUser(id: 'u1', username: 'owner', fullName: 'De Nest Owner', role: 'OWNER'),
         loading: false,
       );
 }
@@ -53,7 +51,7 @@ void main() {
     final rows = await db.select(db.localCashCollections).get();
     expect(rows, hasLength(1));
     expect(rows.single.countedCash, 850);
-    expect(rows.single.branchId, 'branch-1');
+    expect(rows.single.branchId, 'main');
 
     final pending = await db.select(db.pendingSyncOps).get();
     expect(pending, hasLength(1));

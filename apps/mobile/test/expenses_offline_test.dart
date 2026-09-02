@@ -17,9 +17,7 @@ class _AlwaysOffline extends ConnectivityNotifier {
 class _FakeSession extends SessionNotifier {
   @override
   SessionState build() => const SessionState(
-        user: DnUser(id: 'u1', username: 'owner', fullName: 'De Nest Owner', role: 'OWNER', branchId: 'branch-1'),
-        accessToken: 'token',
-        refreshToken: 'refresh',
+        user: DnUser(id: 'u1', username: 'owner', fullName: 'De Nest Owner', role: 'OWNER'),
         loading: false,
       );
 }

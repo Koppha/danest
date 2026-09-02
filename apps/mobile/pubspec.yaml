@@ -59,6 +59,10 @@ dependencies:
   # Client-generated UUIDs for offline-safe entity IDs / idempotency keys
   uuid: ^4.5.1
 
+  # Local password/PIN hashing (no server left to do this) — pure Dart, no
+  # native build step, appropriate for a local single-device credential check.
+  bcrypt: ^1.1.3
+
   # NOTE: connectivity_plus was removed — its Android build script pins an
   # AGP version that must be fetched from dl.google.com, unreachable from
   # this sandbox, and it wasn't actually used anywhere yet (deferred with

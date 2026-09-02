@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/session.dart';
+import '../features/auth/first_run_setup_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/shell/app_shell.dart';
 import '../features/dashboard/dashboard_screen.dart';
@@ -27,12 +28,16 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final session = ref.read(sessionProvider);
       if (session.loading) return null;
+      if (session.needsFirstRunSetup) {
+        return state.matchedLocation == '/setup' ? null : '/setup';
+      }
       final loggingIn = state.matchedLocation == '/login';
       if (!session.isAuthenticated) return loggingIn ? null : '/login';
       if (loggingIn) return '/dashboard';
       return null;
     },
     routes: [
+      GoRoute(path: '/setup', builder: (context, state) => const FirstRunSetupScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),

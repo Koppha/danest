@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/session.dart';
+import '../../data/local/auth_repository.dart';
 import '../../data/local/offline_pos_repository.dart';
-import '../../data/remote/auth_repository.dart';
 import '../../design_system/theme.dart';
 import 'sync_status.dart';
 
