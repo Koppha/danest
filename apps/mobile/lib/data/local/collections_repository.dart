@@ -76,23 +76,26 @@ class CollectionsRepository {
     return last?.countedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
   }
 
-  Future<CollectionsExpected> computeExpected({DateTime? periodEnd}) async {
-    final periodStart = await lastCollectionCutoff();
+  /// [periodStart] defaults to the last confirmed collection's cutoff (the
+  /// till-reconciliation use case); Reports passes its own window start
+  /// instead, to get the same cash breakdown over an arbitrary date range.
+  Future<CollectionsExpected> computeExpected({DateTime? periodStart, DateTime? periodEnd}) async {
+    final start = periodStart ?? await lastCollectionCutoff();
     final end = periodEnd ?? DateTime.now();
-    if (!end.isAfter(periodStart)) throw PeriodEndBeforeCutoffException();
+    if (!end.isAfter(start)) throw PeriodEndBeforeCutoffException();
 
     final payments = await (_db.select(_db.localPayments)
-          ..where((p) => p.completedAt.isBiggerOrEqualValue(periodStart) & p.completedAt.isSmallerThanValue(end)))
+          ..where((p) => p.completedAt.isBiggerOrEqualValue(start) & p.completedAt.isSmallerThanValue(end)))
         .get();
     final voidedInWindow = await (_db.select(_db.localPayments)
-          ..where((p) => p.voided.equals(true) & p.voidedAt.isBiggerOrEqualValue(periodStart) & p.voidedAt.isSmallerThanValue(end)))
+          ..where((p) => p.voided.equals(true) & p.voidedAt.isBiggerOrEqualValue(start) & p.voidedAt.isSmallerThanValue(end)))
         .get();
     final deposits = await (_db.select(_db.localPrepaidWalletLedger)
           ..where(
             (l) =>
                 l.entryType.equals('DEPOSIT') &
                 l.method.equals('CASH') &
-                l.createdAt.isBiggerOrEqualValue(periodStart) &
+                l.createdAt.isBiggerOrEqualValue(start) &
                 l.createdAt.isSmallerThanValue(end),
           ))
         .get();
@@ -100,7 +103,7 @@ class CollectionsRepository {
           ..where(
             (e) =>
                 e.paymentMethod.equals('CASH') &
-                e.createdAt.isBiggerOrEqualValue(periodStart) &
+                e.createdAt.isBiggerOrEqualValue(start) &
                 e.createdAt.isSmallerThanValue(end),
           ))
         .get();
@@ -145,7 +148,7 @@ class CollectionsRepository {
       walletTotal: walletTotal,
       packageUsageTotal: packageUsageTotal,
       loyaltyRedemptionsTotal: loyaltyRedemptionsTotal,
-      periodStart: periodStart,
+      periodStart: start,
       periodEnd: end,
     );
   }

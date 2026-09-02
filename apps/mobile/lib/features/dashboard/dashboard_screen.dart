@@ -2,19 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/money.dart';
-import '../../data/remote/pos_repository.dart';
+import '../../data/local/reports_repository.dart';
 import '../../data/local/wash_orders_repository.dart';
 import '../../data/models/models.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
-import '../shell/sync_status.dart';
 
 final queueProvider = FutureProvider.autoDispose<List<WashOrder>>((ref) => ref.watch(washOrdersRepositoryProvider).queue());
 
-final dashboardSummaryProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) {
+final dashboardSummaryProvider = FutureProvider.autoDispose<ReportsSummary>((ref) {
   final now = DateTime.now();
   final startOfDay = DateTime(now.year, now.month, now.day);
-  return ref.watch(posRepositoryProvider).dashboardSummary(from: startOfDay, to: now.add(const Duration(days: 1)));
+  return ref.watch(reportsRepositoryProvider).summary(from: startOfDay, to: now);
 });
 
 class DashboardScreen extends ConsumerWidget {
@@ -22,7 +21,6 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(syncNowProvider); // best-effort catalog refresh + outbox drain on first dashboard load
     final queue = ref.watch(queueProvider);
     final summary = ref.watch(dashboardSummaryProvider);
 
@@ -52,7 +50,7 @@ class DashboardScreen extends ConsumerWidget {
             LayoutBuilder(builder: (context, constraints) {
               final cols = constraints.maxWidth > 700 ? 3 : (constraints.maxWidth > 420 ? 2 : 1);
               final carsOnSite = queue.valueOrNull?.length ?? 0;
-              final takenToday = summary.valueOrNull?['totalSales'];
+              final takenToday = summary.valueOrNull?.totalSales;
               return GridView.count(
                 crossAxisCount: cols,
                 shrinkWrap: true,
@@ -65,14 +63,14 @@ class DashboardScreen extends ConsumerWidget {
                   DnKpi(
                     icon: Icons.payments_outlined,
                     label: 'Taken today',
-                    value: takenToday != null ? 'M${(takenToday as num).toStringAsFixed(0)}' : '—',
+                    value: takenToday != null ? 'M${formatMoney(takenToday)}' : '—',
                     tint: DnColors.greenSoft,
                     iconColor: DnColors.green,
                   ),
                   DnKpi(
                     icon: Icons.card_giftcard,
                     label: 'Free washes today',
-                    value: '${summary.valueOrNull?['totalFreeWashes'] ?? '—'}',
+                    value: '${summary.valueOrNull?.totalFreeWashes ?? '—'}',
                     tint: DnColors.purpleSoft,
                     iconColor: const Color(0xFF7C4DEB),
                   ),

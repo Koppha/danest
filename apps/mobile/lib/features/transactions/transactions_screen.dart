@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/remote/api_client.dart';
+import '../../core/money.dart';
+import '../../data/local/reports_repository.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
 
-final transactionsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
-  final dio = ref.watch(apiClientProvider);
+final transactionsProvider = FutureProvider.autoDispose<List<TransactionSummary>>((ref) {
   final now = DateTime.now();
   final from = now.subtract(const Duration(days: 30));
-  final resp = await dio.get('/reports/transactions', queryParameters: {'from': from.toIso8601String(), 'to': now.toIso8601String()});
-  return resp.data as List<dynamic>;
+  return ref.watch(reportsRepositoryProvider).transactions(from: from, to: now);
 });
 
 class TransactionsScreen extends ConsumerWidget {
@@ -33,10 +32,8 @@ class TransactionsScreen extends ConsumerWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             itemCount: list.length,
             itemBuilder: (context, i) {
-              final t = list[i] as Map<String, dynamic>;
-              final washOrder = t['washOrder'] as Map<String, dynamic>;
-              final vehicle = washOrder['vehicle'] as Map<String, dynamic>;
-              final components = (t['components'] as List).map((c) => (c['paymentMethod'] as Map)['code']).join(' + ');
+              final t = list[i];
+              final methodsLabel = t.methods.map((m) => paymentMethodLabels[m] ?? m).join(' + ');
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: DnCard(
@@ -46,16 +43,16 @@ class TransactionsScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(vehicle['regNumberDisplay'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
-                            Text(components, style: const TextStyle(color: DnColors.muted, fontSize: 12)),
+                            Text(t.vehicleRegNumber ?? '—', style: const TextStyle(fontWeight: FontWeight.w600)),
+                            Text(methodsLabel, style: const TextStyle(color: DnColors.muted, fontSize: 12)),
                           ],
                         ),
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text('M${double.parse(t['totalAmount'].toString()).toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          if (t['voided'] == true) const Text('VOIDED', style: TextStyle(color: DnColors.red, fontSize: 11)),
+                          Text('M${formatMoney(t.totalAmount)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          if (t.voided) const Text('VOIDED', style: TextStyle(color: DnColors.red, fontSize: 11)),
                         ],
                       ),
                     ],

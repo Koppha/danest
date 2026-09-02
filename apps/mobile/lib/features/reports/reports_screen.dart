@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/remote/pos_repository.dart';
+import '../../core/money.dart';
+import '../../data/local/reports_repository.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
 
-final reportsSummaryProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) {
+final reportsSummaryProvider = FutureProvider.autoDispose<ReportsSummary>((ref) {
   final now = DateTime.now();
   final from = DateTime(now.year, now.month, 1);
-  return ref.watch(posRepositoryProvider).dashboardSummary(from: from, to: now.add(const Duration(days: 1)));
+  return ref.watch(reportsRepositoryProvider).summary(from: from, to: now);
 });
 
 class ReportsScreen extends ConsumerWidget {
@@ -34,10 +35,16 @@ class ReportsScreen extends ConsumerWidget {
                 crossAxisSpacing: 12,
                 childAspectRatio: 2.6,
                 children: [
-                  DnKpi(icon: Icons.payments, label: 'Total sales', value: 'M${(s['totalSales'] as num).toStringAsFixed(0)}', tint: DnColors.greenSoft, iconColor: DnColors.green),
-                  DnKpi(icon: Icons.local_car_wash, label: 'Completed washes', value: '${s['totalCompletedWashes']}', tint: DnColors.blueSoft, iconColor: DnColors.blue),
-                  DnKpi(icon: Icons.card_giftcard, label: 'Free washes', value: '${s['totalFreeWashes']}', tint: DnColors.purpleSoft, iconColor: const Color(0xFF7C4DEB)),
-                  DnKpi(icon: Icons.account_balance_wallet, label: 'Prepaid deposits', value: 'M${(s['totalPrepaidDeposits'] as num).toStringAsFixed(0)}', tint: DnColors.amberSoft, iconColor: DnColors.amber),
+                  DnKpi(icon: Icons.payments, label: 'Total sales', value: 'M${formatMoney(s.totalSales)}', tint: DnColors.greenSoft, iconColor: DnColors.green),
+                  DnKpi(icon: Icons.local_car_wash, label: 'Completed washes', value: '${s.totalCompletedWashes}', tint: DnColors.blueSoft, iconColor: DnColors.blue),
+                  DnKpi(icon: Icons.card_giftcard, label: 'Free washes', value: '${s.totalFreeWashes}', tint: DnColors.purpleSoft, iconColor: const Color(0xFF7C4DEB)),
+                  DnKpi(
+                    icon: Icons.account_balance_wallet,
+                    label: 'Prepaid deposits',
+                    value: 'M${formatMoney(s.totalPrepaidDeposits)}',
+                    tint: DnColors.amberSoft,
+                    iconColor: DnColors.amber,
+                  ),
                 ],
               );
             }),
@@ -48,17 +55,22 @@ class ReportsScreen extends ConsumerWidget {
                 children: [
                   const Text('Sales by payment method', style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
-                  ...((s['salesByMethod'] as Map).entries.map((e) => Padding(
+                  if (s.salesByMethod.isEmpty)
+                    const Text('No sales yet this month', style: TextStyle(color: DnColors.muted))
+                  else
+                    ...s.salesByMethod.entries.map(
+                      (e) => Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(child: Text(e.key as String, overflow: TextOverflow.ellipsis, maxLines: 1)),
+                            Expanded(child: Text(e.key, overflow: TextOverflow.ellipsis, maxLines: 1)),
                             const SizedBox(width: 8),
-                            Text('M${(e.value as num).toStringAsFixed(2)}'),
+                            Text('M${formatMoney(e.value)}'),
                           ],
                         ),
-                      ))),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -69,7 +81,7 @@ class ReportsScreen extends ConsumerWidget {
                 children: [
                   const Text('Net operating cash', style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Text('M${(s['netOperatingCash'] as num).toStringAsFixed(2)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: DnColors.green)),
+                  Text('M${formatMoney(s.netOperatingCash)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: DnColors.green)),
                 ],
               ),
             ),

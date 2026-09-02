@@ -8,6 +8,7 @@ import 'package:de_nest/data/local/database_provider.dart';
 import 'package:de_nest/data/models/models.dart';
 import 'package:de_nest/design_system/widgets.dart';
 import 'package:de_nest/features/dashboard/dashboard_screen.dart' show queueProvider;
+import 'package:de_nest/data/local/reports_repository.dart';
 import 'package:de_nest/features/new_wash/new_wash_screen.dart';
 import 'package:de_nest/features/reports/reports_screen.dart';
 import 'package:de_nest/features/wash_queue/finish_wash_sheet.dart';
@@ -134,14 +135,14 @@ void main() {
   });
 
   testWidgets('reports screen picks a wider grid on tablet and does not overflow on phone or tablet', (tester) async {
-    final summary = <String, dynamic>{
-      'totalSales': 123456,
-      'totalCompletedWashes': 42,
-      'totalFreeWashes': 3,
-      'totalPrepaidDeposits': 9876,
-      'salesByMethod': {'A_VERY_LONG_PAYMENT_METHOD_NAME': 543.21, 'CASH': 100},
-      'netOperatingCash': 5000,
-    };
+    final summary = ReportsSummary(
+      totalSales: 123456,
+      totalCompletedWashes: 42,
+      totalFreeWashes: 3,
+      totalPrepaidDeposits: 9876,
+      salesByMethod: const {'A Very Long Payment Method Name': 54321, 'Cash': 100},
+      netOperatingCash: 5000,
+    );
     final overrides = [reportsSummaryProvider.overrideWith((ref) async => summary)];
 
     await _setSurfaceSize(tester, const Size(360, 800));

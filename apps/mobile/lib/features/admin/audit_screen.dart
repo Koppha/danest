@@ -1,18 +1,45 @@
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/remote/api_client.dart';
+import 'package:intl/intl.dart';
+
+import '../../data/local/database_provider.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
 
-final auditLogProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
-  final resp = await ref.watch(apiClientProvider).get('/audit');
-  return resp.data as List<dynamic>;
+final _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
+
+String _humanizeAction(String action) {
+  final words = action.split('_').where((w) => w.isNotEmpty).map((w) => w.toLowerCase()).toList();
+  if (words.isEmpty) return action;
+  words[0] = words[0][0].toUpperCase() + words[0].substring(1);
+  return words.join(' ');
+}
+
+final auditLogProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final db = ref.watch(appDatabaseProvider);
+  final entries = await (db.select(db.localAuditLog)
+        ..orderBy([(a) => OrderingTerm.desc(a.createdAt)])
+        ..limit(200))
+      .get();
+  final users = await db.select(db.localUsers).get();
+  final namesById = {for (final u in users) u.id: u.fullName};
+  return entries
+      .map(
+        (e) => {
+          'action': e.action,
+          'entityType': e.entityType,
+          'actorName': e.actorId == null ? 'System' : (namesById[e.actorId] ?? 'Unknown'),
+          'createdAt': e.createdAt,
+        },
+      )
+      .toList();
 });
 
-final smsLogProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
-  final resp = await ref.watch(apiClientProvider).get('/sms');
-  return resp.data as List<dynamic>;
-});
+/// No SMS provider is wired up yet (Phase 8) — this stays a local, always-
+/// empty stub rather than a network call that would just fail on every
+/// load now that there's no backend to proxy it through.
+final smsLogProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async => const []);
 
 class AuditScreen extends ConsumerWidget {
   const AuditScreen({super.key});
@@ -32,12 +59,9 @@ class AuditScreen extends ConsumerWidget {
               tabs: [Tab(text: 'Audit log'), Tab(text: 'SMS log')],
             ),
           ),
-          Expanded(
+          const Expanded(
             child: TabBarView(
-              children: [
-                _AuditList(provider: auditLogProvider),
-                _SmsList(provider: smsLogProvider),
-              ],
+              children: [_AuditList(), _SmsList()],
             ),
           ),
         ],
@@ -47,12 +71,11 @@ class AuditScreen extends ConsumerWidget {
 }
 
 class _AuditList extends ConsumerWidget {
-  final AutoDisposeFutureProvider<List<dynamic>> provider;
-  const _AuditList({required this.provider});
+  const _AuditList();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(provider);
+    final data = ref.watch(auditLogProvider);
     return data.when(
       data: (list) => list.isEmpty
           ? const DnEmptyState(icon: Icons.shield_outlined, title: 'No audit entries yet', hint: '')
@@ -60,12 +83,11 @@ class _AuditList extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               itemCount: list.length,
               itemBuilder: (context, i) {
-                final a = list[i] as Map<String, dynamic>;
-                final user = a['user'] as Map<String, dynamic>?;
+                final a = list[i];
                 return ListTile(
-                  title: Text(a['action'] as String),
-                  subtitle: Text('${a['entityType']} · ${user?['fullName'] ?? 'system'}'),
-                  trailing: Text((a['createdAt'] as String).substring(0, 16).replaceFirst('T', ' '), style: const TextStyle(fontSize: 11, color: DnColors.muted)),
+                  title: Text(_humanizeAction(a['action'] as String)),
+                  subtitle: Text('${a['entityType'] ?? '—'} · ${a['actorName']}'),
+                  trailing: Text(_dateFormat.format((a['createdAt'] as DateTime).toLocal()), style: const TextStyle(fontSize: 11, color: DnColors.muted)),
                 );
               },
             ),
@@ -76,15 +98,14 @@ class _AuditList extends ConsumerWidget {
 }
 
 class _SmsList extends ConsumerWidget {
-  final AutoDisposeFutureProvider<List<dynamic>> provider;
-  const _SmsList({required this.provider});
+  const _SmsList();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(provider);
+    final data = ref.watch(smsLogProvider);
     return data.when(
       data: (list) => list.isEmpty
-          ? const DnEmptyState(icon: Icons.sms_outlined, title: 'No SMS messages yet', hint: '')
+          ? const DnEmptyState(icon: Icons.sms_outlined, title: 'No SMS messages yet', hint: "SMS sending isn't set up on this device yet.")
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: list.length,
