@@ -239,11 +239,9 @@ class LocalPrepaidPackages extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// One row per customer with a wallet — cached balance, refreshed on every
-/// online overview fetch and optimistically mutated on offline
-/// deposits/spends. The server remains authoritative: a spend that turns
-/// out to exceed the real balance is rejected at sync time and surfaces in
-/// the Sync Issues screen rather than failing silently.
+/// One row per customer with a wallet. `balance` is a running total kept in
+/// sync with LocalPrepaidWalletLedger on every write — always recomputable
+/// from the ledger, cached here purely so reads don't have to re-sum it.
 class LocalPrepaidWallets extends Table {
   TextColumn get customerId => text()();
   IntColumn get balance => integer()(); // cents
@@ -253,16 +251,54 @@ class LocalPrepaidWallets extends Table {
   Set<Column> get primaryKey => {customerId};
 }
 
-/// Cached prepaid package purchases, for offline eligibility checks
-/// (tier/vehicle/expiry/remaining-count) before allowing an offline PACKAGE
-/// spend — same "provisional, server can still reject" model as the wallet.
+/// Every wallet mutation, signed (+deposit/refund, -debit) — the real
+/// history, not just a cached balance. `clientEntryId` is the idempotency
+/// key: a retried deposit/debit/refund with the same id is a no-op.
+class LocalPrepaidWalletLedger extends Table {
+  TextColumn get id => text()();
+  TextColumn get customerId => text()();
+  TextColumn get entryType => text()(); // DEPOSIT | DEBIT | ADJUSTMENT
+  IntColumn get amount => integer()(); // cents, signed
+  IntColumn get balanceAfter => integer()(); // cents
+  TextColumn get method => text().nullable()(); // set on DEPOSIT only
+  TextColumn get reference => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get createdById => text()();
+  TextColumn get clientEntryId => text().unique()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// A customer's purchase of a prepaid wash bundle — the canonical record,
+/// not a cache. `vehicleId` is set only when the package's applicableScope
+/// is SPECIFIC_VEHICLE; null means it covers any vehicle of the customer.
 class LocalPrepaidPackagePurchases extends Table {
   TextColumn get id => text()();
   TextColumn get packageId => text()();
   TextColumn get customerId => text()();
   TextColumn get vehicleId => text().nullable()();
+  DateTimeColumn get purchasedAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get expiresAt => dateTime()();
   IntColumn get remainingCount => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Idempotent per clientEntryId — one row per wash a package purchase was
+/// spent on, decrementing that purchase's remainingCount by exactly one.
+/// Refunding a void doesn't delete or flag this row (append-only, same as
+/// the rest of the ledger); reconciling net usage means cross-referencing
+/// void events separately.
+class LocalPrepaidPackageUsage extends Table {
+  TextColumn get id => text()();
+  TextColumn get purchaseId => text()();
+  TextColumn get washOrderId => text()();
+  TextColumn get vehicleId => text()();
+  DateTimeColumn get usedAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get usedById => text()();
+  TextColumn get clientEntryId => text().unique()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -339,7 +375,9 @@ class LocalUsers extends Table {
   LocalExpenses,
   LocalPrepaidPackages,
   LocalPrepaidWallets,
+  LocalPrepaidWalletLedger,
   LocalPrepaidPackagePurchases,
+  LocalPrepaidPackageUsage,
   LocalCashCollections,
   LocalPendingUsers,
   LocalUsers,
@@ -349,7 +387,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -397,6 +435,11 @@ class AppDatabase extends _$AppDatabase {
           if (from < 5) {
             await m.createTable(localLoyaltyLedger);
             await m.createTable(localLoyaltyRewards);
+          }
+          if (from < 6) {
+            await m.createTable(localPrepaidWalletLedger);
+            await m.createTable(localPrepaidPackageUsage);
+            await m.addColumn(localPrepaidPackagePurchases, localPrepaidPackagePurchases.purchasedAt);
           }
         },
       );

@@ -7329,6 +7329,639 @@ class LocalPrepaidWalletsCompanion extends UpdateCompanion<LocalPrepaidWallet> {
   }
 }
 
+class $LocalPrepaidWalletLedgerTable extends LocalPrepaidWalletLedger
+    with
+        TableInfo<
+          $LocalPrepaidWalletLedgerTable,
+          LocalPrepaidWalletLedgerData
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalPrepaidWalletLedgerTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _customerIdMeta = const VerificationMeta(
+    'customerId',
+  );
+  @override
+  late final GeneratedColumn<String> customerId = GeneratedColumn<String>(
+    'customer_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _entryTypeMeta = const VerificationMeta(
+    'entryType',
+  );
+  @override
+  late final GeneratedColumn<String> entryType = GeneratedColumn<String>(
+    'entry_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<int> amount = GeneratedColumn<int>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _balanceAfterMeta = const VerificationMeta(
+    'balanceAfter',
+  );
+  @override
+  late final GeneratedColumn<int> balanceAfter = GeneratedColumn<int>(
+    'balance_after',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _methodMeta = const VerificationMeta('method');
+  @override
+  late final GeneratedColumn<String> method = GeneratedColumn<String>(
+    'method',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _referenceMeta = const VerificationMeta(
+    'reference',
+  );
+  @override
+  late final GeneratedColumn<String> reference = GeneratedColumn<String>(
+    'reference',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _createdByIdMeta = const VerificationMeta(
+    'createdById',
+  );
+  @override
+  late final GeneratedColumn<String> createdById = GeneratedColumn<String>(
+    'created_by_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _clientEntryIdMeta = const VerificationMeta(
+    'clientEntryId',
+  );
+  @override
+  late final GeneratedColumn<String> clientEntryId = GeneratedColumn<String>(
+    'client_entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    customerId,
+    entryType,
+    amount,
+    balanceAfter,
+    method,
+    reference,
+    createdAt,
+    createdById,
+    clientEntryId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_prepaid_wallet_ledger';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalPrepaidWalletLedgerData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('customer_id')) {
+      context.handle(
+        _customerIdMeta,
+        customerId.isAcceptableOrUnknown(data['customer_id']!, _customerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_customerIdMeta);
+    }
+    if (data.containsKey('entry_type')) {
+      context.handle(
+        _entryTypeMeta,
+        entryType.isAcceptableOrUnknown(data['entry_type']!, _entryTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entryTypeMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('balance_after')) {
+      context.handle(
+        _balanceAfterMeta,
+        balanceAfter.isAcceptableOrUnknown(
+          data['balance_after']!,
+          _balanceAfterMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_balanceAfterMeta);
+    }
+    if (data.containsKey('method')) {
+      context.handle(
+        _methodMeta,
+        method.isAcceptableOrUnknown(data['method']!, _methodMeta),
+      );
+    }
+    if (data.containsKey('reference')) {
+      context.handle(
+        _referenceMeta,
+        reference.isAcceptableOrUnknown(data['reference']!, _referenceMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('created_by_id')) {
+      context.handle(
+        _createdByIdMeta,
+        createdById.isAcceptableOrUnknown(
+          data['created_by_id']!,
+          _createdByIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdByIdMeta);
+    }
+    if (data.containsKey('client_entry_id')) {
+      context.handle(
+        _clientEntryIdMeta,
+        clientEntryId.isAcceptableOrUnknown(
+          data['client_entry_id']!,
+          _clientEntryIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_clientEntryIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocalPrepaidWalletLedgerData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalPrepaidWalletLedgerData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      customerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}customer_id'],
+      )!,
+      entryType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entry_type'],
+      )!,
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount'],
+      )!,
+      balanceAfter: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}balance_after'],
+      )!,
+      method: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}method'],
+      ),
+      reference: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reference'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      createdById: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by_id'],
+      )!,
+      clientEntryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}client_entry_id'],
+      )!,
+    );
+  }
+
+  @override
+  $LocalPrepaidWalletLedgerTable createAlias(String alias) {
+    return $LocalPrepaidWalletLedgerTable(attachedDatabase, alias);
+  }
+}
+
+class LocalPrepaidWalletLedgerData extends DataClass
+    implements Insertable<LocalPrepaidWalletLedgerData> {
+  final String id;
+  final String customerId;
+  final String entryType;
+  final int amount;
+  final int balanceAfter;
+  final String? method;
+  final String? reference;
+  final DateTime createdAt;
+  final String createdById;
+  final String clientEntryId;
+  const LocalPrepaidWalletLedgerData({
+    required this.id,
+    required this.customerId,
+    required this.entryType,
+    required this.amount,
+    required this.balanceAfter,
+    this.method,
+    this.reference,
+    required this.createdAt,
+    required this.createdById,
+    required this.clientEntryId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['customer_id'] = Variable<String>(customerId);
+    map['entry_type'] = Variable<String>(entryType);
+    map['amount'] = Variable<int>(amount);
+    map['balance_after'] = Variable<int>(balanceAfter);
+    if (!nullToAbsent || method != null) {
+      map['method'] = Variable<String>(method);
+    }
+    if (!nullToAbsent || reference != null) {
+      map['reference'] = Variable<String>(reference);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['created_by_id'] = Variable<String>(createdById);
+    map['client_entry_id'] = Variable<String>(clientEntryId);
+    return map;
+  }
+
+  LocalPrepaidWalletLedgerCompanion toCompanion(bool nullToAbsent) {
+    return LocalPrepaidWalletLedgerCompanion(
+      id: Value(id),
+      customerId: Value(customerId),
+      entryType: Value(entryType),
+      amount: Value(amount),
+      balanceAfter: Value(balanceAfter),
+      method: method == null && nullToAbsent
+          ? const Value.absent()
+          : Value(method),
+      reference: reference == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reference),
+      createdAt: Value(createdAt),
+      createdById: Value(createdById),
+      clientEntryId: Value(clientEntryId),
+    );
+  }
+
+  factory LocalPrepaidWalletLedgerData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalPrepaidWalletLedgerData(
+      id: serializer.fromJson<String>(json['id']),
+      customerId: serializer.fromJson<String>(json['customerId']),
+      entryType: serializer.fromJson<String>(json['entryType']),
+      amount: serializer.fromJson<int>(json['amount']),
+      balanceAfter: serializer.fromJson<int>(json['balanceAfter']),
+      method: serializer.fromJson<String?>(json['method']),
+      reference: serializer.fromJson<String?>(json['reference']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      createdById: serializer.fromJson<String>(json['createdById']),
+      clientEntryId: serializer.fromJson<String>(json['clientEntryId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'customerId': serializer.toJson<String>(customerId),
+      'entryType': serializer.toJson<String>(entryType),
+      'amount': serializer.toJson<int>(amount),
+      'balanceAfter': serializer.toJson<int>(balanceAfter),
+      'method': serializer.toJson<String?>(method),
+      'reference': serializer.toJson<String?>(reference),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'createdById': serializer.toJson<String>(createdById),
+      'clientEntryId': serializer.toJson<String>(clientEntryId),
+    };
+  }
+
+  LocalPrepaidWalletLedgerData copyWith({
+    String? id,
+    String? customerId,
+    String? entryType,
+    int? amount,
+    int? balanceAfter,
+    Value<String?> method = const Value.absent(),
+    Value<String?> reference = const Value.absent(),
+    DateTime? createdAt,
+    String? createdById,
+    String? clientEntryId,
+  }) => LocalPrepaidWalletLedgerData(
+    id: id ?? this.id,
+    customerId: customerId ?? this.customerId,
+    entryType: entryType ?? this.entryType,
+    amount: amount ?? this.amount,
+    balanceAfter: balanceAfter ?? this.balanceAfter,
+    method: method.present ? method.value : this.method,
+    reference: reference.present ? reference.value : this.reference,
+    createdAt: createdAt ?? this.createdAt,
+    createdById: createdById ?? this.createdById,
+    clientEntryId: clientEntryId ?? this.clientEntryId,
+  );
+  LocalPrepaidWalletLedgerData copyWithCompanion(
+    LocalPrepaidWalletLedgerCompanion data,
+  ) {
+    return LocalPrepaidWalletLedgerData(
+      id: data.id.present ? data.id.value : this.id,
+      customerId: data.customerId.present
+          ? data.customerId.value
+          : this.customerId,
+      entryType: data.entryType.present ? data.entryType.value : this.entryType,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      balanceAfter: data.balanceAfter.present
+          ? data.balanceAfter.value
+          : this.balanceAfter,
+      method: data.method.present ? data.method.value : this.method,
+      reference: data.reference.present ? data.reference.value : this.reference,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      createdById: data.createdById.present
+          ? data.createdById.value
+          : this.createdById,
+      clientEntryId: data.clientEntryId.present
+          ? data.clientEntryId.value
+          : this.clientEntryId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalPrepaidWalletLedgerData(')
+          ..write('id: $id, ')
+          ..write('customerId: $customerId, ')
+          ..write('entryType: $entryType, ')
+          ..write('amount: $amount, ')
+          ..write('balanceAfter: $balanceAfter, ')
+          ..write('method: $method, ')
+          ..write('reference: $reference, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('createdById: $createdById, ')
+          ..write('clientEntryId: $clientEntryId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    customerId,
+    entryType,
+    amount,
+    balanceAfter,
+    method,
+    reference,
+    createdAt,
+    createdById,
+    clientEntryId,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalPrepaidWalletLedgerData &&
+          other.id == this.id &&
+          other.customerId == this.customerId &&
+          other.entryType == this.entryType &&
+          other.amount == this.amount &&
+          other.balanceAfter == this.balanceAfter &&
+          other.method == this.method &&
+          other.reference == this.reference &&
+          other.createdAt == this.createdAt &&
+          other.createdById == this.createdById &&
+          other.clientEntryId == this.clientEntryId);
+}
+
+class LocalPrepaidWalletLedgerCompanion
+    extends UpdateCompanion<LocalPrepaidWalletLedgerData> {
+  final Value<String> id;
+  final Value<String> customerId;
+  final Value<String> entryType;
+  final Value<int> amount;
+  final Value<int> balanceAfter;
+  final Value<String?> method;
+  final Value<String?> reference;
+  final Value<DateTime> createdAt;
+  final Value<String> createdById;
+  final Value<String> clientEntryId;
+  final Value<int> rowid;
+  const LocalPrepaidWalletLedgerCompanion({
+    this.id = const Value.absent(),
+    this.customerId = const Value.absent(),
+    this.entryType = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.balanceAfter = const Value.absent(),
+    this.method = const Value.absent(),
+    this.reference = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.createdById = const Value.absent(),
+    this.clientEntryId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalPrepaidWalletLedgerCompanion.insert({
+    required String id,
+    required String customerId,
+    required String entryType,
+    required int amount,
+    required int balanceAfter,
+    this.method = const Value.absent(),
+    this.reference = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    required String createdById,
+    required String clientEntryId,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       customerId = Value(customerId),
+       entryType = Value(entryType),
+       amount = Value(amount),
+       balanceAfter = Value(balanceAfter),
+       createdById = Value(createdById),
+       clientEntryId = Value(clientEntryId);
+  static Insertable<LocalPrepaidWalletLedgerData> custom({
+    Expression<String>? id,
+    Expression<String>? customerId,
+    Expression<String>? entryType,
+    Expression<int>? amount,
+    Expression<int>? balanceAfter,
+    Expression<String>? method,
+    Expression<String>? reference,
+    Expression<DateTime>? createdAt,
+    Expression<String>? createdById,
+    Expression<String>? clientEntryId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (customerId != null) 'customer_id': customerId,
+      if (entryType != null) 'entry_type': entryType,
+      if (amount != null) 'amount': amount,
+      if (balanceAfter != null) 'balance_after': balanceAfter,
+      if (method != null) 'method': method,
+      if (reference != null) 'reference': reference,
+      if (createdAt != null) 'created_at': createdAt,
+      if (createdById != null) 'created_by_id': createdById,
+      if (clientEntryId != null) 'client_entry_id': clientEntryId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalPrepaidWalletLedgerCompanion copyWith({
+    Value<String>? id,
+    Value<String>? customerId,
+    Value<String>? entryType,
+    Value<int>? amount,
+    Value<int>? balanceAfter,
+    Value<String?>? method,
+    Value<String?>? reference,
+    Value<DateTime>? createdAt,
+    Value<String>? createdById,
+    Value<String>? clientEntryId,
+    Value<int>? rowid,
+  }) {
+    return LocalPrepaidWalletLedgerCompanion(
+      id: id ?? this.id,
+      customerId: customerId ?? this.customerId,
+      entryType: entryType ?? this.entryType,
+      amount: amount ?? this.amount,
+      balanceAfter: balanceAfter ?? this.balanceAfter,
+      method: method ?? this.method,
+      reference: reference ?? this.reference,
+      createdAt: createdAt ?? this.createdAt,
+      createdById: createdById ?? this.createdById,
+      clientEntryId: clientEntryId ?? this.clientEntryId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (customerId.present) {
+      map['customer_id'] = Variable<String>(customerId.value);
+    }
+    if (entryType.present) {
+      map['entry_type'] = Variable<String>(entryType.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<int>(amount.value);
+    }
+    if (balanceAfter.present) {
+      map['balance_after'] = Variable<int>(balanceAfter.value);
+    }
+    if (method.present) {
+      map['method'] = Variable<String>(method.value);
+    }
+    if (reference.present) {
+      map['reference'] = Variable<String>(reference.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (createdById.present) {
+      map['created_by_id'] = Variable<String>(createdById.value);
+    }
+    if (clientEntryId.present) {
+      map['client_entry_id'] = Variable<String>(clientEntryId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalPrepaidWalletLedgerCompanion(')
+          ..write('id: $id, ')
+          ..write('customerId: $customerId, ')
+          ..write('entryType: $entryType, ')
+          ..write('amount: $amount, ')
+          ..write('balanceAfter: $balanceAfter, ')
+          ..write('method: $method, ')
+          ..write('reference: $reference, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('createdById: $createdById, ')
+          ..write('clientEntryId: $clientEntryId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $LocalPrepaidPackagePurchasesTable extends LocalPrepaidPackagePurchases
     with
         TableInfo<
@@ -7381,6 +8014,18 @@ class $LocalPrepaidPackagePurchasesTable extends LocalPrepaidPackagePurchases
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _purchasedAtMeta = const VerificationMeta(
+    'purchasedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> purchasedAt = GeneratedColumn<DateTime>(
+    'purchased_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   static const VerificationMeta _expiresAtMeta = const VerificationMeta(
     'expiresAt',
   );
@@ -7409,6 +8054,7 @@ class $LocalPrepaidPackagePurchasesTable extends LocalPrepaidPackagePurchases
     packageId,
     customerId,
     vehicleId,
+    purchasedAt,
     expiresAt,
     remainingCount,
   ];
@@ -7449,6 +8095,15 @@ class $LocalPrepaidPackagePurchasesTable extends LocalPrepaidPackagePurchases
       context.handle(
         _vehicleIdMeta,
         vehicleId.isAcceptableOrUnknown(data['vehicle_id']!, _vehicleIdMeta),
+      );
+    }
+    if (data.containsKey('purchased_at')) {
+      context.handle(
+        _purchasedAtMeta,
+        purchasedAt.isAcceptableOrUnknown(
+          data['purchased_at']!,
+          _purchasedAtMeta,
+        ),
       );
     }
     if (data.containsKey('expires_at')) {
@@ -7498,6 +8153,10 @@ class $LocalPrepaidPackagePurchasesTable extends LocalPrepaidPackagePurchases
         DriftSqlType.string,
         data['${effectivePrefix}vehicle_id'],
       ),
+      purchasedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}purchased_at'],
+      )!,
       expiresAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}expires_at'],
@@ -7521,6 +8180,7 @@ class LocalPrepaidPackagePurchase extends DataClass
   final String packageId;
   final String customerId;
   final String? vehicleId;
+  final DateTime purchasedAt;
   final DateTime expiresAt;
   final int remainingCount;
   const LocalPrepaidPackagePurchase({
@@ -7528,6 +8188,7 @@ class LocalPrepaidPackagePurchase extends DataClass
     required this.packageId,
     required this.customerId,
     this.vehicleId,
+    required this.purchasedAt,
     required this.expiresAt,
     required this.remainingCount,
   });
@@ -7540,6 +8201,7 @@ class LocalPrepaidPackagePurchase extends DataClass
     if (!nullToAbsent || vehicleId != null) {
       map['vehicle_id'] = Variable<String>(vehicleId);
     }
+    map['purchased_at'] = Variable<DateTime>(purchasedAt);
     map['expires_at'] = Variable<DateTime>(expiresAt);
     map['remaining_count'] = Variable<int>(remainingCount);
     return map;
@@ -7553,6 +8215,7 @@ class LocalPrepaidPackagePurchase extends DataClass
       vehicleId: vehicleId == null && nullToAbsent
           ? const Value.absent()
           : Value(vehicleId),
+      purchasedAt: Value(purchasedAt),
       expiresAt: Value(expiresAt),
       remainingCount: Value(remainingCount),
     );
@@ -7568,6 +8231,7 @@ class LocalPrepaidPackagePurchase extends DataClass
       packageId: serializer.fromJson<String>(json['packageId']),
       customerId: serializer.fromJson<String>(json['customerId']),
       vehicleId: serializer.fromJson<String?>(json['vehicleId']),
+      purchasedAt: serializer.fromJson<DateTime>(json['purchasedAt']),
       expiresAt: serializer.fromJson<DateTime>(json['expiresAt']),
       remainingCount: serializer.fromJson<int>(json['remainingCount']),
     );
@@ -7580,6 +8244,7 @@ class LocalPrepaidPackagePurchase extends DataClass
       'packageId': serializer.toJson<String>(packageId),
       'customerId': serializer.toJson<String>(customerId),
       'vehicleId': serializer.toJson<String?>(vehicleId),
+      'purchasedAt': serializer.toJson<DateTime>(purchasedAt),
       'expiresAt': serializer.toJson<DateTime>(expiresAt),
       'remainingCount': serializer.toJson<int>(remainingCount),
     };
@@ -7590,6 +8255,7 @@ class LocalPrepaidPackagePurchase extends DataClass
     String? packageId,
     String? customerId,
     Value<String?> vehicleId = const Value.absent(),
+    DateTime? purchasedAt,
     DateTime? expiresAt,
     int? remainingCount,
   }) => LocalPrepaidPackagePurchase(
@@ -7597,6 +8263,7 @@ class LocalPrepaidPackagePurchase extends DataClass
     packageId: packageId ?? this.packageId,
     customerId: customerId ?? this.customerId,
     vehicleId: vehicleId.present ? vehicleId.value : this.vehicleId,
+    purchasedAt: purchasedAt ?? this.purchasedAt,
     expiresAt: expiresAt ?? this.expiresAt,
     remainingCount: remainingCount ?? this.remainingCount,
   );
@@ -7610,6 +8277,9 @@ class LocalPrepaidPackagePurchase extends DataClass
           ? data.customerId.value
           : this.customerId,
       vehicleId: data.vehicleId.present ? data.vehicleId.value : this.vehicleId,
+      purchasedAt: data.purchasedAt.present
+          ? data.purchasedAt.value
+          : this.purchasedAt,
       expiresAt: data.expiresAt.present ? data.expiresAt.value : this.expiresAt,
       remainingCount: data.remainingCount.present
           ? data.remainingCount.value
@@ -7624,6 +8294,7 @@ class LocalPrepaidPackagePurchase extends DataClass
           ..write('packageId: $packageId, ')
           ..write('customerId: $customerId, ')
           ..write('vehicleId: $vehicleId, ')
+          ..write('purchasedAt: $purchasedAt, ')
           ..write('expiresAt: $expiresAt, ')
           ..write('remainingCount: $remainingCount')
           ..write(')'))
@@ -7636,6 +8307,7 @@ class LocalPrepaidPackagePurchase extends DataClass
     packageId,
     customerId,
     vehicleId,
+    purchasedAt,
     expiresAt,
     remainingCount,
   );
@@ -7647,6 +8319,7 @@ class LocalPrepaidPackagePurchase extends DataClass
           other.packageId == this.packageId &&
           other.customerId == this.customerId &&
           other.vehicleId == this.vehicleId &&
+          other.purchasedAt == this.purchasedAt &&
           other.expiresAt == this.expiresAt &&
           other.remainingCount == this.remainingCount);
 }
@@ -7657,6 +8330,7 @@ class LocalPrepaidPackagePurchasesCompanion
   final Value<String> packageId;
   final Value<String> customerId;
   final Value<String?> vehicleId;
+  final Value<DateTime> purchasedAt;
   final Value<DateTime> expiresAt;
   final Value<int> remainingCount;
   final Value<int> rowid;
@@ -7665,6 +8339,7 @@ class LocalPrepaidPackagePurchasesCompanion
     this.packageId = const Value.absent(),
     this.customerId = const Value.absent(),
     this.vehicleId = const Value.absent(),
+    this.purchasedAt = const Value.absent(),
     this.expiresAt = const Value.absent(),
     this.remainingCount = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -7674,6 +8349,7 @@ class LocalPrepaidPackagePurchasesCompanion
     required String packageId,
     required String customerId,
     this.vehicleId = const Value.absent(),
+    this.purchasedAt = const Value.absent(),
     required DateTime expiresAt,
     required int remainingCount,
     this.rowid = const Value.absent(),
@@ -7687,6 +8363,7 @@ class LocalPrepaidPackagePurchasesCompanion
     Expression<String>? packageId,
     Expression<String>? customerId,
     Expression<String>? vehicleId,
+    Expression<DateTime>? purchasedAt,
     Expression<DateTime>? expiresAt,
     Expression<int>? remainingCount,
     Expression<int>? rowid,
@@ -7696,6 +8373,7 @@ class LocalPrepaidPackagePurchasesCompanion
       if (packageId != null) 'package_id': packageId,
       if (customerId != null) 'customer_id': customerId,
       if (vehicleId != null) 'vehicle_id': vehicleId,
+      if (purchasedAt != null) 'purchased_at': purchasedAt,
       if (expiresAt != null) 'expires_at': expiresAt,
       if (remainingCount != null) 'remaining_count': remainingCount,
       if (rowid != null) 'rowid': rowid,
@@ -7707,6 +8385,7 @@ class LocalPrepaidPackagePurchasesCompanion
     Value<String>? packageId,
     Value<String>? customerId,
     Value<String?>? vehicleId,
+    Value<DateTime>? purchasedAt,
     Value<DateTime>? expiresAt,
     Value<int>? remainingCount,
     Value<int>? rowid,
@@ -7716,6 +8395,7 @@ class LocalPrepaidPackagePurchasesCompanion
       packageId: packageId ?? this.packageId,
       customerId: customerId ?? this.customerId,
       vehicleId: vehicleId ?? this.vehicleId,
+      purchasedAt: purchasedAt ?? this.purchasedAt,
       expiresAt: expiresAt ?? this.expiresAt,
       remainingCount: remainingCount ?? this.remainingCount,
       rowid: rowid ?? this.rowid,
@@ -7737,6 +8417,9 @@ class LocalPrepaidPackagePurchasesCompanion
     if (vehicleId.present) {
       map['vehicle_id'] = Variable<String>(vehicleId.value);
     }
+    if (purchasedAt.present) {
+      map['purchased_at'] = Variable<DateTime>(purchasedAt.value);
+    }
     if (expiresAt.present) {
       map['expires_at'] = Variable<DateTime>(expiresAt.value);
     }
@@ -7756,8 +8439,493 @@ class LocalPrepaidPackagePurchasesCompanion
           ..write('packageId: $packageId, ')
           ..write('customerId: $customerId, ')
           ..write('vehicleId: $vehicleId, ')
+          ..write('purchasedAt: $purchasedAt, ')
           ..write('expiresAt: $expiresAt, ')
           ..write('remainingCount: $remainingCount, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LocalPrepaidPackageUsageTable extends LocalPrepaidPackageUsage
+    with
+        TableInfo<
+          $LocalPrepaidPackageUsageTable,
+          LocalPrepaidPackageUsageData
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalPrepaidPackageUsageTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _purchaseIdMeta = const VerificationMeta(
+    'purchaseId',
+  );
+  @override
+  late final GeneratedColumn<String> purchaseId = GeneratedColumn<String>(
+    'purchase_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _washOrderIdMeta = const VerificationMeta(
+    'washOrderId',
+  );
+  @override
+  late final GeneratedColumn<String> washOrderId = GeneratedColumn<String>(
+    'wash_order_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _vehicleIdMeta = const VerificationMeta(
+    'vehicleId',
+  );
+  @override
+  late final GeneratedColumn<String> vehicleId = GeneratedColumn<String>(
+    'vehicle_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _usedAtMeta = const VerificationMeta('usedAt');
+  @override
+  late final GeneratedColumn<DateTime> usedAt = GeneratedColumn<DateTime>(
+    'used_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _usedByIdMeta = const VerificationMeta(
+    'usedById',
+  );
+  @override
+  late final GeneratedColumn<String> usedById = GeneratedColumn<String>(
+    'used_by_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _clientEntryIdMeta = const VerificationMeta(
+    'clientEntryId',
+  );
+  @override
+  late final GeneratedColumn<String> clientEntryId = GeneratedColumn<String>(
+    'client_entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    purchaseId,
+    washOrderId,
+    vehicleId,
+    usedAt,
+    usedById,
+    clientEntryId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_prepaid_package_usage';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalPrepaidPackageUsageData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('purchase_id')) {
+      context.handle(
+        _purchaseIdMeta,
+        purchaseId.isAcceptableOrUnknown(data['purchase_id']!, _purchaseIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_purchaseIdMeta);
+    }
+    if (data.containsKey('wash_order_id')) {
+      context.handle(
+        _washOrderIdMeta,
+        washOrderId.isAcceptableOrUnknown(
+          data['wash_order_id']!,
+          _washOrderIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_washOrderIdMeta);
+    }
+    if (data.containsKey('vehicle_id')) {
+      context.handle(
+        _vehicleIdMeta,
+        vehicleId.isAcceptableOrUnknown(data['vehicle_id']!, _vehicleIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_vehicleIdMeta);
+    }
+    if (data.containsKey('used_at')) {
+      context.handle(
+        _usedAtMeta,
+        usedAt.isAcceptableOrUnknown(data['used_at']!, _usedAtMeta),
+      );
+    }
+    if (data.containsKey('used_by_id')) {
+      context.handle(
+        _usedByIdMeta,
+        usedById.isAcceptableOrUnknown(data['used_by_id']!, _usedByIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_usedByIdMeta);
+    }
+    if (data.containsKey('client_entry_id')) {
+      context.handle(
+        _clientEntryIdMeta,
+        clientEntryId.isAcceptableOrUnknown(
+          data['client_entry_id']!,
+          _clientEntryIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_clientEntryIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocalPrepaidPackageUsageData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalPrepaidPackageUsageData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      purchaseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}purchase_id'],
+      )!,
+      washOrderId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}wash_order_id'],
+      )!,
+      vehicleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vehicle_id'],
+      )!,
+      usedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}used_at'],
+      )!,
+      usedById: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}used_by_id'],
+      )!,
+      clientEntryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}client_entry_id'],
+      )!,
+    );
+  }
+
+  @override
+  $LocalPrepaidPackageUsageTable createAlias(String alias) {
+    return $LocalPrepaidPackageUsageTable(attachedDatabase, alias);
+  }
+}
+
+class LocalPrepaidPackageUsageData extends DataClass
+    implements Insertable<LocalPrepaidPackageUsageData> {
+  final String id;
+  final String purchaseId;
+  final String washOrderId;
+  final String vehicleId;
+  final DateTime usedAt;
+  final String usedById;
+  final String clientEntryId;
+  const LocalPrepaidPackageUsageData({
+    required this.id,
+    required this.purchaseId,
+    required this.washOrderId,
+    required this.vehicleId,
+    required this.usedAt,
+    required this.usedById,
+    required this.clientEntryId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['purchase_id'] = Variable<String>(purchaseId);
+    map['wash_order_id'] = Variable<String>(washOrderId);
+    map['vehicle_id'] = Variable<String>(vehicleId);
+    map['used_at'] = Variable<DateTime>(usedAt);
+    map['used_by_id'] = Variable<String>(usedById);
+    map['client_entry_id'] = Variable<String>(clientEntryId);
+    return map;
+  }
+
+  LocalPrepaidPackageUsageCompanion toCompanion(bool nullToAbsent) {
+    return LocalPrepaidPackageUsageCompanion(
+      id: Value(id),
+      purchaseId: Value(purchaseId),
+      washOrderId: Value(washOrderId),
+      vehicleId: Value(vehicleId),
+      usedAt: Value(usedAt),
+      usedById: Value(usedById),
+      clientEntryId: Value(clientEntryId),
+    );
+  }
+
+  factory LocalPrepaidPackageUsageData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalPrepaidPackageUsageData(
+      id: serializer.fromJson<String>(json['id']),
+      purchaseId: serializer.fromJson<String>(json['purchaseId']),
+      washOrderId: serializer.fromJson<String>(json['washOrderId']),
+      vehicleId: serializer.fromJson<String>(json['vehicleId']),
+      usedAt: serializer.fromJson<DateTime>(json['usedAt']),
+      usedById: serializer.fromJson<String>(json['usedById']),
+      clientEntryId: serializer.fromJson<String>(json['clientEntryId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'purchaseId': serializer.toJson<String>(purchaseId),
+      'washOrderId': serializer.toJson<String>(washOrderId),
+      'vehicleId': serializer.toJson<String>(vehicleId),
+      'usedAt': serializer.toJson<DateTime>(usedAt),
+      'usedById': serializer.toJson<String>(usedById),
+      'clientEntryId': serializer.toJson<String>(clientEntryId),
+    };
+  }
+
+  LocalPrepaidPackageUsageData copyWith({
+    String? id,
+    String? purchaseId,
+    String? washOrderId,
+    String? vehicleId,
+    DateTime? usedAt,
+    String? usedById,
+    String? clientEntryId,
+  }) => LocalPrepaidPackageUsageData(
+    id: id ?? this.id,
+    purchaseId: purchaseId ?? this.purchaseId,
+    washOrderId: washOrderId ?? this.washOrderId,
+    vehicleId: vehicleId ?? this.vehicleId,
+    usedAt: usedAt ?? this.usedAt,
+    usedById: usedById ?? this.usedById,
+    clientEntryId: clientEntryId ?? this.clientEntryId,
+  );
+  LocalPrepaidPackageUsageData copyWithCompanion(
+    LocalPrepaidPackageUsageCompanion data,
+  ) {
+    return LocalPrepaidPackageUsageData(
+      id: data.id.present ? data.id.value : this.id,
+      purchaseId: data.purchaseId.present
+          ? data.purchaseId.value
+          : this.purchaseId,
+      washOrderId: data.washOrderId.present
+          ? data.washOrderId.value
+          : this.washOrderId,
+      vehicleId: data.vehicleId.present ? data.vehicleId.value : this.vehicleId,
+      usedAt: data.usedAt.present ? data.usedAt.value : this.usedAt,
+      usedById: data.usedById.present ? data.usedById.value : this.usedById,
+      clientEntryId: data.clientEntryId.present
+          ? data.clientEntryId.value
+          : this.clientEntryId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalPrepaidPackageUsageData(')
+          ..write('id: $id, ')
+          ..write('purchaseId: $purchaseId, ')
+          ..write('washOrderId: $washOrderId, ')
+          ..write('vehicleId: $vehicleId, ')
+          ..write('usedAt: $usedAt, ')
+          ..write('usedById: $usedById, ')
+          ..write('clientEntryId: $clientEntryId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    purchaseId,
+    washOrderId,
+    vehicleId,
+    usedAt,
+    usedById,
+    clientEntryId,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalPrepaidPackageUsageData &&
+          other.id == this.id &&
+          other.purchaseId == this.purchaseId &&
+          other.washOrderId == this.washOrderId &&
+          other.vehicleId == this.vehicleId &&
+          other.usedAt == this.usedAt &&
+          other.usedById == this.usedById &&
+          other.clientEntryId == this.clientEntryId);
+}
+
+class LocalPrepaidPackageUsageCompanion
+    extends UpdateCompanion<LocalPrepaidPackageUsageData> {
+  final Value<String> id;
+  final Value<String> purchaseId;
+  final Value<String> washOrderId;
+  final Value<String> vehicleId;
+  final Value<DateTime> usedAt;
+  final Value<String> usedById;
+  final Value<String> clientEntryId;
+  final Value<int> rowid;
+  const LocalPrepaidPackageUsageCompanion({
+    this.id = const Value.absent(),
+    this.purchaseId = const Value.absent(),
+    this.washOrderId = const Value.absent(),
+    this.vehicleId = const Value.absent(),
+    this.usedAt = const Value.absent(),
+    this.usedById = const Value.absent(),
+    this.clientEntryId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalPrepaidPackageUsageCompanion.insert({
+    required String id,
+    required String purchaseId,
+    required String washOrderId,
+    required String vehicleId,
+    this.usedAt = const Value.absent(),
+    required String usedById,
+    required String clientEntryId,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       purchaseId = Value(purchaseId),
+       washOrderId = Value(washOrderId),
+       vehicleId = Value(vehicleId),
+       usedById = Value(usedById),
+       clientEntryId = Value(clientEntryId);
+  static Insertable<LocalPrepaidPackageUsageData> custom({
+    Expression<String>? id,
+    Expression<String>? purchaseId,
+    Expression<String>? washOrderId,
+    Expression<String>? vehicleId,
+    Expression<DateTime>? usedAt,
+    Expression<String>? usedById,
+    Expression<String>? clientEntryId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (purchaseId != null) 'purchase_id': purchaseId,
+      if (washOrderId != null) 'wash_order_id': washOrderId,
+      if (vehicleId != null) 'vehicle_id': vehicleId,
+      if (usedAt != null) 'used_at': usedAt,
+      if (usedById != null) 'used_by_id': usedById,
+      if (clientEntryId != null) 'client_entry_id': clientEntryId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalPrepaidPackageUsageCompanion copyWith({
+    Value<String>? id,
+    Value<String>? purchaseId,
+    Value<String>? washOrderId,
+    Value<String>? vehicleId,
+    Value<DateTime>? usedAt,
+    Value<String>? usedById,
+    Value<String>? clientEntryId,
+    Value<int>? rowid,
+  }) {
+    return LocalPrepaidPackageUsageCompanion(
+      id: id ?? this.id,
+      purchaseId: purchaseId ?? this.purchaseId,
+      washOrderId: washOrderId ?? this.washOrderId,
+      vehicleId: vehicleId ?? this.vehicleId,
+      usedAt: usedAt ?? this.usedAt,
+      usedById: usedById ?? this.usedById,
+      clientEntryId: clientEntryId ?? this.clientEntryId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (purchaseId.present) {
+      map['purchase_id'] = Variable<String>(purchaseId.value);
+    }
+    if (washOrderId.present) {
+      map['wash_order_id'] = Variable<String>(washOrderId.value);
+    }
+    if (vehicleId.present) {
+      map['vehicle_id'] = Variable<String>(vehicleId.value);
+    }
+    if (usedAt.present) {
+      map['used_at'] = Variable<DateTime>(usedAt.value);
+    }
+    if (usedById.present) {
+      map['used_by_id'] = Variable<String>(usedById.value);
+    }
+    if (clientEntryId.present) {
+      map['client_entry_id'] = Variable<String>(clientEntryId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalPrepaidPackageUsageCompanion(')
+          ..write('id: $id, ')
+          ..write('purchaseId: $purchaseId, ')
+          ..write('washOrderId: $washOrderId, ')
+          ..write('vehicleId: $vehicleId, ')
+          ..write('usedAt: $usedAt, ')
+          ..write('usedById: $usedById, ')
+          ..write('clientEntryId: $clientEntryId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -9352,8 +10520,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $LocalPrepaidPackagesTable(this);
   late final $LocalPrepaidWalletsTable localPrepaidWallets =
       $LocalPrepaidWalletsTable(this);
+  late final $LocalPrepaidWalletLedgerTable localPrepaidWalletLedger =
+      $LocalPrepaidWalletLedgerTable(this);
   late final $LocalPrepaidPackagePurchasesTable localPrepaidPackagePurchases =
       $LocalPrepaidPackagePurchasesTable(this);
+  late final $LocalPrepaidPackageUsageTable localPrepaidPackageUsage =
+      $LocalPrepaidPackageUsageTable(this);
   late final $LocalCashCollectionsTable localCashCollections =
       $LocalCashCollectionsTable(this);
   late final $LocalPendingUsersTable localPendingUsers =
@@ -9381,7 +10553,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     localExpenses,
     localPrepaidPackages,
     localPrepaidWallets,
+    localPrepaidWalletLedger,
     localPrepaidPackagePurchases,
+    localPrepaidPackageUsage,
     localCashCollections,
     localPendingUsers,
     localUsers,
@@ -13405,12 +14579,335 @@ typedef $$LocalPrepaidWalletsTableProcessedTableManager =
       LocalPrepaidWallet,
       PrefetchHooks Function()
     >;
+typedef $$LocalPrepaidWalletLedgerTableCreateCompanionBuilder =
+    LocalPrepaidWalletLedgerCompanion Function({
+      required String id,
+      required String customerId,
+      required String entryType,
+      required int amount,
+      required int balanceAfter,
+      Value<String?> method,
+      Value<String?> reference,
+      Value<DateTime> createdAt,
+      required String createdById,
+      required String clientEntryId,
+      Value<int> rowid,
+    });
+typedef $$LocalPrepaidWalletLedgerTableUpdateCompanionBuilder =
+    LocalPrepaidWalletLedgerCompanion Function({
+      Value<String> id,
+      Value<String> customerId,
+      Value<String> entryType,
+      Value<int> amount,
+      Value<int> balanceAfter,
+      Value<String?> method,
+      Value<String?> reference,
+      Value<DateTime> createdAt,
+      Value<String> createdById,
+      Value<String> clientEntryId,
+      Value<int> rowid,
+    });
+
+class $$LocalPrepaidWalletLedgerTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalPrepaidWalletLedgerTable> {
+  $$LocalPrepaidWalletLedgerTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customerId => $composableBuilder(
+    column: $table.customerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entryType => $composableBuilder(
+    column: $table.entryType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get balanceAfter => $composableBuilder(
+    column: $table.balanceAfter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get method => $composableBuilder(
+    column: $table.method,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reference => $composableBuilder(
+    column: $table.reference,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdById => $composableBuilder(
+    column: $table.createdById,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get clientEntryId => $composableBuilder(
+    column: $table.clientEntryId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocalPrepaidWalletLedgerTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalPrepaidWalletLedgerTable> {
+  $$LocalPrepaidWalletLedgerTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get customerId => $composableBuilder(
+    column: $table.customerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entryType => $composableBuilder(
+    column: $table.entryType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get balanceAfter => $composableBuilder(
+    column: $table.balanceAfter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get method => $composableBuilder(
+    column: $table.method,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reference => $composableBuilder(
+    column: $table.reference,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdById => $composableBuilder(
+    column: $table.createdById,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get clientEntryId => $composableBuilder(
+    column: $table.clientEntryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalPrepaidWalletLedgerTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalPrepaidWalletLedgerTable> {
+  $$LocalPrepaidWalletLedgerTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get customerId => $composableBuilder(
+    column: $table.customerId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get entryType =>
+      $composableBuilder(column: $table.entryType, builder: (column) => column);
+
+  GeneratedColumn<int> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<int> get balanceAfter => $composableBuilder(
+    column: $table.balanceAfter,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get method =>
+      $composableBuilder(column: $table.method, builder: (column) => column);
+
+  GeneratedColumn<String> get reference =>
+      $composableBuilder(column: $table.reference, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get createdById => $composableBuilder(
+    column: $table.createdById,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get clientEntryId => $composableBuilder(
+    column: $table.clientEntryId,
+    builder: (column) => column,
+  );
+}
+
+class $$LocalPrepaidWalletLedgerTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalPrepaidWalletLedgerTable,
+          LocalPrepaidWalletLedgerData,
+          $$LocalPrepaidWalletLedgerTableFilterComposer,
+          $$LocalPrepaidWalletLedgerTableOrderingComposer,
+          $$LocalPrepaidWalletLedgerTableAnnotationComposer,
+          $$LocalPrepaidWalletLedgerTableCreateCompanionBuilder,
+          $$LocalPrepaidWalletLedgerTableUpdateCompanionBuilder,
+          (
+            LocalPrepaidWalletLedgerData,
+            BaseReferences<
+              _$AppDatabase,
+              $LocalPrepaidWalletLedgerTable,
+              LocalPrepaidWalletLedgerData
+            >,
+          ),
+          LocalPrepaidWalletLedgerData,
+          PrefetchHooks Function()
+        > {
+  $$LocalPrepaidWalletLedgerTableTableManager(
+    _$AppDatabase db,
+    $LocalPrepaidWalletLedgerTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalPrepaidWalletLedgerTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$LocalPrepaidWalletLedgerTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$LocalPrepaidWalletLedgerTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> customerId = const Value.absent(),
+                Value<String> entryType = const Value.absent(),
+                Value<int> amount = const Value.absent(),
+                Value<int> balanceAfter = const Value.absent(),
+                Value<String?> method = const Value.absent(),
+                Value<String?> reference = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<String> createdById = const Value.absent(),
+                Value<String> clientEntryId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalPrepaidWalletLedgerCompanion(
+                id: id,
+                customerId: customerId,
+                entryType: entryType,
+                amount: amount,
+                balanceAfter: balanceAfter,
+                method: method,
+                reference: reference,
+                createdAt: createdAt,
+                createdById: createdById,
+                clientEntryId: clientEntryId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String customerId,
+                required String entryType,
+                required int amount,
+                required int balanceAfter,
+                Value<String?> method = const Value.absent(),
+                Value<String?> reference = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                required String createdById,
+                required String clientEntryId,
+                Value<int> rowid = const Value.absent(),
+              }) => LocalPrepaidWalletLedgerCompanion.insert(
+                id: id,
+                customerId: customerId,
+                entryType: entryType,
+                amount: amount,
+                balanceAfter: balanceAfter,
+                method: method,
+                reference: reference,
+                createdAt: createdAt,
+                createdById: createdById,
+                clientEntryId: clientEntryId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocalPrepaidWalletLedgerTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalPrepaidWalletLedgerTable,
+      LocalPrepaidWalletLedgerData,
+      $$LocalPrepaidWalletLedgerTableFilterComposer,
+      $$LocalPrepaidWalletLedgerTableOrderingComposer,
+      $$LocalPrepaidWalletLedgerTableAnnotationComposer,
+      $$LocalPrepaidWalletLedgerTableCreateCompanionBuilder,
+      $$LocalPrepaidWalletLedgerTableUpdateCompanionBuilder,
+      (
+        LocalPrepaidWalletLedgerData,
+        BaseReferences<
+          _$AppDatabase,
+          $LocalPrepaidWalletLedgerTable,
+          LocalPrepaidWalletLedgerData
+        >,
+      ),
+      LocalPrepaidWalletLedgerData,
+      PrefetchHooks Function()
+    >;
 typedef $$LocalPrepaidPackagePurchasesTableCreateCompanionBuilder =
     LocalPrepaidPackagePurchasesCompanion Function({
       required String id,
       required String packageId,
       required String customerId,
       Value<String?> vehicleId,
+      Value<DateTime> purchasedAt,
       required DateTime expiresAt,
       required int remainingCount,
       Value<int> rowid,
@@ -13421,6 +14918,7 @@ typedef $$LocalPrepaidPackagePurchasesTableUpdateCompanionBuilder =
       Value<String> packageId,
       Value<String> customerId,
       Value<String?> vehicleId,
+      Value<DateTime> purchasedAt,
       Value<DateTime> expiresAt,
       Value<int> remainingCount,
       Value<int> rowid,
@@ -13452,6 +14950,11 @@ class $$LocalPrepaidPackagePurchasesTableFilterComposer
 
   ColumnFilters<String> get vehicleId => $composableBuilder(
     column: $table.vehicleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get purchasedAt => $composableBuilder(
+    column: $table.purchasedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13495,6 +14998,11 @@ class $$LocalPrepaidPackagePurchasesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get purchasedAt => $composableBuilder(
+    column: $table.purchasedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get expiresAt => $composableBuilder(
     column: $table.expiresAt,
     builder: (column) => ColumnOrderings(column),
@@ -13528,6 +15036,11 @@ class $$LocalPrepaidPackagePurchasesTableAnnotationComposer
 
   GeneratedColumn<String> get vehicleId =>
       $composableBuilder(column: $table.vehicleId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get purchasedAt => $composableBuilder(
+    column: $table.purchasedAt,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get expiresAt =>
       $composableBuilder(column: $table.expiresAt, builder: (column) => column);
@@ -13588,6 +15101,7 @@ class $$LocalPrepaidPackagePurchasesTableTableManager
                 Value<String> packageId = const Value.absent(),
                 Value<String> customerId = const Value.absent(),
                 Value<String?> vehicleId = const Value.absent(),
+                Value<DateTime> purchasedAt = const Value.absent(),
                 Value<DateTime> expiresAt = const Value.absent(),
                 Value<int> remainingCount = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -13596,6 +15110,7 @@ class $$LocalPrepaidPackagePurchasesTableTableManager
                 packageId: packageId,
                 customerId: customerId,
                 vehicleId: vehicleId,
+                purchasedAt: purchasedAt,
                 expiresAt: expiresAt,
                 remainingCount: remainingCount,
                 rowid: rowid,
@@ -13606,6 +15121,7 @@ class $$LocalPrepaidPackagePurchasesTableTableManager
                 required String packageId,
                 required String customerId,
                 Value<String?> vehicleId = const Value.absent(),
+                Value<DateTime> purchasedAt = const Value.absent(),
                 required DateTime expiresAt,
                 required int remainingCount,
                 Value<int> rowid = const Value.absent(),
@@ -13614,6 +15130,7 @@ class $$LocalPrepaidPackagePurchasesTableTableManager
                 packageId: packageId,
                 customerId: customerId,
                 vehicleId: vehicleId,
+                purchasedAt: purchasedAt,
                 expiresAt: expiresAt,
                 remainingCount: remainingCount,
                 rowid: rowid,
@@ -13645,6 +15162,269 @@ typedef $$LocalPrepaidPackagePurchasesTableProcessedTableManager =
         >,
       ),
       LocalPrepaidPackagePurchase,
+      PrefetchHooks Function()
+    >;
+typedef $$LocalPrepaidPackageUsageTableCreateCompanionBuilder =
+    LocalPrepaidPackageUsageCompanion Function({
+      required String id,
+      required String purchaseId,
+      required String washOrderId,
+      required String vehicleId,
+      Value<DateTime> usedAt,
+      required String usedById,
+      required String clientEntryId,
+      Value<int> rowid,
+    });
+typedef $$LocalPrepaidPackageUsageTableUpdateCompanionBuilder =
+    LocalPrepaidPackageUsageCompanion Function({
+      Value<String> id,
+      Value<String> purchaseId,
+      Value<String> washOrderId,
+      Value<String> vehicleId,
+      Value<DateTime> usedAt,
+      Value<String> usedById,
+      Value<String> clientEntryId,
+      Value<int> rowid,
+    });
+
+class $$LocalPrepaidPackageUsageTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalPrepaidPackageUsageTable> {
+  $$LocalPrepaidPackageUsageTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get purchaseId => $composableBuilder(
+    column: $table.purchaseId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get washOrderId => $composableBuilder(
+    column: $table.washOrderId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vehicleId => $composableBuilder(
+    column: $table.vehicleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get usedAt => $composableBuilder(
+    column: $table.usedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get usedById => $composableBuilder(
+    column: $table.usedById,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get clientEntryId => $composableBuilder(
+    column: $table.clientEntryId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocalPrepaidPackageUsageTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalPrepaidPackageUsageTable> {
+  $$LocalPrepaidPackageUsageTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get purchaseId => $composableBuilder(
+    column: $table.purchaseId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get washOrderId => $composableBuilder(
+    column: $table.washOrderId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vehicleId => $composableBuilder(
+    column: $table.vehicleId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get usedAt => $composableBuilder(
+    column: $table.usedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get usedById => $composableBuilder(
+    column: $table.usedById,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get clientEntryId => $composableBuilder(
+    column: $table.clientEntryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalPrepaidPackageUsageTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalPrepaidPackageUsageTable> {
+  $$LocalPrepaidPackageUsageTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get purchaseId => $composableBuilder(
+    column: $table.purchaseId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get washOrderId => $composableBuilder(
+    column: $table.washOrderId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get vehicleId =>
+      $composableBuilder(column: $table.vehicleId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get usedAt =>
+      $composableBuilder(column: $table.usedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get usedById =>
+      $composableBuilder(column: $table.usedById, builder: (column) => column);
+
+  GeneratedColumn<String> get clientEntryId => $composableBuilder(
+    column: $table.clientEntryId,
+    builder: (column) => column,
+  );
+}
+
+class $$LocalPrepaidPackageUsageTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalPrepaidPackageUsageTable,
+          LocalPrepaidPackageUsageData,
+          $$LocalPrepaidPackageUsageTableFilterComposer,
+          $$LocalPrepaidPackageUsageTableOrderingComposer,
+          $$LocalPrepaidPackageUsageTableAnnotationComposer,
+          $$LocalPrepaidPackageUsageTableCreateCompanionBuilder,
+          $$LocalPrepaidPackageUsageTableUpdateCompanionBuilder,
+          (
+            LocalPrepaidPackageUsageData,
+            BaseReferences<
+              _$AppDatabase,
+              $LocalPrepaidPackageUsageTable,
+              LocalPrepaidPackageUsageData
+            >,
+          ),
+          LocalPrepaidPackageUsageData,
+          PrefetchHooks Function()
+        > {
+  $$LocalPrepaidPackageUsageTableTableManager(
+    _$AppDatabase db,
+    $LocalPrepaidPackageUsageTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalPrepaidPackageUsageTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$LocalPrepaidPackageUsageTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$LocalPrepaidPackageUsageTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> purchaseId = const Value.absent(),
+                Value<String> washOrderId = const Value.absent(),
+                Value<String> vehicleId = const Value.absent(),
+                Value<DateTime> usedAt = const Value.absent(),
+                Value<String> usedById = const Value.absent(),
+                Value<String> clientEntryId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalPrepaidPackageUsageCompanion(
+                id: id,
+                purchaseId: purchaseId,
+                washOrderId: washOrderId,
+                vehicleId: vehicleId,
+                usedAt: usedAt,
+                usedById: usedById,
+                clientEntryId: clientEntryId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String purchaseId,
+                required String washOrderId,
+                required String vehicleId,
+                Value<DateTime> usedAt = const Value.absent(),
+                required String usedById,
+                required String clientEntryId,
+                Value<int> rowid = const Value.absent(),
+              }) => LocalPrepaidPackageUsageCompanion.insert(
+                id: id,
+                purchaseId: purchaseId,
+                washOrderId: washOrderId,
+                vehicleId: vehicleId,
+                usedAt: usedAt,
+                usedById: usedById,
+                clientEntryId: clientEntryId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocalPrepaidPackageUsageTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalPrepaidPackageUsageTable,
+      LocalPrepaidPackageUsageData,
+      $$LocalPrepaidPackageUsageTableFilterComposer,
+      $$LocalPrepaidPackageUsageTableOrderingComposer,
+      $$LocalPrepaidPackageUsageTableAnnotationComposer,
+      $$LocalPrepaidPackageUsageTableCreateCompanionBuilder,
+      $$LocalPrepaidPackageUsageTableUpdateCompanionBuilder,
+      (
+        LocalPrepaidPackageUsageData,
+        BaseReferences<
+          _$AppDatabase,
+          $LocalPrepaidPackageUsageTable,
+          LocalPrepaidPackageUsageData
+        >,
+      ),
+      LocalPrepaidPackageUsageData,
       PrefetchHooks Function()
     >;
 typedef $$LocalCashCollectionsTableCreateCompanionBuilder =
@@ -14494,11 +16274,21 @@ class $AppDatabaseManager {
       $$LocalPrepaidPackagesTableTableManager(_db, _db.localPrepaidPackages);
   $$LocalPrepaidWalletsTableTableManager get localPrepaidWallets =>
       $$LocalPrepaidWalletsTableTableManager(_db, _db.localPrepaidWallets);
+  $$LocalPrepaidWalletLedgerTableTableManager get localPrepaidWalletLedger =>
+      $$LocalPrepaidWalletLedgerTableTableManager(
+        _db,
+        _db.localPrepaidWalletLedger,
+      );
   $$LocalPrepaidPackagePurchasesTableTableManager
   get localPrepaidPackagePurchases =>
       $$LocalPrepaidPackagePurchasesTableTableManager(
         _db,
         _db.localPrepaidPackagePurchases,
+      );
+  $$LocalPrepaidPackageUsageTableTableManager get localPrepaidPackageUsage =>
+      $$LocalPrepaidPackageUsageTableTableManager(
+        _db,
+        _db.localPrepaidPackageUsage,
       );
   $$LocalCashCollectionsTableTableManager get localCashCollections =>
       $$LocalCashCollectionsTableTableManager(_db, _db.localCashCollections);
