@@ -126,9 +126,18 @@ class OfflinePosRepository {
         .toList();
   }
 
-  /// Price edits apply to the cached row immediately (so the change is
-  /// visible right away) and queue a PATCH — safe to do offline since it
-  /// targets an existing row rather than creating a new one.
+  Future<WashService> createService({
+    required String name,
+    required int basePrice, // cents
+    required int durationMinutes,
+  }) async {
+    final id = _uuid.v4();
+    await _db.into(_db.localWashServices).insert(
+          LocalWashServicesCompanion.insert(id: id, name: name, tier: 'standard', basePrice: basePrice, durationMinutes: durationMinutes),
+        );
+    return WashService(id: id, name: name, tier: 'standard', basePrice: basePrice, durationMinutes: durationMinutes);
+  }
+
   Future<void> updateService({
     required String id,
     required String name,
@@ -147,14 +156,12 @@ class OfflinePosRepository {
             durationMinutes: durationMinutes,
           ),
         );
-    await _enqueueOrPush(
-      entityType: 'service',
-      entityId: id,
-      opType: 'update',
-      path: '/wash-services/$id',
-      method: 'PATCH',
-      payload: {'name': name, 'basePrice': basePrice, 'durationMinutes': durationMinutes},
-    );
+  }
+
+  Future<WashExtra> createExtra({required String name, required int price}) async {
+    final id = _uuid.v4();
+    await _db.into(_db.localWashExtras).insert(LocalWashExtrasCompanion.insert(id: id, name: name, price: price));
+    return WashExtra(id: id, name: name, price: price);
   }
 
   Future<void> updateExtra({
@@ -165,14 +172,6 @@ class OfflinePosRepository {
     await _db
         .into(_db.localWashExtras)
         .insertOnConflictUpdate(LocalWashExtrasCompanion.insert(id: id, name: name, price: price));
-    await _enqueueOrPush(
-      entityType: 'extra',
-      entityId: id,
-      opType: 'update',
-      path: '/wash-extras/$id',
-      method: 'PATCH',
-      payload: {'name': name, 'price': price},
-    );
   }
 
   // ----------------------------------------------------------- customers

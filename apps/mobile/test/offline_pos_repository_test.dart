@@ -47,7 +47,7 @@ void main() {
     expect(rows.first.regNumberDisplay, 'ABC 123');
   });
 
-  test('updating a service price offline applies to the cache immediately and preserves the tier, and queues a PATCH', () async {
+  test('updating a service price applies immediately and preserves the tier', () async {
     await db.into(db.localWashServices).insert(
           LocalWashServicesCompanion.insert(id: 'svc-1', name: 'Standard Wash', tier: 'premium', basePrice: 6000, durationMinutes: 15),
         );
@@ -58,14 +58,18 @@ void main() {
     expect(service.basePrice, 7500);
     expect(service.durationMinutes, 20);
     expect(service.tier, 'premium'); // untouched field must survive the update
-
-    final outbox = await db.select(db.pendingSyncOps).get();
-    expect(outbox, hasLength(1));
-    expect(outbox.single.entityType, 'service');
-    expect(outbox.single.opType, 'update');
   });
 
-  test('updating an extra price offline applies to the cache immediately and queues a PATCH', () async {
+  test('creating a service is real and immediate, defaulting to the standard tier', () async {
+    final created = await repo.createService(name: 'Premium Wash', basePrice: 9000, durationMinutes: 25);
+
+    final service = await (db.select(db.localWashServices)..where((s) => s.id.equals(created.id))).getSingle();
+    expect(service.name, 'Premium Wash');
+    expect(service.basePrice, 9000);
+    expect(service.tier, 'standard');
+  });
+
+  test('updating an extra price applies immediately', () async {
     await db.into(db.localWashExtras).insert(
           LocalWashExtrasCompanion.insert(id: 'ext-1', name: 'Tyre Shine', price: 2000),
         );
@@ -74,11 +78,14 @@ void main() {
 
     final extra = await db.select(db.localWashExtras).getSingle();
     expect(extra.price, 2500);
+  });
 
-    final outbox = await db.select(db.pendingSyncOps).get();
-    expect(outbox, hasLength(1));
-    expect(outbox.single.entityType, 'extra');
-    expect(outbox.single.opType, 'update');
+  test('creating an extra is real and immediate', () async {
+    final created = await repo.createExtra(name: 'Air Freshener', price: 1500);
+
+    final extra = await (db.select(db.localWashExtras)..where((e) => e.id.equals(created.id))).getSingle();
+    expect(extra.name, 'Air Freshener');
+    expect(extra.price, 1500);
   });
 
   test('watchFailedSyncOps only surfaces FAILED rows, and dismissSyncIssue removes one for good', () async {

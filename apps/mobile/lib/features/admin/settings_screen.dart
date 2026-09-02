@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/connectivity.dart';
 import '../../core/money.dart';
 import '../../data/local/offline_pos_repository.dart';
 import '../../data/models/models.dart';
-import '../../data/remote/api_client.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
 
@@ -18,7 +16,6 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final services = ref.watch(servicesSettingsProvider);
     final extras = ref.watch(extrasSettingsProvider);
-    final isOnline = ref.watch(connectivityProvider);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -26,24 +23,7 @@ class SettingsScreen extends ConsumerWidget {
         children: [
           const Text('Settings', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          const Text('Services, extras and prices. Payment methods, loyalty and backup settings are managed via the API for now.', style: TextStyle(color: DnColors.muted)),
-          if (!isOnline) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(color: DnColors.amberSoft, borderRadius: BorderRadius.circular(8)),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.cloud_off, size: 14, color: DnColors.amber),
-                  SizedBox(width: 6),
-                  Expanded(
-                    child: Text('Offline — price edits will sync automatically. Adding a new service or extra needs a connection.', style: TextStyle(fontSize: 12, color: DnColors.amber)),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          const Text('Services, extras and prices.', style: TextStyle(color: DnColors.muted)),
           const SizedBox(height: 16),
           DnCard(
             child: Column(
@@ -54,7 +34,7 @@ class SettingsScreen extends ConsumerWidget {
                   children: [
                     const Text('Wash services', style: TextStyle(fontWeight: FontWeight.bold)),
                     TextButton.icon(
-                      onPressed: isOnline ? () => _showServiceDialog(context, ref) : null,
+                      onPressed: () => _showServiceDialog(context, ref),
                       icon: const Icon(Icons.add, size: 16),
                       label: const Text('Add service'),
                     ),
@@ -97,7 +77,7 @@ class SettingsScreen extends ConsumerWidget {
                   children: [
                     const Text('Extras', style: TextStyle(fontWeight: FontWeight.bold)),
                     TextButton.icon(
-                      onPressed: isOnline ? () => _showExtraDialog(context, ref) : null,
+                      onPressed: () => _showExtraDialog(context, ref),
                       icon: const Icon(Icons.add, size: 16),
                       label: const Text('Add extra'),
                     ),
@@ -162,7 +142,7 @@ class SettingsScreen extends ConsumerWidget {
               if (nameController.text.trim().isEmpty || price == null || duration == null) return;
               final name = nameController.text.trim();
               if (existing == null) {
-                await ref.read(apiClientProvider).post('/wash-services', data: {'name': name, 'basePrice': price / 100, 'durationMinutes': duration});
+                await ref.read(offlinePosRepositoryProvider).createService(name: name, basePrice: price, durationMinutes: duration);
               } else {
                 await ref.read(offlinePosRepositoryProvider).updateService(id: existing.id, name: name, basePrice: price, durationMinutes: duration);
               }
@@ -200,7 +180,7 @@ class SettingsScreen extends ConsumerWidget {
               if (nameController.text.trim().isEmpty || price == null) return;
               final name = nameController.text.trim();
               if (existing == null) {
-                await ref.read(apiClientProvider).post('/wash-extras', data: {'name': name, 'price': price / 100});
+                await ref.read(offlinePosRepositoryProvider).createExtra(name: name, price: price);
               } else {
                 await ref.read(offlinePosRepositoryProvider).updateExtra(id: existing.id, name: name, price: price);
               }
