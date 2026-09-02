@@ -34,6 +34,7 @@ const _adminNav = [
   NavItem('/admin/users', 'Users', Icons.badge_outlined),
   NavItem('/admin/settings', 'Settings', Icons.settings_outlined),
   NavItem('/admin/audit', 'Audit & SMS', Icons.shield_outlined),
+  NavItem('/admin/backups', 'Backups', Icons.backup_outlined),
   NavItem('/admin/sync-issues', 'Sync Issues', Icons.sync_problem_outlined),
 ];
 

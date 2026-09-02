@@ -378,6 +378,21 @@ class LocalSmsMessages extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// History of local backup exports — [BackupRepository] writes one row per
+/// attempt, success or failure, so a manager can see when the last one
+/// actually worked.
+class LocalBackupRuns extends Table {
+  TextColumn get id => text()();
+  TextColumn get filePath => text()();
+  IntColumn get sizeBytes => integer()();
+  TextColumn get status => text()(); // SUCCESS | FAILED
+  TextColumn get errorMessage => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// The device's own local user directory — no server, so this is the
 /// permanent credential store, not a cache. `passwordHash`/`pinHash` are
 /// bcrypt hashes; plaintext credentials are never persisted.
@@ -422,13 +437,14 @@ class LocalUsers extends Table {
   LocalUsers,
   LocalAuditLog,
   LocalSmsMessages,
+  LocalBackupRuns,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   // Default storage truncates DateTime to whole-second unix timestamps,
   // which let two events in the same second compare as equal instead of
@@ -509,6 +525,9 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 10) {
             await m.createTable(localSmsMessages);
+          }
+          if (from < 11) {
+            await m.createTable(localBackupRuns);
           }
         },
       );

@@ -11722,6 +11722,418 @@ class LocalSmsMessagesCompanion extends UpdateCompanion<LocalSmsMessage> {
   }
 }
 
+class $LocalBackupRunsTable extends LocalBackupRuns
+    with TableInfo<$LocalBackupRunsTable, LocalBackupRun> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalBackupRunsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _filePathMeta = const VerificationMeta(
+    'filePath',
+  );
+  @override
+  late final GeneratedColumn<String> filePath = GeneratedColumn<String>(
+    'file_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sizeBytesMeta = const VerificationMeta(
+    'sizeBytes',
+  );
+  @override
+  late final GeneratedColumn<int> sizeBytes = GeneratedColumn<int>(
+    'size_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _errorMessageMeta = const VerificationMeta(
+    'errorMessage',
+  );
+  @override
+  late final GeneratedColumn<String> errorMessage = GeneratedColumn<String>(
+    'error_message',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    filePath,
+    sizeBytes,
+    status,
+    errorMessage,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_backup_runs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalBackupRun> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('file_path')) {
+      context.handle(
+        _filePathMeta,
+        filePath.isAcceptableOrUnknown(data['file_path']!, _filePathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_filePathMeta);
+    }
+    if (data.containsKey('size_bytes')) {
+      context.handle(
+        _sizeBytesMeta,
+        sizeBytes.isAcceptableOrUnknown(data['size_bytes']!, _sizeBytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sizeBytesMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('error_message')) {
+      context.handle(
+        _errorMessageMeta,
+        errorMessage.isAcceptableOrUnknown(
+          data['error_message']!,
+          _errorMessageMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocalBackupRun map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalBackupRun(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      filePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_path'],
+      )!,
+      sizeBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size_bytes'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      errorMessage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error_message'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $LocalBackupRunsTable createAlias(String alias) {
+    return $LocalBackupRunsTable(attachedDatabase, alias);
+  }
+}
+
+class LocalBackupRun extends DataClass implements Insertable<LocalBackupRun> {
+  final String id;
+  final String filePath;
+  final int sizeBytes;
+  final String status;
+  final String? errorMessage;
+  final DateTime createdAt;
+  const LocalBackupRun({
+    required this.id,
+    required this.filePath,
+    required this.sizeBytes,
+    required this.status,
+    this.errorMessage,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['file_path'] = Variable<String>(filePath);
+    map['size_bytes'] = Variable<int>(sizeBytes);
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || errorMessage != null) {
+      map['error_message'] = Variable<String>(errorMessage);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  LocalBackupRunsCompanion toCompanion(bool nullToAbsent) {
+    return LocalBackupRunsCompanion(
+      id: Value(id),
+      filePath: Value(filePath),
+      sizeBytes: Value(sizeBytes),
+      status: Value(status),
+      errorMessage: errorMessage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(errorMessage),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory LocalBackupRun.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalBackupRun(
+      id: serializer.fromJson<String>(json['id']),
+      filePath: serializer.fromJson<String>(json['filePath']),
+      sizeBytes: serializer.fromJson<int>(json['sizeBytes']),
+      status: serializer.fromJson<String>(json['status']),
+      errorMessage: serializer.fromJson<String?>(json['errorMessage']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'filePath': serializer.toJson<String>(filePath),
+      'sizeBytes': serializer.toJson<int>(sizeBytes),
+      'status': serializer.toJson<String>(status),
+      'errorMessage': serializer.toJson<String?>(errorMessage),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  LocalBackupRun copyWith({
+    String? id,
+    String? filePath,
+    int? sizeBytes,
+    String? status,
+    Value<String?> errorMessage = const Value.absent(),
+    DateTime? createdAt,
+  }) => LocalBackupRun(
+    id: id ?? this.id,
+    filePath: filePath ?? this.filePath,
+    sizeBytes: sizeBytes ?? this.sizeBytes,
+    status: status ?? this.status,
+    errorMessage: errorMessage.present ? errorMessage.value : this.errorMessage,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  LocalBackupRun copyWithCompanion(LocalBackupRunsCompanion data) {
+    return LocalBackupRun(
+      id: data.id.present ? data.id.value : this.id,
+      filePath: data.filePath.present ? data.filePath.value : this.filePath,
+      sizeBytes: data.sizeBytes.present ? data.sizeBytes.value : this.sizeBytes,
+      status: data.status.present ? data.status.value : this.status,
+      errorMessage: data.errorMessage.present
+          ? data.errorMessage.value
+          : this.errorMessage,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalBackupRun(')
+          ..write('id: $id, ')
+          ..write('filePath: $filePath, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('status: $status, ')
+          ..write('errorMessage: $errorMessage, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, filePath, sizeBytes, status, errorMessage, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalBackupRun &&
+          other.id == this.id &&
+          other.filePath == this.filePath &&
+          other.sizeBytes == this.sizeBytes &&
+          other.status == this.status &&
+          other.errorMessage == this.errorMessage &&
+          other.createdAt == this.createdAt);
+}
+
+class LocalBackupRunsCompanion extends UpdateCompanion<LocalBackupRun> {
+  final Value<String> id;
+  final Value<String> filePath;
+  final Value<int> sizeBytes;
+  final Value<String> status;
+  final Value<String?> errorMessage;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const LocalBackupRunsCompanion({
+    this.id = const Value.absent(),
+    this.filePath = const Value.absent(),
+    this.sizeBytes = const Value.absent(),
+    this.status = const Value.absent(),
+    this.errorMessage = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalBackupRunsCompanion.insert({
+    required String id,
+    required String filePath,
+    required int sizeBytes,
+    required String status,
+    this.errorMessage = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       filePath = Value(filePath),
+       sizeBytes = Value(sizeBytes),
+       status = Value(status);
+  static Insertable<LocalBackupRun> custom({
+    Expression<String>? id,
+    Expression<String>? filePath,
+    Expression<int>? sizeBytes,
+    Expression<String>? status,
+    Expression<String>? errorMessage,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (filePath != null) 'file_path': filePath,
+      if (sizeBytes != null) 'size_bytes': sizeBytes,
+      if (status != null) 'status': status,
+      if (errorMessage != null) 'error_message': errorMessage,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalBackupRunsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? filePath,
+    Value<int>? sizeBytes,
+    Value<String>? status,
+    Value<String?>? errorMessage,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return LocalBackupRunsCompanion(
+      id: id ?? this.id,
+      filePath: filePath ?? this.filePath,
+      sizeBytes: sizeBytes ?? this.sizeBytes,
+      status: status ?? this.status,
+      errorMessage: errorMessage ?? this.errorMessage,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (filePath.present) {
+      map['file_path'] = Variable<String>(filePath.value);
+    }
+    if (sizeBytes.present) {
+      map['size_bytes'] = Variable<int>(sizeBytes.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (errorMessage.present) {
+      map['error_message'] = Variable<String>(errorMessage.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalBackupRunsCompanion(')
+          ..write('id: $id, ')
+          ..write('filePath: $filePath, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('status: $status, ')
+          ..write('errorMessage: $errorMessage, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -11770,6 +12182,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LocalSmsMessagesTable localSmsMessages = $LocalSmsMessagesTable(
     this,
   );
+  late final $LocalBackupRunsTable localBackupRuns = $LocalBackupRunsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -11800,6 +12215,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     localUsers,
     localAuditLog,
     localSmsMessages,
+    localBackupRuns,
   ];
 }
 
@@ -18080,6 +18496,233 @@ typedef $$LocalSmsMessagesTableProcessedTableManager =
       LocalSmsMessage,
       PrefetchHooks Function()
     >;
+typedef $$LocalBackupRunsTableCreateCompanionBuilder =
+    LocalBackupRunsCompanion Function({
+      required String id,
+      required String filePath,
+      required int sizeBytes,
+      required String status,
+      Value<String?> errorMessage,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+typedef $$LocalBackupRunsTableUpdateCompanionBuilder =
+    LocalBackupRunsCompanion Function({
+      Value<String> id,
+      Value<String> filePath,
+      Value<int> sizeBytes,
+      Value<String> status,
+      Value<String?> errorMessage,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$LocalBackupRunsTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalBackupRunsTable> {
+  $$LocalBackupRunsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get filePath => $composableBuilder(
+    column: $table.filePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocalBackupRunsTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalBackupRunsTable> {
+  $$LocalBackupRunsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get filePath => $composableBuilder(
+    column: $table.filePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalBackupRunsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalBackupRunsTable> {
+  $$LocalBackupRunsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get filePath =>
+      $composableBuilder(column: $table.filePath, builder: (column) => column);
+
+  GeneratedColumn<int> get sizeBytes =>
+      $composableBuilder(column: $table.sizeBytes, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$LocalBackupRunsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalBackupRunsTable,
+          LocalBackupRun,
+          $$LocalBackupRunsTableFilterComposer,
+          $$LocalBackupRunsTableOrderingComposer,
+          $$LocalBackupRunsTableAnnotationComposer,
+          $$LocalBackupRunsTableCreateCompanionBuilder,
+          $$LocalBackupRunsTableUpdateCompanionBuilder,
+          (
+            LocalBackupRun,
+            BaseReferences<
+              _$AppDatabase,
+              $LocalBackupRunsTable,
+              LocalBackupRun
+            >,
+          ),
+          LocalBackupRun,
+          PrefetchHooks Function()
+        > {
+  $$LocalBackupRunsTableTableManager(
+    _$AppDatabase db,
+    $LocalBackupRunsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalBackupRunsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocalBackupRunsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LocalBackupRunsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> filePath = const Value.absent(),
+                Value<int> sizeBytes = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> errorMessage = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalBackupRunsCompanion(
+                id: id,
+                filePath: filePath,
+                sizeBytes: sizeBytes,
+                status: status,
+                errorMessage: errorMessage,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String filePath,
+                required int sizeBytes,
+                required String status,
+                Value<String?> errorMessage = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalBackupRunsCompanion.insert(
+                id: id,
+                filePath: filePath,
+                sizeBytes: sizeBytes,
+                status: status,
+                errorMessage: errorMessage,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocalBackupRunsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalBackupRunsTable,
+      LocalBackupRun,
+      $$LocalBackupRunsTableFilterComposer,
+      $$LocalBackupRunsTableOrderingComposer,
+      $$LocalBackupRunsTableAnnotationComposer,
+      $$LocalBackupRunsTableCreateCompanionBuilder,
+      $$LocalBackupRunsTableUpdateCompanionBuilder,
+      (
+        LocalBackupRun,
+        BaseReferences<_$AppDatabase, $LocalBackupRunsTable, LocalBackupRun>,
+      ),
+      LocalBackupRun,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -18153,4 +18796,6 @@ class $AppDatabaseManager {
       $$LocalAuditLogTableTableManager(_db, _db.localAuditLog);
   $$LocalSmsMessagesTableTableManager get localSmsMessages =>
       $$LocalSmsMessagesTableTableManager(_db, _db.localSmsMessages);
+  $$LocalBackupRunsTableTableManager get localBackupRuns =>
+      $$LocalBackupRunsTableTableManager(_db, _db.localBackupRuns);
 }
