@@ -166,6 +166,8 @@ class LocalPayments extends Table {
   TextColumn get washOrderId => text()();
   IntColumn get totalAmount => integer()(); // cents
   DateTimeColumn get completedAt => dateTime()();
+  BoolColumn get voided => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get voidedAt => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -398,7 +400,13 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
+
+  // Default storage truncates DateTime to whole-second unix timestamps,
+  // which let two events in the same second compare as equal instead of
+  // ordered. Stored as ISO-8601 text instead, preserving full precision.
+  @override
+  DriftDatabaseOptions get options => const DriftDatabaseOptions(storeDateTimeAsText: true);
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -454,6 +462,10 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 7) {
             await m.createTable(localWashStatusHistory);
+          }
+          if (from < 8) {
+            await m.addColumn(localPayments, localPayments.voided);
+            await m.addColumn(localPayments, localPayments.voidedAt);
           }
         },
       );

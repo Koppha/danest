@@ -332,12 +332,16 @@ class WashOrdersRepository {
     final wash = await (_db.select(_db.localWashOrders)..where((w) => w.id.equals(washOrderId))).getSingleOrNull();
     if (wash == null) throw WashNotFoundException();
     final payment = await (_db.select(_db.localPayments)..where((p) => p.washOrderId.equals(washOrderId))).getSingleOrNull();
-    if (payment == null) throw NoActivePaymentException();
+    if (payment == null || payment.voided) throw NoActivePaymentException();
     final components = await (_db.select(_db.localPaymentComponents)..where((c) => c.paymentId.equals(payment.id))).get();
 
     await _db.transaction(() async {
+      final now = DateTime.now();
+      await (_db.update(_db.localPayments)..where((p) => p.id.equals(payment.id))).write(
+        LocalPaymentsCompanion(voided: const Value(true), voidedAt: Value(now)),
+      );
       await (_db.update(_db.localWashOrders)..where((w) => w.id.equals(washOrderId))).write(
-        LocalWashOrdersCompanion(status: const Value('CANCELLED'), cancelledAt: Value(DateTime.now()), cancelReason: Value(reason)),
+        LocalWashOrdersCompanion(status: const Value('CANCELLED'), cancelledAt: Value(now), cancelReason: Value(reason)),
       );
       await _appendHistory(washOrderId: washOrderId, from: wash.status, to: 'CANCELLED', actorId: actorId);
     });

@@ -347,5 +347,36 @@ void main() {
       updated = await (db.select(db.localPrepaidPackagePurchases)..where((p) => p.id.equals(purchase.id))).getSingle();
       expect(updated.remainingCount, 5);
     });
+
+    test('voiding marks the payment itself voided, with a voidedAt timestamp', () async {
+      final id = await startBasicWash();
+      await repo.finishWash(id, [
+        {'method': 'CASH', 'amount': 6000},
+      ], actorId: 'u1');
+      final before = DateTime.now();
+
+      await repo.voidPayment(id, 'reason', actorId: 'u1', approvedByUserId: 's1');
+
+      final payment = await (db.select(db.localPayments)..where((p) => p.washOrderId.equals(id))).getSingle();
+      expect(payment.voided, isTrue);
+      expect(payment.voidedAt, isNotNull);
+      expect(payment.voidedAt!.isAfter(before.subtract(const Duration(seconds: 1))), isTrue);
+    });
+
+    test('voiding an already-voided payment throws instead of double-refunding', () async {
+      await prepaid.deposit(customerId: 'c1', amount: 10000, method: 'CASH', clientEntryId: 'd1', actorId: 'u1');
+      final id = await startBasicWash();
+      await repo.finishWash(id, [
+        {'method': 'WALLET', 'amount': 6000},
+      ], actorId: 'u1');
+      await repo.voidPayment(id, 'first void', actorId: 'u1', approvedByUserId: 's1');
+      expect(await prepaid.walletBalance('c1'), 10000);
+
+      await expectLater(
+        repo.voidPayment(id, 'second void attempt', actorId: 'u1', approvedByUserId: 's1'),
+        throwsA(isA<NoActivePaymentException>()),
+      );
+      expect(await prepaid.walletBalance('c1'), 10000); // not refunded twice
+    });
   });
 }

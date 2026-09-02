@@ -4802,12 +4802,38 @@ class $LocalPaymentsTable extends LocalPayments
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _voidedMeta = const VerificationMeta('voided');
+  @override
+  late final GeneratedColumn<bool> voided = GeneratedColumn<bool>(
+    'voided',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("voided" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _voidedAtMeta = const VerificationMeta(
+    'voidedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> voidedAt = GeneratedColumn<DateTime>(
+    'voided_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     washOrderId,
     totalAmount,
     completedAt,
+    voided,
+    voidedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4859,6 +4885,18 @@ class $LocalPaymentsTable extends LocalPayments
     } else if (isInserting) {
       context.missing(_completedAtMeta);
     }
+    if (data.containsKey('voided')) {
+      context.handle(
+        _voidedMeta,
+        voided.isAcceptableOrUnknown(data['voided']!, _voidedMeta),
+      );
+    }
+    if (data.containsKey('voided_at')) {
+      context.handle(
+        _voidedAtMeta,
+        voidedAt.isAcceptableOrUnknown(data['voided_at']!, _voidedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -4884,6 +4922,14 @@ class $LocalPaymentsTable extends LocalPayments
         DriftSqlType.dateTime,
         data['${effectivePrefix}completed_at'],
       )!,
+      voided: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}voided'],
+      )!,
+      voidedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}voided_at'],
+      ),
     );
   }
 
@@ -4898,11 +4944,15 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
   final String washOrderId;
   final int totalAmount;
   final DateTime completedAt;
+  final bool voided;
+  final DateTime? voidedAt;
   const LocalPayment({
     required this.id,
     required this.washOrderId,
     required this.totalAmount,
     required this.completedAt,
+    required this.voided,
+    this.voidedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4911,6 +4961,10 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
     map['wash_order_id'] = Variable<String>(washOrderId);
     map['total_amount'] = Variable<int>(totalAmount);
     map['completed_at'] = Variable<DateTime>(completedAt);
+    map['voided'] = Variable<bool>(voided);
+    if (!nullToAbsent || voidedAt != null) {
+      map['voided_at'] = Variable<DateTime>(voidedAt);
+    }
     return map;
   }
 
@@ -4920,6 +4974,10 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
       washOrderId: Value(washOrderId),
       totalAmount: Value(totalAmount),
       completedAt: Value(completedAt),
+      voided: Value(voided),
+      voidedAt: voidedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(voidedAt),
     );
   }
 
@@ -4933,6 +4991,8 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
       washOrderId: serializer.fromJson<String>(json['washOrderId']),
       totalAmount: serializer.fromJson<int>(json['totalAmount']),
       completedAt: serializer.fromJson<DateTime>(json['completedAt']),
+      voided: serializer.fromJson<bool>(json['voided']),
+      voidedAt: serializer.fromJson<DateTime?>(json['voidedAt']),
     );
   }
   @override
@@ -4943,6 +5003,8 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
       'washOrderId': serializer.toJson<String>(washOrderId),
       'totalAmount': serializer.toJson<int>(totalAmount),
       'completedAt': serializer.toJson<DateTime>(completedAt),
+      'voided': serializer.toJson<bool>(voided),
+      'voidedAt': serializer.toJson<DateTime?>(voidedAt),
     };
   }
 
@@ -4951,11 +5013,15 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
     String? washOrderId,
     int? totalAmount,
     DateTime? completedAt,
+    bool? voided,
+    Value<DateTime?> voidedAt = const Value.absent(),
   }) => LocalPayment(
     id: id ?? this.id,
     washOrderId: washOrderId ?? this.washOrderId,
     totalAmount: totalAmount ?? this.totalAmount,
     completedAt: completedAt ?? this.completedAt,
+    voided: voided ?? this.voided,
+    voidedAt: voidedAt.present ? voidedAt.value : this.voidedAt,
   );
   LocalPayment copyWithCompanion(LocalPaymentsCompanion data) {
     return LocalPayment(
@@ -4969,6 +5035,8 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
       completedAt: data.completedAt.present
           ? data.completedAt.value
           : this.completedAt,
+      voided: data.voided.present ? data.voided.value : this.voided,
+      voidedAt: data.voidedAt.present ? data.voidedAt.value : this.voidedAt,
     );
   }
 
@@ -4978,13 +5046,16 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
           ..write('id: $id, ')
           ..write('washOrderId: $washOrderId, ')
           ..write('totalAmount: $totalAmount, ')
-          ..write('completedAt: $completedAt')
+          ..write('completedAt: $completedAt, ')
+          ..write('voided: $voided, ')
+          ..write('voidedAt: $voidedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, washOrderId, totalAmount, completedAt);
+  int get hashCode =>
+      Object.hash(id, washOrderId, totalAmount, completedAt, voided, voidedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4992,7 +5063,9 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
           other.id == this.id &&
           other.washOrderId == this.washOrderId &&
           other.totalAmount == this.totalAmount &&
-          other.completedAt == this.completedAt);
+          other.completedAt == this.completedAt &&
+          other.voided == this.voided &&
+          other.voidedAt == this.voidedAt);
 }
 
 class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
@@ -5000,12 +5073,16 @@ class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
   final Value<String> washOrderId;
   final Value<int> totalAmount;
   final Value<DateTime> completedAt;
+  final Value<bool> voided;
+  final Value<DateTime?> voidedAt;
   final Value<int> rowid;
   const LocalPaymentsCompanion({
     this.id = const Value.absent(),
     this.washOrderId = const Value.absent(),
     this.totalAmount = const Value.absent(),
     this.completedAt = const Value.absent(),
+    this.voided = const Value.absent(),
+    this.voidedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalPaymentsCompanion.insert({
@@ -5013,6 +5090,8 @@ class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
     required String washOrderId,
     required int totalAmount,
     required DateTime completedAt,
+    this.voided = const Value.absent(),
+    this.voidedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        washOrderId = Value(washOrderId),
@@ -5023,6 +5102,8 @@ class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
     Expression<String>? washOrderId,
     Expression<int>? totalAmount,
     Expression<DateTime>? completedAt,
+    Expression<bool>? voided,
+    Expression<DateTime>? voidedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5030,6 +5111,8 @@ class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
       if (washOrderId != null) 'wash_order_id': washOrderId,
       if (totalAmount != null) 'total_amount': totalAmount,
       if (completedAt != null) 'completed_at': completedAt,
+      if (voided != null) 'voided': voided,
+      if (voidedAt != null) 'voided_at': voidedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5039,6 +5122,8 @@ class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
     Value<String>? washOrderId,
     Value<int>? totalAmount,
     Value<DateTime>? completedAt,
+    Value<bool>? voided,
+    Value<DateTime?>? voidedAt,
     Value<int>? rowid,
   }) {
     return LocalPaymentsCompanion(
@@ -5046,6 +5131,8 @@ class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
       washOrderId: washOrderId ?? this.washOrderId,
       totalAmount: totalAmount ?? this.totalAmount,
       completedAt: completedAt ?? this.completedAt,
+      voided: voided ?? this.voided,
+      voidedAt: voidedAt ?? this.voidedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5065,6 +5152,12 @@ class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
     if (completedAt.present) {
       map['completed_at'] = Variable<DateTime>(completedAt.value);
     }
+    if (voided.present) {
+      map['voided'] = Variable<bool>(voided.value);
+    }
+    if (voidedAt.present) {
+      map['voided_at'] = Variable<DateTime>(voidedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5078,6 +5171,8 @@ class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
           ..write('washOrderId: $washOrderId, ')
           ..write('totalAmount: $totalAmount, ')
           ..write('completedAt: $completedAt, ')
+          ..write('voided: $voided, ')
+          ..write('voidedAt: $voidedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -13551,6 +13646,8 @@ typedef $$LocalPaymentsTableCreateCompanionBuilder =
       required String washOrderId,
       required int totalAmount,
       required DateTime completedAt,
+      Value<bool> voided,
+      Value<DateTime?> voidedAt,
       Value<int> rowid,
     });
 typedef $$LocalPaymentsTableUpdateCompanionBuilder =
@@ -13559,6 +13656,8 @@ typedef $$LocalPaymentsTableUpdateCompanionBuilder =
       Value<String> washOrderId,
       Value<int> totalAmount,
       Value<DateTime> completedAt,
+      Value<bool> voided,
+      Value<DateTime?> voidedAt,
       Value<int> rowid,
     });
 
@@ -13588,6 +13687,16 @@ class $$LocalPaymentsTableFilterComposer
 
   ColumnFilters<DateTime> get completedAt => $composableBuilder(
     column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get voided => $composableBuilder(
+    column: $table.voided,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get voidedAt => $composableBuilder(
+    column: $table.voidedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -13620,6 +13729,16 @@ class $$LocalPaymentsTableOrderingComposer
     column: $table.completedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get voided => $composableBuilder(
+    column: $table.voided,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get voidedAt => $composableBuilder(
+    column: $table.voidedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$LocalPaymentsTableAnnotationComposer
@@ -13648,6 +13767,12 @@ class $$LocalPaymentsTableAnnotationComposer
     column: $table.completedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get voided =>
+      $composableBuilder(column: $table.voided, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get voidedAt =>
+      $composableBuilder(column: $table.voidedAt, builder: (column) => column);
 }
 
 class $$LocalPaymentsTableTableManager
@@ -13685,12 +13810,16 @@ class $$LocalPaymentsTableTableManager
                 Value<String> washOrderId = const Value.absent(),
                 Value<int> totalAmount = const Value.absent(),
                 Value<DateTime> completedAt = const Value.absent(),
+                Value<bool> voided = const Value.absent(),
+                Value<DateTime?> voidedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalPaymentsCompanion(
                 id: id,
                 washOrderId: washOrderId,
                 totalAmount: totalAmount,
                 completedAt: completedAt,
+                voided: voided,
+                voidedAt: voidedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -13699,12 +13828,16 @@ class $$LocalPaymentsTableTableManager
                 required String washOrderId,
                 required int totalAmount,
                 required DateTime completedAt,
+                Value<bool> voided = const Value.absent(),
+                Value<DateTime?> voidedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalPaymentsCompanion.insert(
                 id: id,
                 washOrderId: washOrderId,
                 totalAmount: totalAmount,
                 completedAt: completedAt,
+                voided: voided,
+                voidedAt: voidedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
