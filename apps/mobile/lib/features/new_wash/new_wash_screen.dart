@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/money.dart';
 import '../../core/session.dart';
 import '../../data/models/models.dart';
+import '../../data/local/loyalty_repository.dart';
 import '../../data/local/offline_pos_repository.dart';
+import '../../data/local/wash_orders_repository.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
 
@@ -71,7 +73,7 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
 
   Future<void> _selectVehicle(Vehicle v) async {
     setState(() => _selectedVehicle = v);
-    final summary = await ref.read(offlinePosRepositoryProvider).loyaltySummary(v.id);
+    final summary = await ref.read(loyaltyRepositoryProvider).summaryForVehicle(v.id);
     if (mounted) setState(() => _loyalty = summary);
   }
 
@@ -90,12 +92,12 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
       ..._selectedExtraIds.map((id) => {'itemType': 'EXTRA', 'extraId': id}),
     ];
     try {
-      final branchId = ref.read(sessionProvider).user?.branchId ?? '';
-      await ref.read(offlinePosRepositoryProvider).startWash(
-            branchId: branchId,
+      final actorId = ref.read(sessionProvider).user!.id;
+      await ref.read(washOrdersRepositoryProvider).startWash(
             vehicleId: _selectedVehicle!.id,
             customerId: _selectedCustomer!.id,
             items: items,
+            actorId: actorId,
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Wash started and added to the queue')));

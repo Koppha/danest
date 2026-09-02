@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:de_nest/core/connectivity.dart';
 import 'package:de_nest/data/local/app_database.dart';
 import 'package:de_nest/data/local/database_provider.dart';
 import 'package:de_nest/data/models/models.dart';
@@ -44,41 +43,6 @@ void main() {
       ),
     );
 
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('finish wash sheet offline banner wraps instead of overflowing on a narrow phone', (tester) async {
-    await _setSurfaceSize(tester, const Size(320, 640));
-    final order = WashOrder(
-      id: 'w1',
-      status: 'READY',
-      totalAmount: 60,
-      createdAt: DateTime.now(),
-      vehicle: Vehicle(id: 'v1', customerId: 'c1', regNumberDisplay: 'ABC 123'),
-    );
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [connectivityProvider.overrideWith(_AlwaysOffline.new)],
-        child: MaterialApp(
-          home: Consumer(
-            builder: (context, ref, _) => Scaffold(
-              body: Builder(
-                builder: (context) => ElevatedButton(
-                  onPressed: () => showFinishWashSheet(context, ref, order),
-                  child: const Text('open'),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('Offline —'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -202,9 +166,4 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
-}
-
-class _AlwaysOffline extends ConnectivityNotifier {
-  @override
-  bool build() => false;
 }

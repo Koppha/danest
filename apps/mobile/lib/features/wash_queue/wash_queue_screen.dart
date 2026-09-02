@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/money.dart';
-import '../../data/local/offline_pos_repository.dart';
+import '../../core/session.dart';
+import '../../data/local/wash_orders_repository.dart';
 import '../../data/models/models.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
@@ -46,7 +47,8 @@ class _QueueCard extends StatelessWidget {
 
   Future<void> _transition(BuildContext context, String toStatus) async {
     try {
-      await ref.read(offlinePosRepositoryProvider).transitionWash(order.id, toStatus);
+      final actorId = ref.read(sessionProvider).user!.id;
+      await ref.read(washOrdersRepositoryProvider).transition(order.id, toStatus, actorId: actorId);
       ref.invalidate(queueProvider);
     } catch (e) {
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not update status: $e')));
@@ -89,7 +91,7 @@ class _QueueCard extends StatelessWidget {
                   if (order.status == 'WASHING')
                     OutlinedButton(
                       onPressed: () => _transition(context, 'READY'),
-                      child: const Text('Mark ready & send SMS', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
+                      child: const Text('Mark ready', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
                     ),
                   if (order.status == 'READY')
                     ElevatedButton(

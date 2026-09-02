@@ -101,9 +101,9 @@ void main() {
     final wallets = await db.select(db.localPrepaidWallets).get();
     expect(wallets, hasLength(1));
     expect(wallets.single.balance, 25000); // cents
-    final pending = await db.select(db.pendingSyncOps).get();
-    expect(pending, hasLength(1));
-    expect(pending.single.entityType, 'prepaid_deposit');
+    final ledger = await db.select(db.localPrepaidWalletLedger).get();
+    expect(ledger, hasLength(1));
+    expect(ledger.single.entryType, 'DEPOSIT');
     expect(tester.takeException(), isNull);
   });
 }

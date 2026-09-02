@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/connectivity.dart';
 import '../../core/money.dart';
+import '../../core/session.dart';
 import '../../data/models/models.dart';
-import '../../data/local/offline_pos_repository.dart';
+import '../../data/local/loyalty_repository.dart';
+import '../../data/local/prepaid_repository.dart';
+import '../../data/local/wash_orders_repository.dart';
 import '../../design_system/theme.dart';
 import '../dashboard/dashboard_screen.dart' show queueProvider;
 
-// UI-level payment choices. Ecocash and M-Pesa are both recorded on the
-// backend as the generic MOBILE_MONEY method (see _backendMethod below) —
-// the reference number captures which provider was actually used.
+// UI-level payment choices. Ecocash and M-Pesa are both recorded as the
+// generic MOBILE_MONEY method (see _backendMethod below) — the reference
+// number captures which provider was actually used.
 const _methods = [
   ('CASH', 'Cash', Icons.payments_outlined),
   ('ECOCASH', 'Ecocash', Icons.smartphone),
   ('MPESA', 'M-Pesa', Icons.smartphone),
   ('CARD', 'Card', Icons.credit_card),
+  ('BANK_TRANSFER', 'Bank transfer', Icons.account_balance),
+  ('WALLET', 'Wallet', Icons.account_balance_wallet_outlined),
+  ('PACKAGE', 'Package', Icons.card_membership_outlined),
   ('LOYALTY_FREE_WASH', 'Free wash', Icons.card_giftcard),
 ];
 
@@ -52,13 +57,13 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
     super.initState();
     final vehicleId = widget.order.vehicle?.id;
     if (vehicleId != null) {
-      widget.ref.read(offlinePosRepositoryProvider).loyaltySummary(vehicleId).then((summary) {
+      widget.ref.read(loyaltyRepositoryProvider).summaryForVehicle(vehicleId).then((summary) {
         if (mounted) setState(() => _loyalty = summary);
       });
     }
   }
 
-  bool get _referenceRequired => _method == 'ECOCASH' || _method == 'MPESA';
+  bool get _referenceRequired => _method == 'ECOCASH' || _method == 'MPESA' || _method == 'BANK_TRANSFER';
 
   Future<void> _submit() async {
     if (_referenceRequired && _referenceController.text.trim().isEmpty) {
@@ -70,19 +75,22 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
       _error = null;
     });
     try {
-      await widget.ref.read(offlinePosRepositoryProvider).finishWash(widget.order.id, [
-        {
-          'method': _backendMethod(_method),
-          'amount': widget.order.totalAmount,
-          if (_referenceController.text.trim().isNotEmpty) 'externalReference': _referenceController.text.trim(),
-        },
-      ]);
+      final actorId = widget.ref.read(sessionProvider).user!.id;
+      await widget.ref.read(washOrdersRepositoryProvider).finishWash(
+        widget.order.id,
+        [
+          {
+            'method': _backendMethod(_method),
+            'amount': widget.order.totalAmount,
+            if (_referenceController.text.trim().isNotEmpty) 'externalReference': _referenceController.text.trim(),
+          },
+        ],
+        actorId: actorId,
+      );
       widget.ref.invalidate(queueProvider);
       if (mounted) Navigator.of(context).pop();
-    } on OfflinePaymentNotAllowedException catch (e) {
-      setState(() => _error = e.toString());
-    } on OfflineInsufficientCachedBalanceException catch (e) {
-      setState(() => _error = e.toString());
+    } on InsufficientWalletBalanceException catch (e) {
+      setState(() => _error = 'Insufficient prepaid balance: available M${formatMoney(e.available)}, requested M${formatMoney(e.requested)}');
     } catch (e) {
       setState(() => _error = 'Could not complete the payment: $e');
     } finally {
@@ -92,17 +100,8 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isOnline = widget.ref.watch(connectivityProvider);
     final hasFreeWash = _loyalty?.hasAvailableReward ?? false;
-    // LOYALTY_FREE_WASH is allowed offline once eligibleMethods has already
-    // gated it on the cached hasAvailableReward flag above — finishWash()
-    // re-checks the same cache and blocks if it's actually empty.
-    final eligibleMethods = _methods.where((m) => m.$1 != 'LOYALTY_FREE_WASH' || hasFreeWash);
-    final availableMethods = isOnline
-        ? eligibleMethods.toList()
-        : eligibleMethods
-            .where((m) => m.$1 == 'LOYALTY_FREE_WASH' || offlineSafePaymentMethods.contains(_backendMethod(m.$1)))
-            .toList();
+    final availableMethods = _methods.where((m) => m.$1 != 'LOYALTY_FREE_WASH' || hasFreeWash).toList();
 
     return SafeArea(
       child: Padding(
@@ -116,23 +115,6 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
               Text('Finish wash — ${widget.order.vehicle?.regNumberDisplay ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 4),
               Text('Total due: M${formatMoney(widget.order.totalAmount)}', style: const TextStyle(color: DnColors.muted)),
-              if (!isOnline) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: DnColors.amberSoft, borderRadius: BorderRadius.circular(8)),
-                  child: const Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.cloud_off, size: 14, color: DnColors.amber),
-                      SizedBox(width: 6),
-                      Expanded(
-                        child: Text('Offline — balances shown are as of last sync and will be verified once reconnected', style: TextStyle(fontSize: 12, color: DnColors.amber)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
               const SizedBox(height: 16),
               Wrap(
                 spacing: 8,

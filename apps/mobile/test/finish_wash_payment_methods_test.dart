@@ -3,15 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:de_nest/core/connectivity.dart';
+import 'package:de_nest/core/session.dart';
 import 'package:de_nest/data/local/app_database.dart';
 import 'package:de_nest/data/local/database_provider.dart';
+import 'package:de_nest/data/local/loyalty_repository.dart';
 import 'package:de_nest/data/models/models.dart';
 import 'package:de_nest/features/wash_queue/finish_wash_sheet.dart';
 
-class _AlwaysOffline extends ConnectivityNotifier {
+class _FakeSession extends SessionNotifier {
   @override
-  bool build() => false;
+  SessionState build() => const SessionState(
+        user: DnUser(id: 'u1', username: 'owner', fullName: 'De Nest Owner', role: 'OWNER'),
+        loading: false,
+      );
 }
 
 void main() {
@@ -26,7 +30,7 @@ void main() {
             vehicleId: 'v1',
             customerId: 'c1',
             status: 'READY',
-            totalAmount: 60,
+            totalAmount: 6000,
             createdAt: DateTime.now(),
           ),
         );
@@ -34,17 +38,17 @@ void main() {
 
   tearDown(() => db.close());
 
-  Future<void> openSheet(WidgetTester tester, {List<Override> extraOverrides = const []}) async {
+  Future<void> openSheet(WidgetTester tester) async {
     final order = WashOrder(
       id: 'w1',
       status: 'READY',
-      totalAmount: 60,
+      totalAmount: 6000,
       createdAt: DateTime.now(),
       vehicle: Vehicle(id: 'v1', customerId: 'c1', regNumberDisplay: 'ABC 123'),
     );
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [appDatabaseProvider.overrideWithValue(db), ...extraOverrides],
+        overrides: [appDatabaseProvider.overrideWithValue(db), sessionProvider.overrideWith(_FakeSession.new)],
         child: MaterialApp(
           home: Consumer(
             builder: (context, ref, _) => Scaffold(
@@ -63,34 +67,44 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('only Cash, Ecocash, M-Pesa, Card and Free wash (when earned) are offered', (tester) async {
-    await db.into(db.localLoyaltySummaries).insert(
-          LocalLoyaltySummariesCompanion.insert(vehicleId: 'v1', qualifyingCount: 5, hasAvailableReward: true, asOf: DateTime.now()),
-        );
+  testWidgets('every real payment method is offered; Free wash only when a reward is actually available', (tester) async {
     await openSheet(tester);
 
-    for (final label in ['Cash', 'Ecocash', 'M-Pesa', 'Card', 'Free wash']) {
+    for (final label in ['Cash', 'Ecocash', 'M-Pesa', 'Card', 'Bank transfer', 'Wallet', 'Package']) {
       expect(find.text(label), findsOneWidget);
     }
-    for (final removed in ['Mobile money', 'Bank transfer', 'Prepaid balance', 'Wash package']) {
-      expect(find.text(removed), findsNothing);
-    }
+    expect(find.text('Free wash'), findsNothing); // nothing earned yet
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Free wash is hidden when the vehicle has no reward available', (tester) async {
-    // No loyalty summary seeded — vehicle hasn't earned a free wash yet.
-    await openSheet(tester);
-
-    for (final label in ['Cash', 'Ecocash', 'M-Pesa', 'Card']) {
-      expect(find.text(label), findsOneWidget);
+  testWidgets('Free wash is offered once the vehicle has an available reward, and redeeming it marks the reward spent', (tester) async {
+    // Earn the reward last month so it's valid (redeemable) this month —
+    // findAvailableReward only matches the current calendar month.
+    final lastMonth = DateTime(DateTime.now().year, DateTime.now().month - 1);
+    final loyalty = LoyaltyRepository(db);
+    for (var i = 1; i <= 5; i++) {
+      await loyalty.creditQualifyingWash(vehicleId: 'v1', washOrderId: 'seed-$i', at: lastMonth, actorId: 'u1');
     }
-    expect(find.text('Free wash'), findsNothing);
+
+    await openSheet(tester);
+    expect(find.text('Free wash'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Free wash'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'FINISH WASH'));
+    await tester.pumpAndSettle();
+
+    final components = await db.select(db.localPaymentComponents).get();
+    expect(components, hasLength(1));
+    expect(components.single.method, 'LOYALTY_FREE_WASH');
+
+    final reward = await db.select(db.localLoyaltyRewards).getSingle();
+    expect(reward.status, 'REDEEMED'); // spent, so this device can't redeem it twice
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('selecting Ecocash requires a reference and records it as MOBILE_MONEY', (tester) async {
-    await openSheet(tester, extraOverrides: [connectivityProvider.overrideWith(_AlwaysOffline.new)]);
+    await openSheet(tester);
 
     await tester.tap(find.widgetWithText(ChoiceChip, 'Ecocash'));
     await tester.pumpAndSettle();
@@ -107,40 +121,39 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Free wash stays hidden offline when no reward is cached, same as online', (tester) async {
-    await openSheet(tester, extraOverrides: [connectivityProvider.overrideWith(_AlwaysOffline.new)]);
+  testWidgets('selecting Bank transfer requires a reference too', (tester) async {
+    await openSheet(tester);
 
-    expect(find.text('Free wash'), findsNothing);
-    expect(find.text('Ecocash'), findsOneWidget);
-    expect(find.text('M-Pesa'), findsOneWidget);
-    expect(find.textContaining('as of last sync'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('Free wash is offered and redeemable offline when cached as available, and marks the cache spent', (tester) async {
-    await db.into(db.localLoyaltySummaries).insert(
-          LocalLoyaltySummariesCompanion.insert(vehicleId: 'v1', qualifyingCount: 5, hasAvailableReward: true, asOf: DateTime.now()),
-        );
-    await openSheet(tester, extraOverrides: [connectivityProvider.overrideWith(_AlwaysOffline.new)]);
-
-    expect(find.text('Free wash'), findsOneWidget);
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Free wash'));
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Bank transfer'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ElevatedButton, 'FINISH WASH'));
     await tester.pumpAndSettle();
 
-    final components = await db.select(db.localPaymentComponents).get();
-    expect(components, hasLength(1));
-    expect(components.single.method, 'LOYALTY_FREE_WASH');
+    expect(find.textContaining('reference is required'), findsOneWidget);
+    expect(await db.select(db.localPayments).get(), isEmpty);
+  });
 
-    // Optimistically marked spent so this device can't redeem it twice.
-    final loyalty = await (db.select(
-      db.localLoyaltySummaries,
-    )..where((s) => s.vehicleId.equals('v1'))).getSingle();
-    expect(loyalty.hasAvailableReward, isFalse);
+  testWidgets('Cash needs no reference and completes the wash immediately', (tester) async {
+    await openSheet(tester);
 
-    final pending = await db.select(db.pendingSyncOps).get();
-    expect(pending, hasLength(1));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'FINISH WASH'));
+    await tester.pumpAndSettle();
+
+    final order = await (db.select(db.localWashOrders)..where((w) => w.id.equals('w1'))).getSingle();
+    expect(order.status, 'COMPLETED');
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('selecting Wallet with an insufficient balance shows a clear error and completes nothing', (tester) async {
+    await openSheet(tester);
+
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Wallet'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'FINISH WASH'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Insufficient prepaid balance'), findsOneWidget);
+    final order = await (db.select(db.localWashOrders)..where((w) => w.id.equals('w1'))).getSingle();
+    expect(order.status, 'READY'); // untouched
   });
 }

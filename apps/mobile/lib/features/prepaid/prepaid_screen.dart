@@ -2,12 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 import '../../core/money.dart';
 import '../../core/session.dart';
 import '../../data/local/offline_pos_repository.dart';
+import '../../data/local/prepaid_repository.dart';
 import '../../data/models/models.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
+
+const _uuid = Uuid();
 
 class PrepaidScreen extends ConsumerStatefulWidget {
   const PrepaidScreen({super.key});
@@ -95,7 +99,7 @@ class _PrepaidScreenState extends ConsumerState<PrepaidScreen> {
   }
 
   Future<void> _select(Customer c) async {
-    final overview = await ref.read(offlinePosRepositoryProvider).prepaidOverview(c.id);
+    final overview = await ref.read(prepaidRepositoryProvider).customerOverview(c.id);
     setState(() {
       _selected = c;
       _overview = overview;
@@ -135,7 +139,14 @@ class _PrepaidScreenState extends ConsumerState<PrepaidScreen> {
               onPressed: () async {
                 final amount = parseMoneyInput(amountController.text) ?? 0;
                 if (amount <= 0) return;
-                await ref.read(offlinePosRepositoryProvider).depositToWallet(customerId: _selected!.id, amount: amount, method: method);
+                final actorId = ref.read(sessionProvider).user!.id;
+                await ref.read(prepaidRepositoryProvider).deposit(
+                      customerId: _selected!.id,
+                      amount: amount,
+                      method: method,
+                      clientEntryId: _uuid.v4(),
+                      actorId: actorId,
+                    );
                 if (mounted) {
                   Navigator.pop(ctx);
                   _select(_selected!);

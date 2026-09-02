@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/money.dart';
 import '../../data/remote/pos_repository.dart';
-import '../../data/local/offline_pos_repository.dart';
+import '../../data/local/wash_orders_repository.dart';
 import '../../data/models/models.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
 import '../shell/sync_status.dart';
 
-final queueProvider = FutureProvider.autoDispose<List<WashOrder>>((ref) => ref.watch(offlinePosRepositoryProvider).queue());
+final queueProvider = FutureProvider.autoDispose<List<WashOrder>>((ref) => ref.watch(washOrdersRepositoryProvider).queue());
 
 final dashboardSummaryProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) {
   final now = DateTime.now();
