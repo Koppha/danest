@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../data/local/app_database.dart';
 import '../../data/local/database_provider.dart';
+import '../../data/local/sms_service.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
 
@@ -36,10 +38,18 @@ final auditLogProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>(
       .toList();
 });
 
-/// No SMS provider is wired up yet (Phase 8) — this stays a local, always-
-/// empty stub rather than a network call that would just fail on every
-/// load now that there's no backend to proxy it through.
-final smsLogProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async => const []);
+final smsLogProvider = FutureProvider.autoDispose<List<LocalSmsMessage>>((ref) => ref.watch(smsServiceProvider).list());
+
+Color _smsStatusColor(String status) {
+  switch (status) {
+    case 'SENT':
+      return DnColors.green;
+    case 'FAILED':
+      return DnColors.red;
+    default:
+      return DnColors.amber;
+  }
+}
 
 class AuditScreen extends ConsumerWidget {
   const AuditScreen({super.key});
@@ -105,16 +115,16 @@ class _SmsList extends ConsumerWidget {
     final data = ref.watch(smsLogProvider);
     return data.when(
       data: (list) => list.isEmpty
-          ? const DnEmptyState(icon: Icons.sms_outlined, title: 'No SMS messages yet', hint: "SMS sending isn't set up on this device yet.")
+          ? const DnEmptyState(icon: Icons.sms_outlined, title: 'No SMS messages yet', hint: '')
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: list.length,
               itemBuilder: (context, i) {
-                final m = list[i] as Map<String, dynamic>;
+                final m = list[i];
                 return ListTile(
-                  title: Text(m['phone'] as String),
-                  subtitle: Text(m['renderedBody'] as String, maxLines: 2, overflow: TextOverflow.ellipsis),
-                  trailing: Text(m['status'] as String, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                  title: Text(m.phone),
+                  subtitle: Text(m.renderedBody, maxLines: 2, overflow: TextOverflow.ellipsis),
+                  trailing: Text(m.status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _smsStatusColor(m.status))),
                 );
               },
             ),

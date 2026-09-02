@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/router.dart';
+import 'data/local/sms_retry_timer.dart';
 import 'design_system/theme.dart';
 
 void main() {
@@ -12,6 +13,7 @@ class DeNestApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(smsRetryTimerProvider); // keeps SMS retries moving while the app is open
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
       title: 'De Nest',

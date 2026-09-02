@@ -359,6 +359,25 @@ class LocalAuditLog extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// One row per SMS attempt — sent directly from the tablet now, with its
+/// own retry/backoff state machine standing in for the NestJS cron this
+/// was ported from.
+class LocalSmsMessages extends Table {
+  TextColumn get id => text()();
+  TextColumn get washOrderId => text().nullable()();
+  TextColumn get phone => text()();
+  TextColumn get renderedBody => text()();
+  TextColumn get status => text().withDefault(const Constant('PENDING'))(); // PENDING | SENT | FAILED
+  IntColumn get attemptCount => integer().withDefault(const Constant(0))();
+  DateTimeColumn get nextAttemptAt => dateTime()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get sentAt => dateTime().nullable()();
+  TextColumn get lastError => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// The device's own local user directory — no server, so this is the
 /// permanent credential store, not a cache. `passwordHash`/`pinHash` are
 /// bcrypt hashes; plaintext credentials are never persisted.
@@ -402,13 +421,14 @@ class LocalUsers extends Table {
   LocalCashCollections,
   LocalUsers,
   LocalAuditLog,
+  LocalSmsMessages,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   // Default storage truncates DateTime to whole-second unix timestamps,
   // which let two events in the same second compare as equal instead of
@@ -486,6 +506,9 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(localAuditLog);
             await m.addColumn(localExpenses, localExpenses.reversedByExpenseId);
             await m.addColumn(localExpenses, localExpenses.reversalOfExpenseId);
+          }
+          if (from < 10) {
+            await m.createTable(localSmsMessages);
           }
         },
       );

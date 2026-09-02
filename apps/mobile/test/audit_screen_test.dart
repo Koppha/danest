@@ -32,7 +32,7 @@ void main() {
 
     await tester.tap(find.text('SMS log'));
     await tester.pumpAndSettle();
-    expect(find.textContaining("isn't set up"), findsOneWidget);
+    expect(find.text('No SMS messages yet'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

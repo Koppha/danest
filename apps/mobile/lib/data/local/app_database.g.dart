@@ -11102,6 +11102,626 @@ class LocalAuditLogCompanion extends UpdateCompanion<LocalAuditLogData> {
   }
 }
 
+class $LocalSmsMessagesTable extends LocalSmsMessages
+    with TableInfo<$LocalSmsMessagesTable, LocalSmsMessage> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalSmsMessagesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _washOrderIdMeta = const VerificationMeta(
+    'washOrderId',
+  );
+  @override
+  late final GeneratedColumn<String> washOrderId = GeneratedColumn<String>(
+    'wash_order_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+    'phone',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _renderedBodyMeta = const VerificationMeta(
+    'renderedBody',
+  );
+  @override
+  late final GeneratedColumn<String> renderedBody = GeneratedColumn<String>(
+    'rendered_body',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('PENDING'),
+  );
+  static const VerificationMeta _attemptCountMeta = const VerificationMeta(
+    'attemptCount',
+  );
+  @override
+  late final GeneratedColumn<int> attemptCount = GeneratedColumn<int>(
+    'attempt_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _nextAttemptAtMeta = const VerificationMeta(
+    'nextAttemptAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> nextAttemptAt =
+      GeneratedColumn<DateTime>(
+        'next_attempt_at',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _sentAtMeta = const VerificationMeta('sentAt');
+  @override
+  late final GeneratedColumn<DateTime> sentAt = GeneratedColumn<DateTime>(
+    'sent_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastErrorMeta = const VerificationMeta(
+    'lastError',
+  );
+  @override
+  late final GeneratedColumn<String> lastError = GeneratedColumn<String>(
+    'last_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    washOrderId,
+    phone,
+    renderedBody,
+    status,
+    attemptCount,
+    nextAttemptAt,
+    createdAt,
+    sentAt,
+    lastError,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_sms_messages';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalSmsMessage> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('wash_order_id')) {
+      context.handle(
+        _washOrderIdMeta,
+        washOrderId.isAcceptableOrUnknown(
+          data['wash_order_id']!,
+          _washOrderIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_phoneMeta);
+    }
+    if (data.containsKey('rendered_body')) {
+      context.handle(
+        _renderedBodyMeta,
+        renderedBody.isAcceptableOrUnknown(
+          data['rendered_body']!,
+          _renderedBodyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_renderedBodyMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('attempt_count')) {
+      context.handle(
+        _attemptCountMeta,
+        attemptCount.isAcceptableOrUnknown(
+          data['attempt_count']!,
+          _attemptCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('next_attempt_at')) {
+      context.handle(
+        _nextAttemptAtMeta,
+        nextAttemptAt.isAcceptableOrUnknown(
+          data['next_attempt_at']!,
+          _nextAttemptAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_nextAttemptAtMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('sent_at')) {
+      context.handle(
+        _sentAtMeta,
+        sentAt.isAcceptableOrUnknown(data['sent_at']!, _sentAtMeta),
+      );
+    }
+    if (data.containsKey('last_error')) {
+      context.handle(
+        _lastErrorMeta,
+        lastError.isAcceptableOrUnknown(data['last_error']!, _lastErrorMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocalSmsMessage map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalSmsMessage(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      washOrderId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}wash_order_id'],
+      ),
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      )!,
+      renderedBody: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rendered_body'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      attemptCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}attempt_count'],
+      )!,
+      nextAttemptAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}next_attempt_at'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      sentAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}sent_at'],
+      ),
+      lastError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_error'],
+      ),
+    );
+  }
+
+  @override
+  $LocalSmsMessagesTable createAlias(String alias) {
+    return $LocalSmsMessagesTable(attachedDatabase, alias);
+  }
+}
+
+class LocalSmsMessage extends DataClass implements Insertable<LocalSmsMessage> {
+  final String id;
+  final String? washOrderId;
+  final String phone;
+  final String renderedBody;
+  final String status;
+  final int attemptCount;
+  final DateTime nextAttemptAt;
+  final DateTime createdAt;
+  final DateTime? sentAt;
+  final String? lastError;
+  const LocalSmsMessage({
+    required this.id,
+    this.washOrderId,
+    required this.phone,
+    required this.renderedBody,
+    required this.status,
+    required this.attemptCount,
+    required this.nextAttemptAt,
+    required this.createdAt,
+    this.sentAt,
+    this.lastError,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    if (!nullToAbsent || washOrderId != null) {
+      map['wash_order_id'] = Variable<String>(washOrderId);
+    }
+    map['phone'] = Variable<String>(phone);
+    map['rendered_body'] = Variable<String>(renderedBody);
+    map['status'] = Variable<String>(status);
+    map['attempt_count'] = Variable<int>(attemptCount);
+    map['next_attempt_at'] = Variable<DateTime>(nextAttemptAt);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || sentAt != null) {
+      map['sent_at'] = Variable<DateTime>(sentAt);
+    }
+    if (!nullToAbsent || lastError != null) {
+      map['last_error'] = Variable<String>(lastError);
+    }
+    return map;
+  }
+
+  LocalSmsMessagesCompanion toCompanion(bool nullToAbsent) {
+    return LocalSmsMessagesCompanion(
+      id: Value(id),
+      washOrderId: washOrderId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(washOrderId),
+      phone: Value(phone),
+      renderedBody: Value(renderedBody),
+      status: Value(status),
+      attemptCount: Value(attemptCount),
+      nextAttemptAt: Value(nextAttemptAt),
+      createdAt: Value(createdAt),
+      sentAt: sentAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sentAt),
+      lastError: lastError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastError),
+    );
+  }
+
+  factory LocalSmsMessage.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalSmsMessage(
+      id: serializer.fromJson<String>(json['id']),
+      washOrderId: serializer.fromJson<String?>(json['washOrderId']),
+      phone: serializer.fromJson<String>(json['phone']),
+      renderedBody: serializer.fromJson<String>(json['renderedBody']),
+      status: serializer.fromJson<String>(json['status']),
+      attemptCount: serializer.fromJson<int>(json['attemptCount']),
+      nextAttemptAt: serializer.fromJson<DateTime>(json['nextAttemptAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      sentAt: serializer.fromJson<DateTime?>(json['sentAt']),
+      lastError: serializer.fromJson<String?>(json['lastError']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'washOrderId': serializer.toJson<String?>(washOrderId),
+      'phone': serializer.toJson<String>(phone),
+      'renderedBody': serializer.toJson<String>(renderedBody),
+      'status': serializer.toJson<String>(status),
+      'attemptCount': serializer.toJson<int>(attemptCount),
+      'nextAttemptAt': serializer.toJson<DateTime>(nextAttemptAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'sentAt': serializer.toJson<DateTime?>(sentAt),
+      'lastError': serializer.toJson<String?>(lastError),
+    };
+  }
+
+  LocalSmsMessage copyWith({
+    String? id,
+    Value<String?> washOrderId = const Value.absent(),
+    String? phone,
+    String? renderedBody,
+    String? status,
+    int? attemptCount,
+    DateTime? nextAttemptAt,
+    DateTime? createdAt,
+    Value<DateTime?> sentAt = const Value.absent(),
+    Value<String?> lastError = const Value.absent(),
+  }) => LocalSmsMessage(
+    id: id ?? this.id,
+    washOrderId: washOrderId.present ? washOrderId.value : this.washOrderId,
+    phone: phone ?? this.phone,
+    renderedBody: renderedBody ?? this.renderedBody,
+    status: status ?? this.status,
+    attemptCount: attemptCount ?? this.attemptCount,
+    nextAttemptAt: nextAttemptAt ?? this.nextAttemptAt,
+    createdAt: createdAt ?? this.createdAt,
+    sentAt: sentAt.present ? sentAt.value : this.sentAt,
+    lastError: lastError.present ? lastError.value : this.lastError,
+  );
+  LocalSmsMessage copyWithCompanion(LocalSmsMessagesCompanion data) {
+    return LocalSmsMessage(
+      id: data.id.present ? data.id.value : this.id,
+      washOrderId: data.washOrderId.present
+          ? data.washOrderId.value
+          : this.washOrderId,
+      phone: data.phone.present ? data.phone.value : this.phone,
+      renderedBody: data.renderedBody.present
+          ? data.renderedBody.value
+          : this.renderedBody,
+      status: data.status.present ? data.status.value : this.status,
+      attemptCount: data.attemptCount.present
+          ? data.attemptCount.value
+          : this.attemptCount,
+      nextAttemptAt: data.nextAttemptAt.present
+          ? data.nextAttemptAt.value
+          : this.nextAttemptAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      sentAt: data.sentAt.present ? data.sentAt.value : this.sentAt,
+      lastError: data.lastError.present ? data.lastError.value : this.lastError,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalSmsMessage(')
+          ..write('id: $id, ')
+          ..write('washOrderId: $washOrderId, ')
+          ..write('phone: $phone, ')
+          ..write('renderedBody: $renderedBody, ')
+          ..write('status: $status, ')
+          ..write('attemptCount: $attemptCount, ')
+          ..write('nextAttemptAt: $nextAttemptAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('sentAt: $sentAt, ')
+          ..write('lastError: $lastError')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    washOrderId,
+    phone,
+    renderedBody,
+    status,
+    attemptCount,
+    nextAttemptAt,
+    createdAt,
+    sentAt,
+    lastError,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalSmsMessage &&
+          other.id == this.id &&
+          other.washOrderId == this.washOrderId &&
+          other.phone == this.phone &&
+          other.renderedBody == this.renderedBody &&
+          other.status == this.status &&
+          other.attemptCount == this.attemptCount &&
+          other.nextAttemptAt == this.nextAttemptAt &&
+          other.createdAt == this.createdAt &&
+          other.sentAt == this.sentAt &&
+          other.lastError == this.lastError);
+}
+
+class LocalSmsMessagesCompanion extends UpdateCompanion<LocalSmsMessage> {
+  final Value<String> id;
+  final Value<String?> washOrderId;
+  final Value<String> phone;
+  final Value<String> renderedBody;
+  final Value<String> status;
+  final Value<int> attemptCount;
+  final Value<DateTime> nextAttemptAt;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> sentAt;
+  final Value<String?> lastError;
+  final Value<int> rowid;
+  const LocalSmsMessagesCompanion({
+    this.id = const Value.absent(),
+    this.washOrderId = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.renderedBody = const Value.absent(),
+    this.status = const Value.absent(),
+    this.attemptCount = const Value.absent(),
+    this.nextAttemptAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.sentAt = const Value.absent(),
+    this.lastError = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalSmsMessagesCompanion.insert({
+    required String id,
+    this.washOrderId = const Value.absent(),
+    required String phone,
+    required String renderedBody,
+    this.status = const Value.absent(),
+    this.attemptCount = const Value.absent(),
+    required DateTime nextAttemptAt,
+    this.createdAt = const Value.absent(),
+    this.sentAt = const Value.absent(),
+    this.lastError = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       phone = Value(phone),
+       renderedBody = Value(renderedBody),
+       nextAttemptAt = Value(nextAttemptAt);
+  static Insertable<LocalSmsMessage> custom({
+    Expression<String>? id,
+    Expression<String>? washOrderId,
+    Expression<String>? phone,
+    Expression<String>? renderedBody,
+    Expression<String>? status,
+    Expression<int>? attemptCount,
+    Expression<DateTime>? nextAttemptAt,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? sentAt,
+    Expression<String>? lastError,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (washOrderId != null) 'wash_order_id': washOrderId,
+      if (phone != null) 'phone': phone,
+      if (renderedBody != null) 'rendered_body': renderedBody,
+      if (status != null) 'status': status,
+      if (attemptCount != null) 'attempt_count': attemptCount,
+      if (nextAttemptAt != null) 'next_attempt_at': nextAttemptAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (sentAt != null) 'sent_at': sentAt,
+      if (lastError != null) 'last_error': lastError,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalSmsMessagesCompanion copyWith({
+    Value<String>? id,
+    Value<String?>? washOrderId,
+    Value<String>? phone,
+    Value<String>? renderedBody,
+    Value<String>? status,
+    Value<int>? attemptCount,
+    Value<DateTime>? nextAttemptAt,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? sentAt,
+    Value<String?>? lastError,
+    Value<int>? rowid,
+  }) {
+    return LocalSmsMessagesCompanion(
+      id: id ?? this.id,
+      washOrderId: washOrderId ?? this.washOrderId,
+      phone: phone ?? this.phone,
+      renderedBody: renderedBody ?? this.renderedBody,
+      status: status ?? this.status,
+      attemptCount: attemptCount ?? this.attemptCount,
+      nextAttemptAt: nextAttemptAt ?? this.nextAttemptAt,
+      createdAt: createdAt ?? this.createdAt,
+      sentAt: sentAt ?? this.sentAt,
+      lastError: lastError ?? this.lastError,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (washOrderId.present) {
+      map['wash_order_id'] = Variable<String>(washOrderId.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
+    }
+    if (renderedBody.present) {
+      map['rendered_body'] = Variable<String>(renderedBody.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (attemptCount.present) {
+      map['attempt_count'] = Variable<int>(attemptCount.value);
+    }
+    if (nextAttemptAt.present) {
+      map['next_attempt_at'] = Variable<DateTime>(nextAttemptAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (sentAt.present) {
+      map['sent_at'] = Variable<DateTime>(sentAt.value);
+    }
+    if (lastError.present) {
+      map['last_error'] = Variable<String>(lastError.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalSmsMessagesCompanion(')
+          ..write('id: $id, ')
+          ..write('washOrderId: $washOrderId, ')
+          ..write('phone: $phone, ')
+          ..write('renderedBody: $renderedBody, ')
+          ..write('status: $status, ')
+          ..write('attemptCount: $attemptCount, ')
+          ..write('nextAttemptAt: $nextAttemptAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('sentAt: $sentAt, ')
+          ..write('lastError: $lastError, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -11147,6 +11767,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $LocalCashCollectionsTable(this);
   late final $LocalUsersTable localUsers = $LocalUsersTable(this);
   late final $LocalAuditLogTable localAuditLog = $LocalAuditLogTable(this);
+  late final $LocalSmsMessagesTable localSmsMessages = $LocalSmsMessagesTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -11176,6 +11799,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     localCashCollections,
     localUsers,
     localAuditLog,
+    localSmsMessages,
   ];
 }
 
@@ -17147,6 +17771,315 @@ typedef $$LocalAuditLogTableProcessedTableManager =
       LocalAuditLogData,
       PrefetchHooks Function()
     >;
+typedef $$LocalSmsMessagesTableCreateCompanionBuilder =
+    LocalSmsMessagesCompanion Function({
+      required String id,
+      Value<String?> washOrderId,
+      required String phone,
+      required String renderedBody,
+      Value<String> status,
+      Value<int> attemptCount,
+      required DateTime nextAttemptAt,
+      Value<DateTime> createdAt,
+      Value<DateTime?> sentAt,
+      Value<String?> lastError,
+      Value<int> rowid,
+    });
+typedef $$LocalSmsMessagesTableUpdateCompanionBuilder =
+    LocalSmsMessagesCompanion Function({
+      Value<String> id,
+      Value<String?> washOrderId,
+      Value<String> phone,
+      Value<String> renderedBody,
+      Value<String> status,
+      Value<int> attemptCount,
+      Value<DateTime> nextAttemptAt,
+      Value<DateTime> createdAt,
+      Value<DateTime?> sentAt,
+      Value<String?> lastError,
+      Value<int> rowid,
+    });
+
+class $$LocalSmsMessagesTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalSmsMessagesTable> {
+  $$LocalSmsMessagesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get washOrderId => $composableBuilder(
+    column: $table.washOrderId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get renderedBody => $composableBuilder(
+    column: $table.renderedBody,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get attemptCount => $composableBuilder(
+    column: $table.attemptCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get sentAt => $composableBuilder(
+    column: $table.sentAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocalSmsMessagesTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalSmsMessagesTable> {
+  $$LocalSmsMessagesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get washOrderId => $composableBuilder(
+    column: $table.washOrderId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get renderedBody => $composableBuilder(
+    column: $table.renderedBody,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get attemptCount => $composableBuilder(
+    column: $table.attemptCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get sentAt => $composableBuilder(
+    column: $table.sentAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalSmsMessagesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalSmsMessagesTable> {
+  $$LocalSmsMessagesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get washOrderId => $composableBuilder(
+    column: $table.washOrderId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<String> get renderedBody => $composableBuilder(
+    column: $table.renderedBody,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get attemptCount => $composableBuilder(
+    column: $table.attemptCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get sentAt =>
+      $composableBuilder(column: $table.sentAt, builder: (column) => column);
+
+  GeneratedColumn<String> get lastError =>
+      $composableBuilder(column: $table.lastError, builder: (column) => column);
+}
+
+class $$LocalSmsMessagesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalSmsMessagesTable,
+          LocalSmsMessage,
+          $$LocalSmsMessagesTableFilterComposer,
+          $$LocalSmsMessagesTableOrderingComposer,
+          $$LocalSmsMessagesTableAnnotationComposer,
+          $$LocalSmsMessagesTableCreateCompanionBuilder,
+          $$LocalSmsMessagesTableUpdateCompanionBuilder,
+          (
+            LocalSmsMessage,
+            BaseReferences<
+              _$AppDatabase,
+              $LocalSmsMessagesTable,
+              LocalSmsMessage
+            >,
+          ),
+          LocalSmsMessage,
+          PrefetchHooks Function()
+        > {
+  $$LocalSmsMessagesTableTableManager(
+    _$AppDatabase db,
+    $LocalSmsMessagesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalSmsMessagesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocalSmsMessagesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LocalSmsMessagesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String?> washOrderId = const Value.absent(),
+                Value<String> phone = const Value.absent(),
+                Value<String> renderedBody = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> attemptCount = const Value.absent(),
+                Value<DateTime> nextAttemptAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> sentAt = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalSmsMessagesCompanion(
+                id: id,
+                washOrderId: washOrderId,
+                phone: phone,
+                renderedBody: renderedBody,
+                status: status,
+                attemptCount: attemptCount,
+                nextAttemptAt: nextAttemptAt,
+                createdAt: createdAt,
+                sentAt: sentAt,
+                lastError: lastError,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                Value<String?> washOrderId = const Value.absent(),
+                required String phone,
+                required String renderedBody,
+                Value<String> status = const Value.absent(),
+                Value<int> attemptCount = const Value.absent(),
+                required DateTime nextAttemptAt,
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> sentAt = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalSmsMessagesCompanion.insert(
+                id: id,
+                washOrderId: washOrderId,
+                phone: phone,
+                renderedBody: renderedBody,
+                status: status,
+                attemptCount: attemptCount,
+                nextAttemptAt: nextAttemptAt,
+                createdAt: createdAt,
+                sentAt: sentAt,
+                lastError: lastError,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocalSmsMessagesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalSmsMessagesTable,
+      LocalSmsMessage,
+      $$LocalSmsMessagesTableFilterComposer,
+      $$LocalSmsMessagesTableOrderingComposer,
+      $$LocalSmsMessagesTableAnnotationComposer,
+      $$LocalSmsMessagesTableCreateCompanionBuilder,
+      $$LocalSmsMessagesTableUpdateCompanionBuilder,
+      (
+        LocalSmsMessage,
+        BaseReferences<_$AppDatabase, $LocalSmsMessagesTable, LocalSmsMessage>,
+      ),
+      LocalSmsMessage,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -17218,4 +18151,6 @@ class $AppDatabaseManager {
       $$LocalUsersTableTableManager(_db, _db.localUsers);
   $$LocalAuditLogTableTableManager get localAuditLog =>
       $$LocalAuditLogTableTableManager(_db, _db.localAuditLog);
+  $$LocalSmsMessagesTableTableManager get localSmsMessages =>
+      $$LocalSmsMessagesTableTableManager(_db, _db.localSmsMessages);
 }

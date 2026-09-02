@@ -9,6 +9,7 @@ import 'audit_log.dart';
 import 'database_provider.dart';
 import 'loyalty_repository.dart';
 import 'prepaid_repository.dart';
+import 'sms_service.dart';
 
 const _uuid = Uuid();
 
@@ -81,7 +82,8 @@ class WashOrdersRepository {
   final AppDatabase _db;
   final PrepaidRepository _prepaid;
   final LoyaltyRepository _loyalty;
-  WashOrdersRepository(this._db, this._prepaid, this._loyalty);
+  final SmsService? _sms;
+  WashOrdersRepository(this._db, this._prepaid, this._loyalty, {SmsService? sms}) : _sms = sms;
 
   Future<List<WashOrder>> queue() async {
     final rows = await (_db.select(_db.localWashOrders)
@@ -201,6 +203,16 @@ class WashOrdersRepository {
       );
       await _appendHistory(washOrderId: washOrderId, from: wash.status, to: toStatus, actorId: actorId);
     });
+
+    if (toStatus == 'READY' && _sms != null) {
+      final customer = await (_db.select(_db.localCustomers)..where((c) => c.id.equals(wash.customerId))).getSingleOrNull();
+      final vehicle = await (_db.select(_db.localVehicles)..where((v) => v.id.equals(wash.vehicleId))).getSingleOrNull();
+      if (customer != null && vehicle != null) {
+        final loyaltySummary = await _loyalty.summaryForVehicle(wash.vehicleId);
+        final body = renderReadyMessage(customerName: customer.fullName, vehicleReg: vehicle.regNumberDisplay, loyalty: loyaltySummary);
+        await _sms.enqueue(washOrderId: washOrderId, phone: customer.phone, body: body);
+      }
+    }
   }
 
   /// PIN-gated at the UI layer — this method trusts [approvedByUserId] was
@@ -405,5 +417,10 @@ extension _FirstWhereOrNull<T> on List<T> {
 }
 
 final washOrdersRepositoryProvider = Provider<WashOrdersRepository>(
-  (ref) => WashOrdersRepository(ref.watch(appDatabaseProvider), ref.watch(prepaidRepositoryProvider), ref.watch(loyaltyRepositoryProvider)),
+  (ref) => WashOrdersRepository(
+    ref.watch(appDatabaseProvider),
+    ref.watch(prepaidRepositoryProvider),
+    ref.watch(loyaltyRepositoryProvider),
+    sms: ref.watch(smsServiceProvider),
+  ),
 );

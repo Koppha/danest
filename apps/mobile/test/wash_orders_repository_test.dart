@@ -5,7 +5,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:de_nest/data/local/app_database.dart';
 import 'package:de_nest/data/local/loyalty_repository.dart';
 import 'package:de_nest/data/local/prepaid_repository.dart';
+import 'package:de_nest/data/local/sms_service.dart';
 import 'package:de_nest/data/local/wash_orders_repository.dart';
+
+class _RecordingSmsProvider implements SmsProvider {
+  final sent = <({String phone, String body})>[];
+  @override
+  Future<void> send({required String phone, required String body}) async {
+    sent.add((phone: phone, body: body));
+  }
+}
 
 void main() {
   late AppDatabase db;
@@ -100,6 +109,30 @@ void main() {
     test('COMPLETED is unreachable through transition() — only finishWash can reach it', () async {
       final id = await startBasicWash();
       await expectLater(repo.transition(id, 'COMPLETED', actorId: 'u1'), throwsA(isA<IllegalWashTransitionException>()));
+    });
+
+    test('marking a wash READY enqueues exactly one SMS to the customer', () async {
+      final provider = _RecordingSmsProvider();
+      final repoWithSms = WashOrdersRepository(db, prepaid, loyalty, sms: SmsService(db, provider));
+      await db.into(db.localCustomers).insert(
+            LocalCustomersCompanion.insert(id: 'c1', branchId: 'main', fullName: 'Thabo Mokoena', phone: '+26658123456'),
+          );
+      await db.into(db.localVehicles).insert(
+            LocalVehiclesCompanion.insert(id: 'v1', customerId: 'c1', regNumberNormalized: 'ABC123', regNumberDisplay: 'ABC 123'),
+          );
+      final id = await startBasicWash();
+
+      await repoWithSms.transition(id, 'WASHING', actorId: 'u1');
+      expect(provider.sent, isEmpty); // not yet — only READY should trigger it
+      await repoWithSms.transition(id, 'READY', actorId: 'u1');
+
+      expect(provider.sent, hasLength(1));
+      expect(provider.sent.single.phone, '+26658123456');
+      expect(provider.sent.single.body, contains('ABC 123'));
+
+      final messages = await db.select(db.localSmsMessages).get();
+      expect(messages, hasLength(1));
+      expect(messages.single.status, 'SENT');
     });
   });
 
