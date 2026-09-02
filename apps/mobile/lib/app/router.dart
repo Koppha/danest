@@ -12,6 +12,7 @@ import '../features/customers/customers_screen.dart';
 import '../features/prepaid/prepaid_screen.dart';
 import '../features/transactions/transactions_screen.dart';
 import '../features/reports/reports_screen.dart';
+import '../features/admin/backups_screen.dart';
 import '../features/admin/collections_screen.dart';
 import '../features/admin/expenses_screen.dart';
 import '../features/admin/settings_screen.dart';
@@ -28,12 +29,17 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final session = ref.read(sessionProvider);
       if (session.loading) return null;
+      final onSetup = state.matchedLocation == '/setup';
       if (session.needsFirstRunSetup) {
-        return state.matchedLocation == '/setup' ? null : '/setup';
+        return onSetup ? null : '/setup';
       }
       final loggingIn = state.matchedLocation == '/login';
       if (!session.isAuthenticated) return loggingIn ? null : '/login';
-      if (loggingIn) return '/dashboard';
+      // Setup just finished and signed the owner in (needsFirstRunSetup
+      // resets to false on signedIn(), but that alone doesn't move us off
+      // this route) — without this, a successful first-run submission
+      // looked identical to nothing having happened at all.
+      if (loggingIn || onSetup) return '/dashboard';
       return null;
     },
     routes: [
@@ -54,6 +60,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/admin/settings', builder: (context, state) => const SettingsScreen()),
           GoRoute(path: '/admin/users', builder: (context, state) => const UsersScreen()),
           GoRoute(path: '/admin/audit', builder: (context, state) => const AuditScreen()),
+          GoRoute(path: '/admin/backups', builder: (context, state) => const BackupsScreen()),
           GoRoute(path: '/admin/sync-issues', builder: (context, state) => const SyncIssuesScreen()),
         ],
       ),
