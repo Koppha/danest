@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/connectivity.dart';
+import '../../core/money.dart';
 import '../../core/session.dart';
 import '../../data/local/offline_pos_repository.dart';
 import '../../data/remote/api_client.dart';
@@ -32,7 +33,7 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
   /// attendant counted; the server works out the expected/variance once it
   /// syncs, using countedAt (recorded here) as the period end.
   Future<void> _confirm({double? expected}) async {
-    final counted = double.tryParse(_countedController.text);
+    final counted = parseMoneyInput(_countedController.text);
     if (counted == null) return;
     final branchId = ref.read(sessionProvider).user?.branchId ?? '';
     setState(() => _submitting = true);
@@ -42,7 +43,7 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
           .confirmCollection(
             branchId: branchId,
             countedCash: counted,
-            varianceReason: (expected == null || counted != expected) && _reasonController.text.trim().isNotEmpty
+            varianceReason: (expected == null || counted / 100 != expected) && _reasonController.text.trim().isNotEmpty
                 ? _reasonController.text.trim()
                 : null,
             witness: _witnessController.text.trim().isEmpty ? null : _witnessController.text.trim(),

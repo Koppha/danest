@@ -1,3 +1,5 @@
+import '../../core/money.dart';
+
 class Customer {
   final String id;
   final String fullName;
@@ -41,7 +43,7 @@ class WashService {
   final String id;
   final String name;
   final String tier;
-  final double basePrice;
+  final int basePrice; // cents
   final int durationMinutes;
 
   WashService({required this.id, required this.name, required this.tier, required this.basePrice, required this.durationMinutes});
@@ -50,7 +52,7 @@ class WashService {
         id: json['id'] as String,
         name: json['name'] as String,
         tier: json['tier'] as String? ?? 'standard',
-        basePrice: double.parse(json['basePrice'].toString()),
+        basePrice: currencyUnitsToCents(json['basePrice']),
         durationMinutes: json['durationMinutes'] as int,
       );
 }
@@ -58,18 +60,18 @@ class WashService {
 class WashExtra {
   final String id;
   final String name;
-  final double price;
+  final int price; // cents
 
   WashExtra({required this.id, required this.name, required this.price});
 
   factory WashExtra.fromJson(Map<String, dynamic> json) =>
-      WashExtra(id: json['id'] as String, name: json['name'] as String, price: double.parse(json['price'].toString()));
+      WashExtra(id: json['id'] as String, name: json['name'] as String, price: currencyUnitsToCents(json['price']));
 }
 
 class WashOrder {
   final String id;
   final String status;
-  final double totalAmount;
+  final int totalAmount; // cents
   final DateTime createdAt;
   final Vehicle? vehicle;
   final Customer? customer;
@@ -86,7 +88,7 @@ class WashOrder {
   factory WashOrder.fromJson(Map<String, dynamic> json) => WashOrder(
         id: json['id'] as String,
         status: json['status'] as String,
-        totalAmount: double.parse(json['totalAmount'].toString()),
+        totalAmount: currencyUnitsToCents(json['totalAmount']),
         createdAt: DateTime.parse(json['createdAt'] as String),
         vehicle: json['vehicle'] != null ? Vehicle.fromJson(json['vehicle'] as Map<String, dynamic>) : null,
         customer: json['customer'] != null ? Customer.fromJson(json['customer'] as Map<String, dynamic>) : null,

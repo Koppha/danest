@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/money.dart';
 import '../../core/session.dart';
 import '../../data/models/models.dart';
 import '../../data/local/offline_pos_repository.dart';
@@ -74,7 +75,7 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
     if (mounted) setState(() => _loyalty = summary);
   }
 
-  double _total(List<WashExtra> extras) {
+  int _total(List<WashExtra> extras) {
     var total = _selectedService?.basePrice ?? 0;
     for (final e in extras) {
       if (_selectedExtraIds.contains(e.id)) total += e.price;
@@ -211,7 +212,7 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
                       children: list.map((s) {
                         final selected = _selectedService?.id == s.id;
                         return ChoiceChip(
-                          label: Text('${s.name} · M${s.basePrice.toStringAsFixed(0)}'),
+                          label: Text('${s.name} · M${formatMoney(s.basePrice)}'),
                           selected: selected,
                           onSelected: (_) => setState(() => _selectedService = s),
                           selectedColor: DnColors.blue,
@@ -232,7 +233,7 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
                       children: list.map((e) {
                         final selected = _selectedExtraIds.contains(e.id);
                         return FilterChip(
-                          label: Text('${e.name} · M${e.price.toStringAsFixed(0)}'),
+                          label: Text('${e.name} · M${formatMoney(e.price)}'),
                           selected: selected,
                           onSelected: (v) => setState(() => v ? _selectedExtraIds.add(e.id) : _selectedExtraIds.remove(e.id)),
                         );
@@ -264,7 +265,7 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                    Text('M${_total(list).toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: DnColors.green)),
+                    Text('M${formatMoney(_total(list))}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: DnColors.green)),
                   ],
                 ),
                 if (_loyalty != null) ...[

@@ -50,7 +50,7 @@ void main() {
 
     final rows = await db.select(db.localCashCollections).get();
     expect(rows, hasLength(1));
-    expect(rows.single.countedCash, 850);
+    expect(rows.single.countedCash, 85000); // cents
     expect(rows.single.branchId, 'main');
 
     final pending = await db.select(db.pendingSyncOps).get();

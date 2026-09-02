@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/money.dart';
 import '../../data/remote/pos_repository.dart';
 import '../../data/local/offline_pos_repository.dart';
 import '../../data/models/models.dart';
@@ -93,7 +94,7 @@ class DashboardScreen extends ConsumerWidget {
                         .map((w) => ListTile(
                               leading: const Icon(Icons.directions_car, color: DnColors.muted),
                               title: Text(w.vehicle?.regNumberDisplay ?? '—', style: const TextStyle(fontWeight: FontWeight.w600)),
-                              subtitle: Text('M${w.totalAmount.toStringAsFixed(2)}'),
+                              subtitle: Text('M${formatMoney(w.totalAmount)}'),
                               trailing: DnStatusPill(status: w.status),
                             ))
                         .toList(),

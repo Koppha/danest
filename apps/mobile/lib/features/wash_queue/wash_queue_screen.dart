@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/money.dart';
 import '../../data/local/offline_pos_repository.dart';
 import '../../data/models/models.dart';
 import '../../design_system/theme.dart';
@@ -69,7 +70,7 @@ class _QueueCard extends StatelessWidget {
                   Text(order.customer?.fullName ?? '',
                       style: const TextStyle(color: DnColors.muted, fontSize: 13), overflow: TextOverflow.ellipsis, maxLines: 1),
                   const SizedBox(height: 6),
-                  Text('M${order.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text('M${formatMoney(order.totalAmount)}', style: const TextStyle(fontWeight: FontWeight.w600)),
                 ],
               ),
             ),

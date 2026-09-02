@@ -6,9 +6,11 @@ import 'package:de_nest/features/admin/expenses_screen.dart';
 import 'package:de_nest/features/transactions/transactions_screen.dart';
 
 // Prisma serializes Decimal fields (totalAmount, amount, etc.) as JSON
-// strings, not numbers — these screens read raw API responses directly
-// (no typed model), so they must not assume a numeric JSON type.
+// strings, not numbers.
 void main() {
+  // transactions_screen.dart still reads raw API responses directly (no
+  // typed model, no repository normalization) — this screen is still
+  // online-only pending Phase 7 of the standalone-app rewrite.
   testWidgets('Transactions screen renders amounts that arrive as Decimal strings', (tester) async {
     final data = [
       {
@@ -38,12 +40,16 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Expenses screen renders amounts that arrive as Decimal strings', (tester) async {
+  // expenses_screen.dart reads through OfflinePosRepository.listExpenses(),
+  // which normalizes both the online and offline paths to int cents before
+  // the screen ever sees the data — so by the time it's here, it's already
+  // an int, not a raw Decimal string.
+  testWidgets('Expenses screen renders a cents amount correctly', (tester) async {
     final data = [
       {
         'id': 'e1',
         'description': 'Detergent',
-        'amount': '150.00',
+        'amount': 15000,
         'paymentMethod': 'CASH',
         'category': {'name': 'Supplies'},
       },

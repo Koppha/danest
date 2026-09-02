@@ -126,7 +126,7 @@ void main() {
     final order = WashOrder(
       id: 'w1',
       status: 'READY',
-      totalAmount: 1234.56,
+      totalAmount: 123456,
       createdAt: DateTime.now(),
       vehicle: Vehicle(id: 'v1', customerId: 'c1', regNumberDisplay: 'ABC 123 XYZ 456 EXTRA LONG PLATE'),
       customer: Customer(id: 'c1', fullName: 'A Customer With An Extremely Long Full Name', phone: '+26658123456'),

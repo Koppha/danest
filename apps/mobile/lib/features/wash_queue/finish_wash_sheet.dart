@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/connectivity.dart';
+import '../../core/money.dart';
 import '../../data/models/models.dart';
 import '../../data/local/offline_pos_repository.dart';
 import '../../design_system/theme.dart';
@@ -114,7 +115,7 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
             children: [
               Text('Finish wash — ${widget.order.vehicle?.regNumberDisplay ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 4),
-              Text('Total due: M${widget.order.totalAmount.toStringAsFixed(2)}', style: const TextStyle(color: DnColors.muted)),
+              Text('Total due: M${formatMoney(widget.order.totalAmount)}', style: const TextStyle(color: DnColors.muted)),
               if (!isOnline) ...[
                 const SizedBox(height: 8),
                 Container(

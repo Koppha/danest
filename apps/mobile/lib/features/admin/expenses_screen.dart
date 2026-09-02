@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/money.dart';
 import '../../core/session.dart';
 import '../../data/local/offline_pos_repository.dart';
 import '../../design_system/theme.dart';
@@ -51,7 +52,7 @@ class ExpensesScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      Text('M${double.parse(e['amount'].toString()).toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text('M${formatMoney((e['amount'] as num).toInt())}', style: const TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -110,7 +111,7 @@ class ExpensesScreen extends ConsumerWidget {
               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
               ElevatedButton(
                 onPressed: () async {
-                  final amount = double.tryParse(amountController.text) ?? 0;
+                  final amount = parseMoneyInput(amountController.text) ?? 0;
                   if (categoryId == null || amount <= 0) return;
                   final branchId = ref.read(sessionProvider).user?.branchId ?? '';
                   await ref.read(offlinePosRepositoryProvider).createExpense(

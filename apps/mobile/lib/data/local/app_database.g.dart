@@ -40,11 +40,11 @@ class $LocalWashServicesTable extends LocalWashServices
     'basePrice',
   );
   @override
-  late final GeneratedColumn<double> basePrice = GeneratedColumn<double>(
+  late final GeneratedColumn<int> basePrice = GeneratedColumn<int>(
     'base_price',
     aliasedName,
     false,
-    type: DriftSqlType.double,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _durationMinutesMeta = const VerificationMeta(
@@ -140,7 +140,7 @@ class $LocalWashServicesTable extends LocalWashServices
         data['${effectivePrefix}tier'],
       )!,
       basePrice: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
+        DriftSqlType.int,
         data['${effectivePrefix}base_price'],
       )!,
       durationMinutes: attachedDatabase.typeMapping.read(
@@ -161,7 +161,7 @@ class LocalWashService extends DataClass
   final String id;
   final String name;
   final String tier;
-  final double basePrice;
+  final int basePrice;
   final int durationMinutes;
   const LocalWashService({
     required this.id,
@@ -176,7 +176,7 @@ class LocalWashService extends DataClass
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
     map['tier'] = Variable<String>(tier);
-    map['base_price'] = Variable<double>(basePrice);
+    map['base_price'] = Variable<int>(basePrice);
     map['duration_minutes'] = Variable<int>(durationMinutes);
     return map;
   }
@@ -200,7 +200,7 @@ class LocalWashService extends DataClass
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       tier: serializer.fromJson<String>(json['tier']),
-      basePrice: serializer.fromJson<double>(json['basePrice']),
+      basePrice: serializer.fromJson<int>(json['basePrice']),
       durationMinutes: serializer.fromJson<int>(json['durationMinutes']),
     );
   }
@@ -211,7 +211,7 @@ class LocalWashService extends DataClass
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'tier': serializer.toJson<String>(tier),
-      'basePrice': serializer.toJson<double>(basePrice),
+      'basePrice': serializer.toJson<int>(basePrice),
       'durationMinutes': serializer.toJson<int>(durationMinutes),
     };
   }
@@ -220,7 +220,7 @@ class LocalWashService extends DataClass
     String? id,
     String? name,
     String? tier,
-    double? basePrice,
+    int? basePrice,
     int? durationMinutes,
   }) => LocalWashService(
     id: id ?? this.id,
@@ -270,7 +270,7 @@ class LocalWashServicesCompanion extends UpdateCompanion<LocalWashService> {
   final Value<String> id;
   final Value<String> name;
   final Value<String> tier;
-  final Value<double> basePrice;
+  final Value<int> basePrice;
   final Value<int> durationMinutes;
   final Value<int> rowid;
   const LocalWashServicesCompanion({
@@ -285,7 +285,7 @@ class LocalWashServicesCompanion extends UpdateCompanion<LocalWashService> {
     required String id,
     required String name,
     required String tier,
-    required double basePrice,
+    required int basePrice,
     required int durationMinutes,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -297,7 +297,7 @@ class LocalWashServicesCompanion extends UpdateCompanion<LocalWashService> {
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? tier,
-    Expression<double>? basePrice,
+    Expression<int>? basePrice,
     Expression<int>? durationMinutes,
     Expression<int>? rowid,
   }) {
@@ -315,7 +315,7 @@ class LocalWashServicesCompanion extends UpdateCompanion<LocalWashService> {
     Value<String>? id,
     Value<String>? name,
     Value<String>? tier,
-    Value<double>? basePrice,
+    Value<int>? basePrice,
     Value<int>? durationMinutes,
     Value<int>? rowid,
   }) {
@@ -342,7 +342,7 @@ class LocalWashServicesCompanion extends UpdateCompanion<LocalWashService> {
       map['tier'] = Variable<String>(tier.value);
     }
     if (basePrice.present) {
-      map['base_price'] = Variable<double>(basePrice.value);
+      map['base_price'] = Variable<int>(basePrice.value);
     }
     if (durationMinutes.present) {
       map['duration_minutes'] = Variable<int>(durationMinutes.value);
@@ -393,11 +393,11 @@ class $LocalWashExtrasTable extends LocalWashExtras
   );
   static const VerificationMeta _priceMeta = const VerificationMeta('price');
   @override
-  late final GeneratedColumn<double> price = GeneratedColumn<double>(
+  late final GeneratedColumn<int> price = GeneratedColumn<int>(
     'price',
     aliasedName,
     false,
-    type: DriftSqlType.double,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   @override
@@ -453,7 +453,7 @@ class $LocalWashExtrasTable extends LocalWashExtras
         data['${effectivePrefix}name'],
       )!,
       price: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
+        DriftSqlType.int,
         data['${effectivePrefix}price'],
       )!,
     );
@@ -468,7 +468,7 @@ class $LocalWashExtrasTable extends LocalWashExtras
 class LocalWashExtra extends DataClass implements Insertable<LocalWashExtra> {
   final String id;
   final String name;
-  final double price;
+  final int price;
   const LocalWashExtra({
     required this.id,
     required this.name,
@@ -479,7 +479,7 @@ class LocalWashExtra extends DataClass implements Insertable<LocalWashExtra> {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
-    map['price'] = Variable<double>(price);
+    map['price'] = Variable<int>(price);
     return map;
   }
 
@@ -499,7 +499,7 @@ class LocalWashExtra extends DataClass implements Insertable<LocalWashExtra> {
     return LocalWashExtra(
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
-      price: serializer.fromJson<double>(json['price']),
+      price: serializer.fromJson<int>(json['price']),
     );
   }
   @override
@@ -508,11 +508,11 @@ class LocalWashExtra extends DataClass implements Insertable<LocalWashExtra> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
-      'price': serializer.toJson<double>(price),
+      'price': serializer.toJson<int>(price),
     };
   }
 
-  LocalWashExtra copyWith({String? id, String? name, double? price}) =>
+  LocalWashExtra copyWith({String? id, String? name, int? price}) =>
       LocalWashExtra(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -550,7 +550,7 @@ class LocalWashExtra extends DataClass implements Insertable<LocalWashExtra> {
 class LocalWashExtrasCompanion extends UpdateCompanion<LocalWashExtra> {
   final Value<String> id;
   final Value<String> name;
-  final Value<double> price;
+  final Value<int> price;
   final Value<int> rowid;
   const LocalWashExtrasCompanion({
     this.id = const Value.absent(),
@@ -561,7 +561,7 @@ class LocalWashExtrasCompanion extends UpdateCompanion<LocalWashExtra> {
   LocalWashExtrasCompanion.insert({
     required String id,
     required String name,
-    required double price,
+    required int price,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
@@ -569,7 +569,7 @@ class LocalWashExtrasCompanion extends UpdateCompanion<LocalWashExtra> {
   static Insertable<LocalWashExtra> custom({
     Expression<String>? id,
     Expression<String>? name,
-    Expression<double>? price,
+    Expression<int>? price,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -583,7 +583,7 @@ class LocalWashExtrasCompanion extends UpdateCompanion<LocalWashExtra> {
   LocalWashExtrasCompanion copyWith({
     Value<String>? id,
     Value<String>? name,
-    Value<double>? price,
+    Value<int>? price,
     Value<int>? rowid,
   }) {
     return LocalWashExtrasCompanion(
@@ -604,7 +604,7 @@ class LocalWashExtrasCompanion extends UpdateCompanion<LocalWashExtra> {
       map['name'] = Variable<String>(name.value);
     }
     if (price.present) {
-      map['price'] = Variable<double>(price.value);
+      map['price'] = Variable<int>(price.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -2047,11 +2047,11 @@ class $LocalWashOrdersTable extends LocalWashOrders
     'totalAmount',
   );
   @override
-  late final GeneratedColumn<double> totalAmount = GeneratedColumn<double>(
+  late final GeneratedColumn<int> totalAmount = GeneratedColumn<int>(
     'total_amount',
     aliasedName,
     false,
-    type: DriftSqlType.double,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
@@ -2247,7 +2247,7 @@ class $LocalWashOrdersTable extends LocalWashOrders
         data['${effectivePrefix}status'],
       )!,
       totalAmount: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
+        DriftSqlType.int,
         data['${effectivePrefix}total_amount'],
       )!,
       createdAt: attachedDatabase.typeMapping.read(
@@ -2292,7 +2292,7 @@ class LocalWashOrder extends DataClass implements Insertable<LocalWashOrder> {
   final String vehicleId;
   final String customerId;
   final String status;
-  final double totalAmount;
+  final int totalAmount;
   final DateTime createdAt;
   final DateTime? completedAt;
   final DateTime? cancelledAt;
@@ -2319,7 +2319,7 @@ class LocalWashOrder extends DataClass implements Insertable<LocalWashOrder> {
     map['vehicle_id'] = Variable<String>(vehicleId);
     map['customer_id'] = Variable<String>(customerId);
     map['status'] = Variable<String>(status);
-    map['total_amount'] = Variable<double>(totalAmount);
+    map['total_amount'] = Variable<int>(totalAmount);
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || completedAt != null) {
       map['completed_at'] = Variable<DateTime>(completedAt);
@@ -2371,7 +2371,7 @@ class LocalWashOrder extends DataClass implements Insertable<LocalWashOrder> {
       vehicleId: serializer.fromJson<String>(json['vehicleId']),
       customerId: serializer.fromJson<String>(json['customerId']),
       status: serializer.fromJson<String>(json['status']),
-      totalAmount: serializer.fromJson<double>(json['totalAmount']),
+      totalAmount: serializer.fromJson<int>(json['totalAmount']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
       cancelledAt: serializer.fromJson<DateTime?>(json['cancelledAt']),
@@ -2390,7 +2390,7 @@ class LocalWashOrder extends DataClass implements Insertable<LocalWashOrder> {
       'vehicleId': serializer.toJson<String>(vehicleId),
       'customerId': serializer.toJson<String>(customerId),
       'status': serializer.toJson<String>(status),
-      'totalAmount': serializer.toJson<double>(totalAmount),
+      'totalAmount': serializer.toJson<int>(totalAmount),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'completedAt': serializer.toJson<DateTime?>(completedAt),
       'cancelledAt': serializer.toJson<DateTime?>(cancelledAt),
@@ -2407,7 +2407,7 @@ class LocalWashOrder extends DataClass implements Insertable<LocalWashOrder> {
     String? vehicleId,
     String? customerId,
     String? status,
-    double? totalAmount,
+    int? totalAmount,
     DateTime? createdAt,
     Value<DateTime?> completedAt = const Value.absent(),
     Value<DateTime?> cancelledAt = const Value.absent(),
@@ -2509,7 +2509,7 @@ class LocalWashOrdersCompanion extends UpdateCompanion<LocalWashOrder> {
   final Value<String> vehicleId;
   final Value<String> customerId;
   final Value<String> status;
-  final Value<double> totalAmount;
+  final Value<int> totalAmount;
   final Value<DateTime> createdAt;
   final Value<DateTime?> completedAt;
   final Value<DateTime?> cancelledAt;
@@ -2536,7 +2536,7 @@ class LocalWashOrdersCompanion extends UpdateCompanion<LocalWashOrder> {
     required String vehicleId,
     required String customerId,
     required String status,
-    required double totalAmount,
+    required int totalAmount,
     required DateTime createdAt,
     this.completedAt = const Value.absent(),
     this.cancelledAt = const Value.absent(),
@@ -2556,7 +2556,7 @@ class LocalWashOrdersCompanion extends UpdateCompanion<LocalWashOrder> {
     Expression<String>? vehicleId,
     Expression<String>? customerId,
     Expression<String>? status,
-    Expression<double>? totalAmount,
+    Expression<int>? totalAmount,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? completedAt,
     Expression<DateTime>? cancelledAt,
@@ -2586,7 +2586,7 @@ class LocalWashOrdersCompanion extends UpdateCompanion<LocalWashOrder> {
     Value<String>? vehicleId,
     Value<String>? customerId,
     Value<String>? status,
-    Value<double>? totalAmount,
+    Value<int>? totalAmount,
     Value<DateTime>? createdAt,
     Value<DateTime?>? completedAt,
     Value<DateTime?>? cancelledAt,
@@ -2629,7 +2629,7 @@ class LocalWashOrdersCompanion extends UpdateCompanion<LocalWashOrder> {
       map['status'] = Variable<String>(status.value);
     }
     if (totalAmount.present) {
-      map['total_amount'] = Variable<double>(totalAmount.value);
+      map['total_amount'] = Variable<int>(totalAmount.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -2748,11 +2748,11 @@ class $LocalWashOrderItemsTable extends LocalWashOrderItems
     'priceSnapshot',
   );
   @override
-  late final GeneratedColumn<double> priceSnapshot = GeneratedColumn<double>(
+  late final GeneratedColumn<int> priceSnapshot = GeneratedColumn<int>(
     'price_snapshot',
     aliasedName,
     false,
-    type: DriftSqlType.double,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _qtyMeta = const VerificationMeta('qty');
@@ -2886,7 +2886,7 @@ class $LocalWashOrderItemsTable extends LocalWashOrderItems
         data['${effectivePrefix}name_snapshot'],
       )!,
       priceSnapshot: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
+        DriftSqlType.int,
         data['${effectivePrefix}price_snapshot'],
       )!,
       qty: attachedDatabase.typeMapping.read(
@@ -2910,7 +2910,7 @@ class LocalWashOrderItem extends DataClass
   final String? serviceId;
   final String? extraId;
   final String nameSnapshot;
-  final double priceSnapshot;
+  final int priceSnapshot;
   final int qty;
   const LocalWashOrderItem({
     required this.id,
@@ -2935,7 +2935,7 @@ class LocalWashOrderItem extends DataClass
       map['extra_id'] = Variable<String>(extraId);
     }
     map['name_snapshot'] = Variable<String>(nameSnapshot);
-    map['price_snapshot'] = Variable<double>(priceSnapshot);
+    map['price_snapshot'] = Variable<int>(priceSnapshot);
     map['qty'] = Variable<int>(qty);
     return map;
   }
@@ -2969,7 +2969,7 @@ class LocalWashOrderItem extends DataClass
       serviceId: serializer.fromJson<String?>(json['serviceId']),
       extraId: serializer.fromJson<String?>(json['extraId']),
       nameSnapshot: serializer.fromJson<String>(json['nameSnapshot']),
-      priceSnapshot: serializer.fromJson<double>(json['priceSnapshot']),
+      priceSnapshot: serializer.fromJson<int>(json['priceSnapshot']),
       qty: serializer.fromJson<int>(json['qty']),
     );
   }
@@ -2983,7 +2983,7 @@ class LocalWashOrderItem extends DataClass
       'serviceId': serializer.toJson<String?>(serviceId),
       'extraId': serializer.toJson<String?>(extraId),
       'nameSnapshot': serializer.toJson<String>(nameSnapshot),
-      'priceSnapshot': serializer.toJson<double>(priceSnapshot),
+      'priceSnapshot': serializer.toJson<int>(priceSnapshot),
       'qty': serializer.toJson<int>(qty),
     };
   }
@@ -2995,7 +2995,7 @@ class LocalWashOrderItem extends DataClass
     Value<String?> serviceId = const Value.absent(),
     Value<String?> extraId = const Value.absent(),
     String? nameSnapshot,
-    double? priceSnapshot,
+    int? priceSnapshot,
     int? qty,
   }) => LocalWashOrderItem(
     id: id ?? this.id,
@@ -3073,7 +3073,7 @@ class LocalWashOrderItemsCompanion extends UpdateCompanion<LocalWashOrderItem> {
   final Value<String?> serviceId;
   final Value<String?> extraId;
   final Value<String> nameSnapshot;
-  final Value<double> priceSnapshot;
+  final Value<int> priceSnapshot;
   final Value<int> qty;
   final Value<int> rowid;
   const LocalWashOrderItemsCompanion({
@@ -3094,7 +3094,7 @@ class LocalWashOrderItemsCompanion extends UpdateCompanion<LocalWashOrderItem> {
     this.serviceId = const Value.absent(),
     this.extraId = const Value.absent(),
     required String nameSnapshot,
-    required double priceSnapshot,
+    required int priceSnapshot,
     this.qty = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -3109,7 +3109,7 @@ class LocalWashOrderItemsCompanion extends UpdateCompanion<LocalWashOrderItem> {
     Expression<String>? serviceId,
     Expression<String>? extraId,
     Expression<String>? nameSnapshot,
-    Expression<double>? priceSnapshot,
+    Expression<int>? priceSnapshot,
     Expression<int>? qty,
     Expression<int>? rowid,
   }) {
@@ -3133,7 +3133,7 @@ class LocalWashOrderItemsCompanion extends UpdateCompanion<LocalWashOrderItem> {
     Value<String?>? serviceId,
     Value<String?>? extraId,
     Value<String>? nameSnapshot,
-    Value<double>? priceSnapshot,
+    Value<int>? priceSnapshot,
     Value<int>? qty,
     Value<int>? rowid,
   }) {
@@ -3172,7 +3172,7 @@ class LocalWashOrderItemsCompanion extends UpdateCompanion<LocalWashOrderItem> {
       map['name_snapshot'] = Variable<String>(nameSnapshot.value);
     }
     if (priceSnapshot.present) {
-      map['price_snapshot'] = Variable<double>(priceSnapshot.value);
+      map['price_snapshot'] = Variable<int>(priceSnapshot.value);
     }
     if (qty.present) {
       map['qty'] = Variable<int>(qty.value);
@@ -3230,11 +3230,11 @@ class $LocalPaymentsTable extends LocalPayments
     'totalAmount',
   );
   @override
-  late final GeneratedColumn<double> totalAmount = GeneratedColumn<double>(
+  late final GeneratedColumn<int> totalAmount = GeneratedColumn<int>(
     'total_amount',
     aliasedName,
     false,
-    type: DriftSqlType.double,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _completedAtMeta = const VerificationMeta(
@@ -3323,7 +3323,7 @@ class $LocalPaymentsTable extends LocalPayments
         data['${effectivePrefix}wash_order_id'],
       )!,
       totalAmount: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
+        DriftSqlType.int,
         data['${effectivePrefix}total_amount'],
       )!,
       completedAt: attachedDatabase.typeMapping.read(
@@ -3342,7 +3342,7 @@ class $LocalPaymentsTable extends LocalPayments
 class LocalPayment extends DataClass implements Insertable<LocalPayment> {
   final String id;
   final String washOrderId;
-  final double totalAmount;
+  final int totalAmount;
   final DateTime completedAt;
   const LocalPayment({
     required this.id,
@@ -3355,7 +3355,7 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['wash_order_id'] = Variable<String>(washOrderId);
-    map['total_amount'] = Variable<double>(totalAmount);
+    map['total_amount'] = Variable<int>(totalAmount);
     map['completed_at'] = Variable<DateTime>(completedAt);
     return map;
   }
@@ -3377,7 +3377,7 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
     return LocalPayment(
       id: serializer.fromJson<String>(json['id']),
       washOrderId: serializer.fromJson<String>(json['washOrderId']),
-      totalAmount: serializer.fromJson<double>(json['totalAmount']),
+      totalAmount: serializer.fromJson<int>(json['totalAmount']),
       completedAt: serializer.fromJson<DateTime>(json['completedAt']),
     );
   }
@@ -3387,7 +3387,7 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'washOrderId': serializer.toJson<String>(washOrderId),
-      'totalAmount': serializer.toJson<double>(totalAmount),
+      'totalAmount': serializer.toJson<int>(totalAmount),
       'completedAt': serializer.toJson<DateTime>(completedAt),
     };
   }
@@ -3395,7 +3395,7 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
   LocalPayment copyWith({
     String? id,
     String? washOrderId,
-    double? totalAmount,
+    int? totalAmount,
     DateTime? completedAt,
   }) => LocalPayment(
     id: id ?? this.id,
@@ -3444,7 +3444,7 @@ class LocalPayment extends DataClass implements Insertable<LocalPayment> {
 class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
   final Value<String> id;
   final Value<String> washOrderId;
-  final Value<double> totalAmount;
+  final Value<int> totalAmount;
   final Value<DateTime> completedAt;
   final Value<int> rowid;
   const LocalPaymentsCompanion({
@@ -3457,7 +3457,7 @@ class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
   LocalPaymentsCompanion.insert({
     required String id,
     required String washOrderId,
-    required double totalAmount,
+    required int totalAmount,
     required DateTime completedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -3467,7 +3467,7 @@ class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
   static Insertable<LocalPayment> custom({
     Expression<String>? id,
     Expression<String>? washOrderId,
-    Expression<double>? totalAmount,
+    Expression<int>? totalAmount,
     Expression<DateTime>? completedAt,
     Expression<int>? rowid,
   }) {
@@ -3483,7 +3483,7 @@ class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
   LocalPaymentsCompanion copyWith({
     Value<String>? id,
     Value<String>? washOrderId,
-    Value<double>? totalAmount,
+    Value<int>? totalAmount,
     Value<DateTime>? completedAt,
     Value<int>? rowid,
   }) {
@@ -3506,7 +3506,7 @@ class LocalPaymentsCompanion extends UpdateCompanion<LocalPayment> {
       map['wash_order_id'] = Variable<String>(washOrderId.value);
     }
     if (totalAmount.present) {
-      map['total_amount'] = Variable<double>(totalAmount.value);
+      map['total_amount'] = Variable<int>(totalAmount.value);
     }
     if (completedAt.present) {
       map['completed_at'] = Variable<DateTime>(completedAt.value);
@@ -3567,11 +3567,11 @@ class $LocalPaymentComponentsTable extends LocalPaymentComponents
   );
   static const VerificationMeta _amountMeta = const VerificationMeta('amount');
   @override
-  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+  late final GeneratedColumn<int> amount = GeneratedColumn<int>(
     'amount',
     aliasedName,
     false,
-    type: DriftSqlType.double,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _externalReferenceMeta = const VerificationMeta(
@@ -3666,7 +3666,7 @@ class $LocalPaymentComponentsTable extends LocalPaymentComponents
         data['${effectivePrefix}method'],
       )!,
       amount: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
+        DriftSqlType.int,
         data['${effectivePrefix}amount'],
       )!,
       externalReference: attachedDatabase.typeMapping.read(
@@ -3687,7 +3687,7 @@ class LocalPaymentComponent extends DataClass
   final String id;
   final String paymentId;
   final String method;
-  final double amount;
+  final int amount;
   final String? externalReference;
   const LocalPaymentComponent({
     required this.id,
@@ -3702,7 +3702,7 @@ class LocalPaymentComponent extends DataClass
     map['id'] = Variable<String>(id);
     map['payment_id'] = Variable<String>(paymentId);
     map['method'] = Variable<String>(method);
-    map['amount'] = Variable<double>(amount);
+    map['amount'] = Variable<int>(amount);
     if (!nullToAbsent || externalReference != null) {
       map['external_reference'] = Variable<String>(externalReference);
     }
@@ -3730,7 +3730,7 @@ class LocalPaymentComponent extends DataClass
       id: serializer.fromJson<String>(json['id']),
       paymentId: serializer.fromJson<String>(json['paymentId']),
       method: serializer.fromJson<String>(json['method']),
-      amount: serializer.fromJson<double>(json['amount']),
+      amount: serializer.fromJson<int>(json['amount']),
       externalReference: serializer.fromJson<String?>(
         json['externalReference'],
       ),
@@ -3743,7 +3743,7 @@ class LocalPaymentComponent extends DataClass
       'id': serializer.toJson<String>(id),
       'paymentId': serializer.toJson<String>(paymentId),
       'method': serializer.toJson<String>(method),
-      'amount': serializer.toJson<double>(amount),
+      'amount': serializer.toJson<int>(amount),
       'externalReference': serializer.toJson<String?>(externalReference),
     };
   }
@@ -3752,7 +3752,7 @@ class LocalPaymentComponent extends DataClass
     String? id,
     String? paymentId,
     String? method,
-    double? amount,
+    int? amount,
     Value<String?> externalReference = const Value.absent(),
   }) => LocalPaymentComponent(
     id: id ?? this.id,
@@ -3808,7 +3808,7 @@ class LocalPaymentComponentsCompanion
   final Value<String> id;
   final Value<String> paymentId;
   final Value<String> method;
-  final Value<double> amount;
+  final Value<int> amount;
   final Value<String?> externalReference;
   final Value<int> rowid;
   const LocalPaymentComponentsCompanion({
@@ -3823,7 +3823,7 @@ class LocalPaymentComponentsCompanion
     required String id,
     required String paymentId,
     required String method,
-    required double amount,
+    required int amount,
     this.externalReference = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -3834,7 +3834,7 @@ class LocalPaymentComponentsCompanion
     Expression<String>? id,
     Expression<String>? paymentId,
     Expression<String>? method,
-    Expression<double>? amount,
+    Expression<int>? amount,
     Expression<String>? externalReference,
     Expression<int>? rowid,
   }) {
@@ -3852,7 +3852,7 @@ class LocalPaymentComponentsCompanion
     Value<String>? id,
     Value<String>? paymentId,
     Value<String>? method,
-    Value<double>? amount,
+    Value<int>? amount,
     Value<String?>? externalReference,
     Value<int>? rowid,
   }) {
@@ -3879,7 +3879,7 @@ class LocalPaymentComponentsCompanion
       map['method'] = Variable<String>(method.value);
     }
     if (amount.present) {
-      map['amount'] = Variable<double>(amount.value);
+      map['amount'] = Variable<int>(amount.value);
     }
     if (externalReference.present) {
       map['external_reference'] = Variable<String>(externalReference.value);
@@ -4991,11 +4991,11 @@ class $LocalExpensesTable extends LocalExpenses
   );
   static const VerificationMeta _amountMeta = const VerificationMeta('amount');
   @override
-  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+  late final GeneratedColumn<int> amount = GeneratedColumn<int>(
     'amount',
     aliasedName,
     false,
-    type: DriftSqlType.double,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _paymentMethodMeta = const VerificationMeta(
@@ -5147,7 +5147,7 @@ class $LocalExpensesTable extends LocalExpenses
         data['${effectivePrefix}description'],
       )!,
       amount: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
+        DriftSqlType.int,
         data['${effectivePrefix}amount'],
       )!,
       paymentMethod: attachedDatabase.typeMapping.read(
@@ -5176,7 +5176,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
   final String branchId;
   final String categoryId;
   final String description;
-  final double amount;
+  final int amount;
   final String paymentMethod;
   final DateTime createdAt;
   final bool dirty;
@@ -5197,7 +5197,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
     map['branch_id'] = Variable<String>(branchId);
     map['category_id'] = Variable<String>(categoryId);
     map['description'] = Variable<String>(description);
-    map['amount'] = Variable<double>(amount);
+    map['amount'] = Variable<int>(amount);
     map['payment_method'] = Variable<String>(paymentMethod);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['dirty'] = Variable<bool>(dirty);
@@ -5227,7 +5227,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
       branchId: serializer.fromJson<String>(json['branchId']),
       categoryId: serializer.fromJson<String>(json['categoryId']),
       description: serializer.fromJson<String>(json['description']),
-      amount: serializer.fromJson<double>(json['amount']),
+      amount: serializer.fromJson<int>(json['amount']),
       paymentMethod: serializer.fromJson<String>(json['paymentMethod']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       dirty: serializer.fromJson<bool>(json['dirty']),
@@ -5241,7 +5241,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
       'branchId': serializer.toJson<String>(branchId),
       'categoryId': serializer.toJson<String>(categoryId),
       'description': serializer.toJson<String>(description),
-      'amount': serializer.toJson<double>(amount),
+      'amount': serializer.toJson<int>(amount),
       'paymentMethod': serializer.toJson<String>(paymentMethod),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'dirty': serializer.toJson<bool>(dirty),
@@ -5253,7 +5253,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
     String? branchId,
     String? categoryId,
     String? description,
-    double? amount,
+    int? amount,
     String? paymentMethod,
     DateTime? createdAt,
     bool? dirty,
@@ -5331,7 +5331,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
   final Value<String> branchId;
   final Value<String> categoryId;
   final Value<String> description;
-  final Value<double> amount;
+  final Value<int> amount;
   final Value<String> paymentMethod;
   final Value<DateTime> createdAt;
   final Value<bool> dirty;
@@ -5352,7 +5352,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
     required String branchId,
     required String categoryId,
     required String description,
-    required double amount,
+    required int amount,
     required String paymentMethod,
     required DateTime createdAt,
     this.dirty = const Value.absent(),
@@ -5369,7 +5369,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
     Expression<String>? branchId,
     Expression<String>? categoryId,
     Expression<String>? description,
-    Expression<double>? amount,
+    Expression<int>? amount,
     Expression<String>? paymentMethod,
     Expression<DateTime>? createdAt,
     Expression<bool>? dirty,
@@ -5393,7 +5393,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
     Value<String>? branchId,
     Value<String>? categoryId,
     Value<String>? description,
-    Value<double>? amount,
+    Value<int>? amount,
     Value<String>? paymentMethod,
     Value<DateTime>? createdAt,
     Value<bool>? dirty,
@@ -5428,7 +5428,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
       map['description'] = Variable<String>(description.value);
     }
     if (amount.present) {
-      map['amount'] = Variable<double>(amount.value);
+      map['amount'] = Variable<int>(amount.value);
     }
     if (paymentMethod.present) {
       map['payment_method'] = Variable<String>(paymentMethod.value);
@@ -5510,11 +5510,11 @@ class $LocalPrepaidPackagesTable extends LocalPrepaidPackages
   );
   static const VerificationMeta _priceMeta = const VerificationMeta('price');
   @override
-  late final GeneratedColumn<double> price = GeneratedColumn<double>(
+  late final GeneratedColumn<int> price = GeneratedColumn<int>(
     'price',
     aliasedName,
     false,
-    type: DriftSqlType.double,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _validityDaysMeta = const VerificationMeta(
@@ -5649,7 +5649,7 @@ class $LocalPrepaidPackagesTable extends LocalPrepaidPackages
         data['${effectivePrefix}wash_count'],
       )!,
       price: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
+        DriftSqlType.int,
         data['${effectivePrefix}price'],
       )!,
       validityDays: attachedDatabase.typeMapping.read(
@@ -5675,7 +5675,7 @@ class LocalPrepaidPackage extends DataClass
   final String name;
   final String eligibleTiers;
   final int washCount;
-  final double price;
+  final int price;
   final int validityDays;
   final String applicableScope;
   const LocalPrepaidPackage({
@@ -5694,7 +5694,7 @@ class LocalPrepaidPackage extends DataClass
     map['name'] = Variable<String>(name);
     map['eligible_tiers'] = Variable<String>(eligibleTiers);
     map['wash_count'] = Variable<int>(washCount);
-    map['price'] = Variable<double>(price);
+    map['price'] = Variable<int>(price);
     map['validity_days'] = Variable<int>(validityDays);
     map['applicable_scope'] = Variable<String>(applicableScope);
     return map;
@@ -5722,7 +5722,7 @@ class LocalPrepaidPackage extends DataClass
       name: serializer.fromJson<String>(json['name']),
       eligibleTiers: serializer.fromJson<String>(json['eligibleTiers']),
       washCount: serializer.fromJson<int>(json['washCount']),
-      price: serializer.fromJson<double>(json['price']),
+      price: serializer.fromJson<int>(json['price']),
       validityDays: serializer.fromJson<int>(json['validityDays']),
       applicableScope: serializer.fromJson<String>(json['applicableScope']),
     );
@@ -5735,7 +5735,7 @@ class LocalPrepaidPackage extends DataClass
       'name': serializer.toJson<String>(name),
       'eligibleTiers': serializer.toJson<String>(eligibleTiers),
       'washCount': serializer.toJson<int>(washCount),
-      'price': serializer.toJson<double>(price),
+      'price': serializer.toJson<int>(price),
       'validityDays': serializer.toJson<int>(validityDays),
       'applicableScope': serializer.toJson<String>(applicableScope),
     };
@@ -5746,7 +5746,7 @@ class LocalPrepaidPackage extends DataClass
     String? name,
     String? eligibleTiers,
     int? washCount,
-    double? price,
+    int? price,
     int? validityDays,
     String? applicableScope,
   }) => LocalPrepaidPackage(
@@ -5819,7 +5819,7 @@ class LocalPrepaidPackagesCompanion
   final Value<String> name;
   final Value<String> eligibleTiers;
   final Value<int> washCount;
-  final Value<double> price;
+  final Value<int> price;
   final Value<int> validityDays;
   final Value<String> applicableScope;
   final Value<int> rowid;
@@ -5838,7 +5838,7 @@ class LocalPrepaidPackagesCompanion
     required String name,
     required String eligibleTiers,
     required int washCount,
-    required double price,
+    required int price,
     required int validityDays,
     required String applicableScope,
     this.rowid = const Value.absent(),
@@ -5854,7 +5854,7 @@ class LocalPrepaidPackagesCompanion
     Expression<String>? name,
     Expression<String>? eligibleTiers,
     Expression<int>? washCount,
-    Expression<double>? price,
+    Expression<int>? price,
     Expression<int>? validityDays,
     Expression<String>? applicableScope,
     Expression<int>? rowid,
@@ -5876,7 +5876,7 @@ class LocalPrepaidPackagesCompanion
     Value<String>? name,
     Value<String>? eligibleTiers,
     Value<int>? washCount,
-    Value<double>? price,
+    Value<int>? price,
     Value<int>? validityDays,
     Value<String>? applicableScope,
     Value<int>? rowid,
@@ -5909,7 +5909,7 @@ class LocalPrepaidPackagesCompanion
       map['wash_count'] = Variable<int>(washCount.value);
     }
     if (price.present) {
-      map['price'] = Variable<double>(price.value);
+      map['price'] = Variable<int>(price.value);
     }
     if (validityDays.present) {
       map['validity_days'] = Variable<int>(validityDays.value);
@@ -5960,11 +5960,11 @@ class $LocalPrepaidWalletsTable extends LocalPrepaidWallets
     'balance',
   );
   @override
-  late final GeneratedColumn<double> balance = GeneratedColumn<double>(
+  late final GeneratedColumn<int> balance = GeneratedColumn<int>(
     'balance',
     aliasedName,
     false,
-    type: DriftSqlType.double,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _asOfMeta = const VerificationMeta('asOf');
@@ -6028,7 +6028,7 @@ class $LocalPrepaidWalletsTable extends LocalPrepaidWallets
         data['${effectivePrefix}customer_id'],
       )!,
       balance: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
+        DriftSqlType.int,
         data['${effectivePrefix}balance'],
       )!,
       asOf: attachedDatabase.typeMapping.read(
@@ -6047,7 +6047,7 @@ class $LocalPrepaidWalletsTable extends LocalPrepaidWallets
 class LocalPrepaidWallet extends DataClass
     implements Insertable<LocalPrepaidWallet> {
   final String customerId;
-  final double balance;
+  final int balance;
   final DateTime asOf;
   const LocalPrepaidWallet({
     required this.customerId,
@@ -6058,7 +6058,7 @@ class LocalPrepaidWallet extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['customer_id'] = Variable<String>(customerId);
-    map['balance'] = Variable<double>(balance);
+    map['balance'] = Variable<int>(balance);
     map['as_of'] = Variable<DateTime>(asOf);
     return map;
   }
@@ -6078,7 +6078,7 @@ class LocalPrepaidWallet extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return LocalPrepaidWallet(
       customerId: serializer.fromJson<String>(json['customerId']),
-      balance: serializer.fromJson<double>(json['balance']),
+      balance: serializer.fromJson<int>(json['balance']),
       asOf: serializer.fromJson<DateTime>(json['asOf']),
     );
   }
@@ -6087,14 +6087,14 @@ class LocalPrepaidWallet extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'customerId': serializer.toJson<String>(customerId),
-      'balance': serializer.toJson<double>(balance),
+      'balance': serializer.toJson<int>(balance),
       'asOf': serializer.toJson<DateTime>(asOf),
     };
   }
 
   LocalPrepaidWallet copyWith({
     String? customerId,
-    double? balance,
+    int? balance,
     DateTime? asOf,
   }) => LocalPrepaidWallet(
     customerId: customerId ?? this.customerId,
@@ -6134,7 +6134,7 @@ class LocalPrepaidWallet extends DataClass
 
 class LocalPrepaidWalletsCompanion extends UpdateCompanion<LocalPrepaidWallet> {
   final Value<String> customerId;
-  final Value<double> balance;
+  final Value<int> balance;
   final Value<DateTime> asOf;
   final Value<int> rowid;
   const LocalPrepaidWalletsCompanion({
@@ -6145,7 +6145,7 @@ class LocalPrepaidWalletsCompanion extends UpdateCompanion<LocalPrepaidWallet> {
   });
   LocalPrepaidWalletsCompanion.insert({
     required String customerId,
-    required double balance,
+    required int balance,
     required DateTime asOf,
     this.rowid = const Value.absent(),
   }) : customerId = Value(customerId),
@@ -6153,7 +6153,7 @@ class LocalPrepaidWalletsCompanion extends UpdateCompanion<LocalPrepaidWallet> {
        asOf = Value(asOf);
   static Insertable<LocalPrepaidWallet> custom({
     Expression<String>? customerId,
-    Expression<double>? balance,
+    Expression<int>? balance,
     Expression<DateTime>? asOf,
     Expression<int>? rowid,
   }) {
@@ -6167,7 +6167,7 @@ class LocalPrepaidWalletsCompanion extends UpdateCompanion<LocalPrepaidWallet> {
 
   LocalPrepaidWalletsCompanion copyWith({
     Value<String>? customerId,
-    Value<double>? balance,
+    Value<int>? balance,
     Value<DateTime>? asOf,
     Value<int>? rowid,
   }) {
@@ -6186,7 +6186,7 @@ class LocalPrepaidWalletsCompanion extends UpdateCompanion<LocalPrepaidWallet> {
       map['customer_id'] = Variable<String>(customerId.value);
     }
     if (balance.present) {
-      map['balance'] = Variable<double>(balance.value);
+      map['balance'] = Variable<int>(balance.value);
     }
     if (asOf.present) {
       map['as_of'] = Variable<DateTime>(asOf.value);
@@ -6674,11 +6674,11 @@ class $LocalCashCollectionsTable extends LocalCashCollections
     'countedCash',
   );
   @override
-  late final GeneratedColumn<double> countedCash = GeneratedColumn<double>(
+  late final GeneratedColumn<int> countedCash = GeneratedColumn<int>(
     'counted_cash',
     aliasedName,
     false,
-    type: DriftSqlType.double,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _varianceReasonMeta = const VerificationMeta(
@@ -6816,7 +6816,7 @@ class $LocalCashCollectionsTable extends LocalCashCollections
         data['${effectivePrefix}branch_id'],
       )!,
       countedCash: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
+        DriftSqlType.int,
         data['${effectivePrefix}counted_cash'],
       )!,
       varianceReason: attachedDatabase.typeMapping.read(
@@ -6848,7 +6848,7 @@ class LocalCashCollection extends DataClass
     implements Insertable<LocalCashCollection> {
   final String id;
   final String branchId;
-  final double countedCash;
+  final int countedCash;
   final String? varianceReason;
   final String? witness;
   final String? notes;
@@ -6867,7 +6867,7 @@ class LocalCashCollection extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['branch_id'] = Variable<String>(branchId);
-    map['counted_cash'] = Variable<double>(countedCash);
+    map['counted_cash'] = Variable<int>(countedCash);
     if (!nullToAbsent || varianceReason != null) {
       map['variance_reason'] = Variable<String>(varianceReason);
     }
@@ -6907,7 +6907,7 @@ class LocalCashCollection extends DataClass
     return LocalCashCollection(
       id: serializer.fromJson<String>(json['id']),
       branchId: serializer.fromJson<String>(json['branchId']),
-      countedCash: serializer.fromJson<double>(json['countedCash']),
+      countedCash: serializer.fromJson<int>(json['countedCash']),
       varianceReason: serializer.fromJson<String?>(json['varianceReason']),
       witness: serializer.fromJson<String?>(json['witness']),
       notes: serializer.fromJson<String?>(json['notes']),
@@ -6920,7 +6920,7 @@ class LocalCashCollection extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'branchId': serializer.toJson<String>(branchId),
-      'countedCash': serializer.toJson<double>(countedCash),
+      'countedCash': serializer.toJson<int>(countedCash),
       'varianceReason': serializer.toJson<String?>(varianceReason),
       'witness': serializer.toJson<String?>(witness),
       'notes': serializer.toJson<String?>(notes),
@@ -6931,7 +6931,7 @@ class LocalCashCollection extends DataClass
   LocalCashCollection copyWith({
     String? id,
     String? branchId,
-    double? countedCash,
+    int? countedCash,
     Value<String?> varianceReason = const Value.absent(),
     Value<String?> witness = const Value.absent(),
     Value<String?> notes = const Value.absent(),
@@ -7004,7 +7004,7 @@ class LocalCashCollectionsCompanion
     extends UpdateCompanion<LocalCashCollection> {
   final Value<String> id;
   final Value<String> branchId;
-  final Value<double> countedCash;
+  final Value<int> countedCash;
   final Value<String?> varianceReason;
   final Value<String?> witness;
   final Value<String?> notes;
@@ -7023,7 +7023,7 @@ class LocalCashCollectionsCompanion
   LocalCashCollectionsCompanion.insert({
     required String id,
     required String branchId,
-    required double countedCash,
+    required int countedCash,
     this.varianceReason = const Value.absent(),
     this.witness = const Value.absent(),
     this.notes = const Value.absent(),
@@ -7036,7 +7036,7 @@ class LocalCashCollectionsCompanion
   static Insertable<LocalCashCollection> custom({
     Expression<String>? id,
     Expression<String>? branchId,
-    Expression<double>? countedCash,
+    Expression<int>? countedCash,
     Expression<String>? varianceReason,
     Expression<String>? witness,
     Expression<String>? notes,
@@ -7058,7 +7058,7 @@ class LocalCashCollectionsCompanion
   LocalCashCollectionsCompanion copyWith({
     Value<String>? id,
     Value<String>? branchId,
-    Value<double>? countedCash,
+    Value<int>? countedCash,
     Value<String?>? varianceReason,
     Value<String?>? witness,
     Value<String?>? notes,
@@ -7087,7 +7087,7 @@ class LocalCashCollectionsCompanion
       map['branch_id'] = Variable<String>(branchId.value);
     }
     if (countedCash.present) {
-      map['counted_cash'] = Variable<double>(countedCash.value);
+      map['counted_cash'] = Variable<int>(countedCash.value);
     }
     if (varianceReason.present) {
       map['variance_reason'] = Variable<String>(varianceReason.value);
@@ -8267,7 +8267,7 @@ typedef $$LocalWashServicesTableCreateCompanionBuilder =
       required String id,
       required String name,
       required String tier,
-      required double basePrice,
+      required int basePrice,
       required int durationMinutes,
       Value<int> rowid,
     });
@@ -8276,7 +8276,7 @@ typedef $$LocalWashServicesTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> name,
       Value<String> tier,
-      Value<double> basePrice,
+      Value<int> basePrice,
       Value<int> durationMinutes,
       Value<int> rowid,
     });
@@ -8305,7 +8305,7 @@ class $$LocalWashServicesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get basePrice => $composableBuilder(
+  ColumnFilters<int> get basePrice => $composableBuilder(
     column: $table.basePrice,
     builder: (column) => ColumnFilters(column),
   );
@@ -8340,7 +8340,7 @@ class $$LocalWashServicesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get basePrice => $composableBuilder(
+  ColumnOrderings<int> get basePrice => $composableBuilder(
     column: $table.basePrice,
     builder: (column) => ColumnOrderings(column),
   );
@@ -8369,7 +8369,7 @@ class $$LocalWashServicesTableAnnotationComposer
   GeneratedColumn<String> get tier =>
       $composableBuilder(column: $table.tier, builder: (column) => column);
 
-  GeneratedColumn<double> get basePrice =>
+  GeneratedColumn<int> get basePrice =>
       $composableBuilder(column: $table.basePrice, builder: (column) => column);
 
   GeneratedColumn<int> get durationMinutes => $composableBuilder(
@@ -8421,7 +8421,7 @@ class $$LocalWashServicesTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String> tier = const Value.absent(),
-                Value<double> basePrice = const Value.absent(),
+                Value<int> basePrice = const Value.absent(),
                 Value<int> durationMinutes = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalWashServicesCompanion(
@@ -8437,7 +8437,7 @@ class $$LocalWashServicesTableTableManager
                 required String id,
                 required String name,
                 required String tier,
-                required double basePrice,
+                required int basePrice,
                 required int durationMinutes,
                 Value<int> rowid = const Value.absent(),
               }) => LocalWashServicesCompanion.insert(
@@ -8481,14 +8481,14 @@ typedef $$LocalWashExtrasTableCreateCompanionBuilder =
     LocalWashExtrasCompanion Function({
       required String id,
       required String name,
-      required double price,
+      required int price,
       Value<int> rowid,
     });
 typedef $$LocalWashExtrasTableUpdateCompanionBuilder =
     LocalWashExtrasCompanion Function({
       Value<String> id,
       Value<String> name,
-      Value<double> price,
+      Value<int> price,
       Value<int> rowid,
     });
 
@@ -8511,7 +8511,7 @@ class $$LocalWashExtrasTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get price => $composableBuilder(
+  ColumnFilters<int> get price => $composableBuilder(
     column: $table.price,
     builder: (column) => ColumnFilters(column),
   );
@@ -8536,7 +8536,7 @@ class $$LocalWashExtrasTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get price => $composableBuilder(
+  ColumnOrderings<int> get price => $composableBuilder(
     column: $table.price,
     builder: (column) => ColumnOrderings(column),
   );
@@ -8557,7 +8557,7 @@ class $$LocalWashExtrasTableAnnotationComposer
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
-  GeneratedColumn<double> get price =>
+  GeneratedColumn<int> get price =>
       $composableBuilder(column: $table.price, builder: (column) => column);
 }
 
@@ -8600,7 +8600,7 @@ class $$LocalWashExtrasTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
-                Value<double> price = const Value.absent(),
+                Value<int> price = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalWashExtrasCompanion(
                 id: id,
@@ -8612,7 +8612,7 @@ class $$LocalWashExtrasTableTableManager
               ({
                 required String id,
                 required String name,
-                required double price,
+                required int price,
                 Value<int> rowid = const Value.absent(),
               }) => LocalWashExtrasCompanion.insert(
                 id: id,
@@ -9380,7 +9380,7 @@ typedef $$LocalWashOrdersTableCreateCompanionBuilder =
       required String vehicleId,
       required String customerId,
       required String status,
-      required double totalAmount,
+      required int totalAmount,
       required DateTime createdAt,
       Value<DateTime?> completedAt,
       Value<DateTime?> cancelledAt,
@@ -9395,7 +9395,7 @@ typedef $$LocalWashOrdersTableUpdateCompanionBuilder =
       Value<String> vehicleId,
       Value<String> customerId,
       Value<String> status,
-      Value<double> totalAmount,
+      Value<int> totalAmount,
       Value<DateTime> createdAt,
       Value<DateTime?> completedAt,
       Value<DateTime?> cancelledAt,
@@ -9438,7 +9438,7 @@ class $$LocalWashOrdersTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get totalAmount => $composableBuilder(
+  ColumnFilters<int> get totalAmount => $composableBuilder(
     column: $table.totalAmount,
     builder: (column) => ColumnFilters(column),
   );
@@ -9504,7 +9504,7 @@ class $$LocalWashOrdersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get totalAmount => $composableBuilder(
+  ColumnOrderings<int> get totalAmount => $composableBuilder(
     column: $table.totalAmount,
     builder: (column) => ColumnOrderings(column),
   );
@@ -9561,7 +9561,7 @@ class $$LocalWashOrdersTableAnnotationComposer
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
 
-  GeneratedColumn<double> get totalAmount => $composableBuilder(
+  GeneratedColumn<int> get totalAmount => $composableBuilder(
     column: $table.totalAmount,
     builder: (column) => column,
   );
@@ -9633,7 +9633,7 @@ class $$LocalWashOrdersTableTableManager
                 Value<String> vehicleId = const Value.absent(),
                 Value<String> customerId = const Value.absent(),
                 Value<String> status = const Value.absent(),
-                Value<double> totalAmount = const Value.absent(),
+                Value<int> totalAmount = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> completedAt = const Value.absent(),
                 Value<DateTime?> cancelledAt = const Value.absent(),
@@ -9661,7 +9661,7 @@ class $$LocalWashOrdersTableTableManager
                 required String vehicleId,
                 required String customerId,
                 required String status,
-                required double totalAmount,
+                required int totalAmount,
                 required DateTime createdAt,
                 Value<DateTime?> completedAt = const Value.absent(),
                 Value<DateTime?> cancelledAt = const Value.absent(),
@@ -9715,7 +9715,7 @@ typedef $$LocalWashOrderItemsTableCreateCompanionBuilder =
       Value<String?> serviceId,
       Value<String?> extraId,
       required String nameSnapshot,
-      required double priceSnapshot,
+      required int priceSnapshot,
       Value<int> qty,
       Value<int> rowid,
     });
@@ -9727,7 +9727,7 @@ typedef $$LocalWashOrderItemsTableUpdateCompanionBuilder =
       Value<String?> serviceId,
       Value<String?> extraId,
       Value<String> nameSnapshot,
-      Value<double> priceSnapshot,
+      Value<int> priceSnapshot,
       Value<int> qty,
       Value<int> rowid,
     });
@@ -9771,7 +9771,7 @@ class $$LocalWashOrderItemsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get priceSnapshot => $composableBuilder(
+  ColumnFilters<int> get priceSnapshot => $composableBuilder(
     column: $table.priceSnapshot,
     builder: (column) => ColumnFilters(column),
   );
@@ -9821,7 +9821,7 @@ class $$LocalWashOrderItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get priceSnapshot => $composableBuilder(
+  ColumnOrderings<int> get priceSnapshot => $composableBuilder(
     column: $table.priceSnapshot,
     builder: (column) => ColumnOrderings(column),
   );
@@ -9863,7 +9863,7 @@ class $$LocalWashOrderItemsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<double> get priceSnapshot => $composableBuilder(
+  GeneratedColumn<int> get priceSnapshot => $composableBuilder(
     column: $table.priceSnapshot,
     builder: (column) => column,
   );
@@ -9921,7 +9921,7 @@ class $$LocalWashOrderItemsTableTableManager
                 Value<String?> serviceId = const Value.absent(),
                 Value<String?> extraId = const Value.absent(),
                 Value<String> nameSnapshot = const Value.absent(),
-                Value<double> priceSnapshot = const Value.absent(),
+                Value<int> priceSnapshot = const Value.absent(),
                 Value<int> qty = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalWashOrderItemsCompanion(
@@ -9943,7 +9943,7 @@ class $$LocalWashOrderItemsTableTableManager
                 Value<String?> serviceId = const Value.absent(),
                 Value<String?> extraId = const Value.absent(),
                 required String nameSnapshot,
-                required double priceSnapshot,
+                required int priceSnapshot,
                 Value<int> qty = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalWashOrderItemsCompanion.insert(
@@ -9990,7 +9990,7 @@ typedef $$LocalPaymentsTableCreateCompanionBuilder =
     LocalPaymentsCompanion Function({
       required String id,
       required String washOrderId,
-      required double totalAmount,
+      required int totalAmount,
       required DateTime completedAt,
       Value<int> rowid,
     });
@@ -9998,7 +9998,7 @@ typedef $$LocalPaymentsTableUpdateCompanionBuilder =
     LocalPaymentsCompanion Function({
       Value<String> id,
       Value<String> washOrderId,
-      Value<double> totalAmount,
+      Value<int> totalAmount,
       Value<DateTime> completedAt,
       Value<int> rowid,
     });
@@ -10022,7 +10022,7 @@ class $$LocalPaymentsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get totalAmount => $composableBuilder(
+  ColumnFilters<int> get totalAmount => $composableBuilder(
     column: $table.totalAmount,
     builder: (column) => ColumnFilters(column),
   );
@@ -10052,7 +10052,7 @@ class $$LocalPaymentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get totalAmount => $composableBuilder(
+  ColumnOrderings<int> get totalAmount => $composableBuilder(
     column: $table.totalAmount,
     builder: (column) => ColumnOrderings(column),
   );
@@ -10080,7 +10080,7 @@ class $$LocalPaymentsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<double> get totalAmount => $composableBuilder(
+  GeneratedColumn<int> get totalAmount => $composableBuilder(
     column: $table.totalAmount,
     builder: (column) => column,
   );
@@ -10124,7 +10124,7 @@ class $$LocalPaymentsTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> washOrderId = const Value.absent(),
-                Value<double> totalAmount = const Value.absent(),
+                Value<int> totalAmount = const Value.absent(),
                 Value<DateTime> completedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalPaymentsCompanion(
@@ -10138,7 +10138,7 @@ class $$LocalPaymentsTableTableManager
               ({
                 required String id,
                 required String washOrderId,
-                required double totalAmount,
+                required int totalAmount,
                 required DateTime completedAt,
                 Value<int> rowid = const Value.absent(),
               }) => LocalPaymentsCompanion.insert(
@@ -10178,7 +10178,7 @@ typedef $$LocalPaymentComponentsTableCreateCompanionBuilder =
       required String id,
       required String paymentId,
       required String method,
-      required double amount,
+      required int amount,
       Value<String?> externalReference,
       Value<int> rowid,
     });
@@ -10187,7 +10187,7 @@ typedef $$LocalPaymentComponentsTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> paymentId,
       Value<String> method,
-      Value<double> amount,
+      Value<int> amount,
       Value<String?> externalReference,
       Value<int> rowid,
     });
@@ -10216,7 +10216,7 @@ class $$LocalPaymentComponentsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get amount => $composableBuilder(
+  ColumnFilters<int> get amount => $composableBuilder(
     column: $table.amount,
     builder: (column) => ColumnFilters(column),
   );
@@ -10251,7 +10251,7 @@ class $$LocalPaymentComponentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get amount => $composableBuilder(
+  ColumnOrderings<int> get amount => $composableBuilder(
     column: $table.amount,
     builder: (column) => ColumnOrderings(column),
   );
@@ -10280,7 +10280,7 @@ class $$LocalPaymentComponentsTableAnnotationComposer
   GeneratedColumn<String> get method =>
       $composableBuilder(column: $table.method, builder: (column) => column);
 
-  GeneratedColumn<double> get amount =>
+  GeneratedColumn<int> get amount =>
       $composableBuilder(column: $table.amount, builder: (column) => column);
 
   GeneratedColumn<String> get externalReference => $composableBuilder(
@@ -10338,7 +10338,7 @@ class $$LocalPaymentComponentsTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> paymentId = const Value.absent(),
                 Value<String> method = const Value.absent(),
-                Value<double> amount = const Value.absent(),
+                Value<int> amount = const Value.absent(),
                 Value<String?> externalReference = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalPaymentComponentsCompanion(
@@ -10354,7 +10354,7 @@ class $$LocalPaymentComponentsTableTableManager
                 required String id,
                 required String paymentId,
                 required String method,
-                required double amount,
+                required int amount,
                 Value<String?> externalReference = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalPaymentComponentsCompanion.insert(
@@ -11004,7 +11004,7 @@ typedef $$LocalExpensesTableCreateCompanionBuilder =
       required String branchId,
       required String categoryId,
       required String description,
-      required double amount,
+      required int amount,
       required String paymentMethod,
       required DateTime createdAt,
       Value<bool> dirty,
@@ -11016,7 +11016,7 @@ typedef $$LocalExpensesTableUpdateCompanionBuilder =
       Value<String> branchId,
       Value<String> categoryId,
       Value<String> description,
-      Value<double> amount,
+      Value<int> amount,
       Value<String> paymentMethod,
       Value<DateTime> createdAt,
       Value<bool> dirty,
@@ -11052,7 +11052,7 @@ class $$LocalExpensesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get amount => $composableBuilder(
+  ColumnFilters<int> get amount => $composableBuilder(
     column: $table.amount,
     builder: (column) => ColumnFilters(column),
   );
@@ -11102,7 +11102,7 @@ class $$LocalExpensesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get amount => $composableBuilder(
+  ColumnOrderings<int> get amount => $composableBuilder(
     column: $table.amount,
     builder: (column) => ColumnOrderings(column),
   );
@@ -11148,7 +11148,7 @@ class $$LocalExpensesTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<double> get amount =>
+  GeneratedColumn<int> get amount =>
       $composableBuilder(column: $table.amount, builder: (column) => column);
 
   GeneratedColumn<String> get paymentMethod => $composableBuilder(
@@ -11198,7 +11198,7 @@ class $$LocalExpensesTableTableManager
                 Value<String> branchId = const Value.absent(),
                 Value<String> categoryId = const Value.absent(),
                 Value<String> description = const Value.absent(),
-                Value<double> amount = const Value.absent(),
+                Value<int> amount = const Value.absent(),
                 Value<String> paymentMethod = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<bool> dirty = const Value.absent(),
@@ -11220,7 +11220,7 @@ class $$LocalExpensesTableTableManager
                 required String branchId,
                 required String categoryId,
                 required String description,
-                required double amount,
+                required int amount,
                 required String paymentMethod,
                 required DateTime createdAt,
                 Value<bool> dirty = const Value.absent(),
@@ -11267,7 +11267,7 @@ typedef $$LocalPrepaidPackagesTableCreateCompanionBuilder =
       required String name,
       required String eligibleTiers,
       required int washCount,
-      required double price,
+      required int price,
       required int validityDays,
       required String applicableScope,
       Value<int> rowid,
@@ -11278,7 +11278,7 @@ typedef $$LocalPrepaidPackagesTableUpdateCompanionBuilder =
       Value<String> name,
       Value<String> eligibleTiers,
       Value<int> washCount,
-      Value<double> price,
+      Value<int> price,
       Value<int> validityDays,
       Value<String> applicableScope,
       Value<int> rowid,
@@ -11313,7 +11313,7 @@ class $$LocalPrepaidPackagesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get price => $composableBuilder(
+  ColumnFilters<int> get price => $composableBuilder(
     column: $table.price,
     builder: (column) => ColumnFilters(column),
   );
@@ -11358,7 +11358,7 @@ class $$LocalPrepaidPackagesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get price => $composableBuilder(
+  ColumnOrderings<int> get price => $composableBuilder(
     column: $table.price,
     builder: (column) => ColumnOrderings(column),
   );
@@ -11397,7 +11397,7 @@ class $$LocalPrepaidPackagesTableAnnotationComposer
   GeneratedColumn<int> get washCount =>
       $composableBuilder(column: $table.washCount, builder: (column) => column);
 
-  GeneratedColumn<double> get price =>
+  GeneratedColumn<int> get price =>
       $composableBuilder(column: $table.price, builder: (column) => column);
 
   GeneratedColumn<int> get validityDays => $composableBuilder(
@@ -11458,7 +11458,7 @@ class $$LocalPrepaidPackagesTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String> eligibleTiers = const Value.absent(),
                 Value<int> washCount = const Value.absent(),
-                Value<double> price = const Value.absent(),
+                Value<int> price = const Value.absent(),
                 Value<int> validityDays = const Value.absent(),
                 Value<String> applicableScope = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -11478,7 +11478,7 @@ class $$LocalPrepaidPackagesTableTableManager
                 required String name,
                 required String eligibleTiers,
                 required int washCount,
-                required double price,
+                required int price,
                 required int validityDays,
                 required String applicableScope,
                 Value<int> rowid = const Value.absent(),
@@ -11524,14 +11524,14 @@ typedef $$LocalPrepaidPackagesTableProcessedTableManager =
 typedef $$LocalPrepaidWalletsTableCreateCompanionBuilder =
     LocalPrepaidWalletsCompanion Function({
       required String customerId,
-      required double balance,
+      required int balance,
       required DateTime asOf,
       Value<int> rowid,
     });
 typedef $$LocalPrepaidWalletsTableUpdateCompanionBuilder =
     LocalPrepaidWalletsCompanion Function({
       Value<String> customerId,
-      Value<double> balance,
+      Value<int> balance,
       Value<DateTime> asOf,
       Value<int> rowid,
     });
@@ -11550,7 +11550,7 @@ class $$LocalPrepaidWalletsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get balance => $composableBuilder(
+  ColumnFilters<int> get balance => $composableBuilder(
     column: $table.balance,
     builder: (column) => ColumnFilters(column),
   );
@@ -11575,7 +11575,7 @@ class $$LocalPrepaidWalletsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get balance => $composableBuilder(
+  ColumnOrderings<int> get balance => $composableBuilder(
     column: $table.balance,
     builder: (column) => ColumnOrderings(column),
   );
@@ -11600,7 +11600,7 @@ class $$LocalPrepaidWalletsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<double> get balance =>
+  GeneratedColumn<int> get balance =>
       $composableBuilder(column: $table.balance, builder: (column) => column);
 
   GeneratedColumn<DateTime> get asOf =>
@@ -11651,7 +11651,7 @@ class $$LocalPrepaidWalletsTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> customerId = const Value.absent(),
-                Value<double> balance = const Value.absent(),
+                Value<int> balance = const Value.absent(),
                 Value<DateTime> asOf = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalPrepaidWalletsCompanion(
@@ -11663,7 +11663,7 @@ class $$LocalPrepaidWalletsTableTableManager
           createCompanionCallback:
               ({
                 required String customerId,
-                required double balance,
+                required int balance,
                 required DateTime asOf,
                 Value<int> rowid = const Value.absent(),
               }) => LocalPrepaidWalletsCompanion.insert(
@@ -11947,7 +11947,7 @@ typedef $$LocalCashCollectionsTableCreateCompanionBuilder =
     LocalCashCollectionsCompanion Function({
       required String id,
       required String branchId,
-      required double countedCash,
+      required int countedCash,
       Value<String?> varianceReason,
       Value<String?> witness,
       Value<String?> notes,
@@ -11958,7 +11958,7 @@ typedef $$LocalCashCollectionsTableUpdateCompanionBuilder =
     LocalCashCollectionsCompanion Function({
       Value<String> id,
       Value<String> branchId,
-      Value<double> countedCash,
+      Value<int> countedCash,
       Value<String?> varianceReason,
       Value<String?> witness,
       Value<String?> notes,
@@ -11985,7 +11985,7 @@ class $$LocalCashCollectionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get countedCash => $composableBuilder(
+  ColumnFilters<int> get countedCash => $composableBuilder(
     column: $table.countedCash,
     builder: (column) => ColumnFilters(column),
   );
@@ -12030,7 +12030,7 @@ class $$LocalCashCollectionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get countedCash => $composableBuilder(
+  ColumnOrderings<int> get countedCash => $composableBuilder(
     column: $table.countedCash,
     builder: (column) => ColumnOrderings(column),
   );
@@ -12071,7 +12071,7 @@ class $$LocalCashCollectionsTableAnnotationComposer
   GeneratedColumn<String> get branchId =>
       $composableBuilder(column: $table.branchId, builder: (column) => column);
 
-  GeneratedColumn<double> get countedCash => $composableBuilder(
+  GeneratedColumn<int> get countedCash => $composableBuilder(
     column: $table.countedCash,
     builder: (column) => column,
   );
@@ -12136,7 +12136,7 @@ class $$LocalCashCollectionsTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> branchId = const Value.absent(),
-                Value<double> countedCash = const Value.absent(),
+                Value<int> countedCash = const Value.absent(),
                 Value<String?> varianceReason = const Value.absent(),
                 Value<String?> witness = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
@@ -12156,7 +12156,7 @@ class $$LocalCashCollectionsTableTableManager
               ({
                 required String id,
                 required String branchId,
-                required double countedCash,
+                required int countedCash,
                 Value<String?> varianceReason = const Value.absent(),
                 Value<String?> witness = const Value.absent(),
                 Value<String?> notes = const Value.absent(),

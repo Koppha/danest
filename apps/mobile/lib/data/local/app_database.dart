@@ -11,7 +11,7 @@ class LocalWashServices extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
   TextColumn get tier => text()();
-  RealColumn get basePrice => real()();
+  IntColumn get basePrice => integer()(); // cents
   IntColumn get durationMinutes => integer()();
 
   @override
@@ -21,7 +21,7 @@ class LocalWashServices extends Table {
 class LocalWashExtras extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
-  RealColumn get price => real()();
+  IntColumn get price => integer()(); // cents
 
   @override
   Set<Column> get primaryKey => {id};
@@ -78,7 +78,7 @@ class LocalWashOrders extends Table {
   TextColumn get vehicleId => text()();
   TextColumn get customerId => text()();
   TextColumn get status => text()(); // WAITING | WASHING | READY | COMPLETED | CANCELLED
-  RealColumn get totalAmount => real()();
+  IntColumn get totalAmount => integer()(); // cents
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get completedAt => dateTime().nullable()();
   DateTimeColumn get cancelledAt => dateTime().nullable()();
@@ -96,7 +96,7 @@ class LocalWashOrderItems extends Table {
   TextColumn get serviceId => text().nullable()();
   TextColumn get extraId => text().nullable()();
   TextColumn get nameSnapshot => text()();
-  RealColumn get priceSnapshot => real()();
+  IntColumn get priceSnapshot => integer()(); // cents
   IntColumn get qty => integer().withDefault(const Constant(1))();
 
   @override
@@ -110,7 +110,7 @@ class LocalWashOrderItems extends Table {
 class LocalPayments extends Table {
   TextColumn get id => text()();
   TextColumn get washOrderId => text()();
-  RealColumn get totalAmount => real()();
+  IntColumn get totalAmount => integer()(); // cents
   DateTimeColumn get completedAt => dateTime()();
 
   @override
@@ -121,7 +121,7 @@ class LocalPaymentComponents extends Table {
   TextColumn get id => text()();
   TextColumn get paymentId => text()();
   TextColumn get method => text()();
-  RealColumn get amount => real()();
+  IntColumn get amount => integer()(); // cents
   TextColumn get externalReference => text().nullable()();
 
   @override
@@ -172,7 +172,7 @@ class LocalExpenses extends Table {
   TextColumn get branchId => text()();
   TextColumn get categoryId => text()();
   TextColumn get description => text()();
-  RealColumn get amount => real()();
+  IntColumn get amount => integer()(); // cents
   TextColumn get paymentMethod => text()();
   DateTimeColumn get createdAt => dateTime()();
   BoolColumn get dirty => boolean().withDefault(const Constant(false))();
@@ -187,7 +187,7 @@ class LocalPrepaidPackages extends Table {
   TextColumn get name => text()();
   TextColumn get eligibleTiers => text()(); // comma-separated; empty = all tiers
   IntColumn get washCount => integer()();
-  RealColumn get price => real()();
+  IntColumn get price => integer()(); // cents
   IntColumn get validityDays => integer()();
   TextColumn get applicableScope => text()(); // ANY_VEHICLE_OF_CUSTOMER | SPECIFIC_VEHICLE
 
@@ -202,7 +202,7 @@ class LocalPrepaidPackages extends Table {
 /// the Sync Issues screen rather than failing silently.
 class LocalPrepaidWallets extends Table {
   TextColumn get customerId => text()();
-  RealColumn get balance => real()();
+  IntColumn get balance => integer()(); // cents
   DateTimeColumn get asOf => dateTime()();
 
   @override
@@ -232,7 +232,7 @@ class LocalPrepaidPackagePurchases extends Table {
 class LocalCashCollections extends Table {
   TextColumn get id => text()();
   TextColumn get branchId => text()();
-  RealColumn get countedCash => real()();
+  IntColumn get countedCash => integer()(); // cents
   TextColumn get varianceReason => text().nullable()();
   TextColumn get witness => text().nullable()();
   TextColumn get notes => text().nullable()();
@@ -303,7 +303,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -320,6 +320,33 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await m.createTable(localUsers);
+          }
+          if (from < 4) {
+            // Money columns moved from REAL (currency units) to INTEGER
+            // (cents) — the values themselves aren't reinterpretable
+            // (they'd be off by 100x), and this is pre-release data with
+            // nothing worth preserving, so every money-bearing table is
+            // dropped and recreated empty rather than migrated in place.
+            await m.deleteTable(localWashServices.actualTableName);
+            await m.createTable(localWashServices);
+            await m.deleteTable(localWashExtras.actualTableName);
+            await m.createTable(localWashExtras);
+            await m.deleteTable(localWashOrders.actualTableName);
+            await m.createTable(localWashOrders);
+            await m.deleteTable(localWashOrderItems.actualTableName);
+            await m.createTable(localWashOrderItems);
+            await m.deleteTable(localPayments.actualTableName);
+            await m.createTable(localPayments);
+            await m.deleteTable(localPaymentComponents.actualTableName);
+            await m.createTable(localPaymentComponents);
+            await m.deleteTable(localExpenses.actualTableName);
+            await m.createTable(localExpenses);
+            await m.deleteTable(localPrepaidPackages.actualTableName);
+            await m.createTable(localPrepaidPackages);
+            await m.deleteTable(localPrepaidWallets.actualTableName);
+            await m.createTable(localPrepaidWallets);
+            await m.deleteTable(localCashCollections.actualTableName);
+            await m.createTable(localCashCollections);
           }
         },
       );

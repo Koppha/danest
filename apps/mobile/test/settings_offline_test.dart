@@ -19,10 +19,10 @@ void main() {
   setUp(() async {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     await db.into(db.localWashServices).insert(
-          LocalWashServicesCompanion.insert(id: 'svc-1', name: 'Standard Wash', tier: 'standard', basePrice: 60, durationMinutes: 15),
+          LocalWashServicesCompanion.insert(id: 'svc-1', name: 'Standard Wash', tier: 'standard', basePrice: 6000, durationMinutes: 15),
         );
     await db.into(db.localWashExtras).insert(
-          LocalWashExtrasCompanion.insert(id: 'ext-1', name: 'Tyre Shine', price: 20),
+          LocalWashExtrasCompanion.insert(id: 'ext-1', name: 'Tyre Shine', price: 2000),
         );
   });
 
@@ -59,7 +59,7 @@ void main() {
     expect(find.text('M70.00'), findsOneWidget);
 
     final service = await db.select(db.localWashServices).getSingle();
-    expect(service.basePrice, 70);
+    expect(service.basePrice, 7000); // cents
     expect(service.tier, 'standard');
 
     final outbox = await db.select(db.pendingSyncOps).get();

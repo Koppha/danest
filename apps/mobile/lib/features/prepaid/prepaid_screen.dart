@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/money.dart';
 import '../../core/session.dart';
 import '../../data/local/offline_pos_repository.dart';
 import '../../data/models/models.dart';
@@ -132,7 +133,7 @@ class _PrepaidScreenState extends ConsumerState<PrepaidScreen> {
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () async {
-                final amount = double.tryParse(amountController.text) ?? 0;
+                final amount = parseMoneyInput(amountController.text) ?? 0;
                 if (amount <= 0) return;
                 await ref.read(offlinePosRepositoryProvider).depositToWallet(customerId: _selected!.id, amount: amount, method: method);
                 if (mounted) {
@@ -194,7 +195,7 @@ class _PrepaidScreenState extends ConsumerState<PrepaidScreen> {
                   Text(_selected!.fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
                   Text('Prepaid balance', style: const TextStyle(color: DnColors.muted, fontSize: 12)),
-                  Text('M${(_overview!['balance'] as num).toStringAsFixed(2)}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: DnColors.green)),
+                  Text('M${formatMoney((_overview!['balance'] as num).toInt())}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: DnColors.green)),
                   const SizedBox(height: 12),
                   ElevatedButton.icon(onPressed: _deposit, icon: const Icon(Icons.add, size: 16), label: const Text('Top up wallet')),
                   if ((_overview!['packages'] as List).isNotEmpty) ...[

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/connectivity.dart';
+import '../../core/money.dart';
 import '../../data/local/offline_pos_repository.dart';
 import '../../data/models/models.dart';
 import '../../data/remote/api_client.dart';
@@ -69,7 +70,7 @@ class SettingsScreen extends ConsumerWidget {
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text('M${s.basePrice.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                                  Text('M${formatMoney(s.basePrice)}', style: const TextStyle(fontWeight: FontWeight.w600)),
                                   IconButton(
                                     icon: const Icon(Icons.edit_outlined, size: 18),
                                     tooltip: 'Edit',
@@ -111,7 +112,7 @@ class SettingsScreen extends ConsumerWidget {
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text('M${e.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                                  Text('M${formatMoney(e.price)}', style: const TextStyle(fontWeight: FontWeight.w600)),
                                   IconButton(
                                     icon: const Icon(Icons.edit_outlined, size: 18),
                                     tooltip: 'Edit',
@@ -135,7 +136,7 @@ class SettingsScreen extends ConsumerWidget {
 
   void _showServiceDialog(BuildContext context, WidgetRef ref, {WashService? existing}) {
     final nameController = TextEditingController(text: existing?.name);
-    final priceController = TextEditingController(text: existing?.basePrice.toStringAsFixed(2));
+    final priceController = TextEditingController(text: existing == null ? null : formatMoney(existing.basePrice));
     final durationController = TextEditingController(text: existing?.durationMinutes.toString());
     showDialog(
       context: context,
@@ -156,12 +157,12 @@ class SettingsScreen extends ConsumerWidget {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
-              final price = double.tryParse(priceController.text);
+              final price = parseMoneyInput(priceController.text);
               final duration = int.tryParse(durationController.text);
               if (nameController.text.trim().isEmpty || price == null || duration == null) return;
               final name = nameController.text.trim();
               if (existing == null) {
-                await ref.read(apiClientProvider).post('/wash-services', data: {'name': name, 'basePrice': price, 'durationMinutes': duration});
+                await ref.read(apiClientProvider).post('/wash-services', data: {'name': name, 'basePrice': price / 100, 'durationMinutes': duration});
               } else {
                 await ref.read(offlinePosRepositoryProvider).updateService(id: existing.id, name: name, basePrice: price, durationMinutes: duration);
               }
@@ -177,7 +178,7 @@ class SettingsScreen extends ConsumerWidget {
 
   void _showExtraDialog(BuildContext context, WidgetRef ref, {WashExtra? existing}) {
     final nameController = TextEditingController(text: existing?.name);
-    final priceController = TextEditingController(text: existing?.price.toStringAsFixed(2));
+    final priceController = TextEditingController(text: existing == null ? null : formatMoney(existing.price));
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -195,11 +196,11 @@ class SettingsScreen extends ConsumerWidget {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
-              final price = double.tryParse(priceController.text);
+              final price = parseMoneyInput(priceController.text);
               if (nameController.text.trim().isEmpty || price == null) return;
               final name = nameController.text.trim();
               if (existing == null) {
-                await ref.read(apiClientProvider).post('/wash-extras', data: {'name': name, 'price': price});
+                await ref.read(apiClientProvider).post('/wash-extras', data: {'name': name, 'price': price / 100});
               } else {
                 await ref.read(offlinePosRepositoryProvider).updateExtra(id: existing.id, name: name, price: price);
               }

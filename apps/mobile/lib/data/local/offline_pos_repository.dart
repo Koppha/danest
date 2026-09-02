@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/connectivity.dart';
+import '../../core/money.dart';
 import '../models/models.dart';
 import '../remote/api_client.dart';
 import 'app_database.dart';
@@ -56,7 +57,7 @@ class OfflinePosRepository {
               id: s['id'],
               name: s['name'],
               tier: s['tier'] ?? 'standard',
-              basePrice: double.parse(s['basePrice'].toString()),
+              basePrice: currencyUnitsToCents(s['basePrice']),
               durationMinutes: s['durationMinutes'],
             ),
           ),
@@ -68,7 +69,7 @@ class OfflinePosRepository {
             (e) => LocalWashExtrasCompanion.insert(
               id: e['id'],
               name: e['name'],
-              price: double.parse(e['price'].toString()),
+              price: currencyUnitsToCents(e['price']),
             ),
           ),
         );
@@ -129,7 +130,7 @@ class OfflinePosRepository {
   Future<void> updateService({
     required String id,
     required String name,
-    required double basePrice,
+    required int basePrice, // cents
     required int durationMinutes,
   }) async {
     final existing = await (_db.select(_db.localWashServices)..where((s) => s.id.equals(id))).getSingleOrNull();
@@ -157,7 +158,7 @@ class OfflinePosRepository {
   Future<void> updateExtra({
     required String id,
     required String name,
-    required double price,
+    required int price, // cents
   }) async {
     await _db
         .into(_db.localWashExtras)
@@ -428,7 +429,7 @@ class OfflinePosRepository {
             branchId: (map['branchId'] as String?) ?? '',
             categoryId: category['id'] as String,
             description: map['description'] as String,
-            amount: double.parse(map['amount'].toString()),
+            amount: currencyUnitsToCents(map['amount']),
             paymentMethod: map['paymentMethod'] as String,
             createdAt: DateTime.parse(map['createdAt'] as String),
             dirty: const Value(false),
@@ -466,7 +467,12 @@ class OfflinePosRepository {
         final resp = await _dio.get('/expenses');
         final expenses = resp.data as List<dynamic>;
         await _cacheExpenses(expenses);
-        return expenses.cast<Map<String, dynamic>>();
+        // Normalize to the same cents-based shape the offline cache
+        // returns, so callers don't care which path served the data.
+        return expenses
+            .cast<Map<String, dynamic>>()
+            .map((e) => {...e, 'amount': currencyUnitsToCents(e['amount'])})
+            .toList();
       } on DioException {
         // Fall through to cache.
       }
@@ -477,7 +483,7 @@ class OfflinePosRepository {
   Future<Map<String, dynamic>> createExpense({
     required String categoryId,
     required String description,
-    required double amount,
+    required int amount, // cents
     required String paymentMethod,
     required String branchId,
   }) async {
@@ -615,7 +621,7 @@ class OfflinePosRepository {
   /// saw.
   Future<void> confirmCollection({
     required String branchId,
-    required double countedCash,
+    required int countedCash, // cents
     String? varianceReason,
     String? witness,
     String? notes,
@@ -659,7 +665,7 @@ class OfflinePosRepository {
         .insertOnConflictUpdate(
           LocalPrepaidWalletsCompanion.insert(
             customerId: customerId,
-            balance: double.parse(overview['balance'].toString()),
+            balance: currencyUnitsToCents(overview['balance']),
             asOf: DateTime.now(),
           ),
         );
@@ -675,7 +681,7 @@ class OfflinePosRepository {
             name: pkg['name'] as String,
             eligibleTiers: (pkg['eligibleTiers'] as List<dynamic>).join(','),
             washCount: pkg['washCount'] as int,
-            price: double.parse(pkg['price'].toString()),
+            price: currencyUnitsToCents(pkg['price']),
             validityDays: pkg['validityDays'] as int,
             applicableScope: pkg['applicableScope'] as String,
           ),
@@ -735,7 +741,9 @@ class OfflinePosRepository {
         final resp = await _dio.get('/prepaid/customers/$customerId/overview');
         final overview = resp.data as Map<String, dynamic>;
         await _cachePrepaidOverview(customerId, overview);
-        return overview;
+        // Normalize to the same cents-based shape the offline cache
+        // returns, so callers don't care which path served the data.
+        return {...overview, 'balance': currencyUnitsToCents(overview['balance'])};
       } on DioException {
         // Fall through to cache.
       }
@@ -748,7 +756,7 @@ class OfflinePosRepository {
   /// the real deposit — already idempotent server-side on clientEntryId.
   Future<void> depositToWallet({
     required String customerId,
-    required double amount,
+    required int amount, // cents
     required String method,
   }) async {
     final clientEntryId = _uuid.v4();
@@ -782,7 +790,7 @@ class OfflinePosRepository {
     final id = _uuid.v4();
     final services = await cachedServices();
     final extras = await cachedExtras();
-    double total = 0;
+    int total = 0;
     final itemRows = <LocalWashOrderItemsCompanion>[];
     for (final item in items) {
       if (item['itemType'] == 'SERVICE') {
@@ -932,7 +940,7 @@ class OfflinePosRepository {
       for (final c in components) {
         final method = c['method'] as String;
         if (offlineSafePaymentMethods.contains(method)) continue;
-        final amount = (c['amount'] as num).toDouble();
+        final amount = (c['amount'] as num).toInt();
         switch (method) {
           case 'WALLET':
             final wallet = await (_db.select(
@@ -982,7 +990,7 @@ class OfflinePosRepository {
             id: _uuid.v4(),
             paymentId: paymentId,
             method: c['method'],
-            amount: (c['amount'] as num).toDouble(),
+            amount: (c['amount'] as num).toInt(),
             externalReference: Value(c['externalReference'] as String?),
           ),
         ),
@@ -1004,7 +1012,7 @@ class OfflinePosRepository {
       // of truth once this syncs.
       for (final c in components) {
         final method = c['method'] as String;
-        final amount = (c['amount'] as num).toDouble();
+        final amount = (c['amount'] as num).toInt();
         if (method == 'WALLET') {
           final wallet = await (_db.select(
             _db.localPrepaidWallets,
