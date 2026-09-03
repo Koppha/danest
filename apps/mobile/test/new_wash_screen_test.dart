@@ -99,4 +99,42 @@ void main() {
     expect(find.text('Not selected'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('adding a vehicle succeeds even if the search box resets the selection while the dialog is open', (tester) async {
+    // Reproduces a real crash: _onQueryChanged nulls out _selectedCustomer
+    // the moment the search text changes, but the Add Vehicle dialog's Save
+    // handler used to read _selectedCustomer! directly, well after an
+    // earlier await — a search that lands while the dialog is still open
+    // (found live on a tablet; the exact trigger wasn't nailed down, but
+    // the crash was reproducible) threw "Null check operator used on a
+    // null value" right as the attendant tapped Save.
+    final searchField = find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == 'Phone number or registration');
+
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+
+    await tester.enterText(searchField, 'Kopano');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Search'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(InkWell, 'Kopano'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Add vehicle'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, 'Registration number'), findsOneWidget);
+
+    await tester.enterText(find.widgetWithText(TextField, 'Registration number'), 'M 1234');
+
+    // The race: the search box's own listener fires while the dialog (and
+    // its now-stale reference to "the selected customer") is still open.
+    await tester.enterText(searchField, 'someone else');
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    final vehicles = await db.select(db.localVehicles).get();
+    expect(vehicles.any((v) => v.regNumberDisplay == 'M 1234' && v.customerId == 'c1'), isTrue);
+  });
 }

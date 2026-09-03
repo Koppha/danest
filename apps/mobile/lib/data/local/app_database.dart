@@ -6,6 +6,25 @@ import 'package:path_provider/path_provider.dart';
 
 part 'app_database.g.dart';
 
+/// [Migrator.addColumn] is a plain `ALTER TABLE ... ADD COLUMN`, with no
+/// `IF NOT EXISTS` guard (SQLite has no such syntax for columns — unlike
+/// `createTable`/`deleteTable`, which Drift already issues as `CREATE TABLE
+/// IF NOT EXISTS`/`DROP TABLE IF EXISTS` and so are already safe to repeat).
+/// If the app is ever killed between `onCreate` finishing (which creates
+/// every table using today's Dart definitions, columns and all) and Drift
+/// persisting the bumped `user_version`, the next launch replays every
+/// `onUpgrade` step from scratch against a database that already has these
+/// columns — a real, if narrow, first-launch crash window, not just a
+/// hypothetical. Treating "already there" as success instead of a crash is
+/// what makes that survivable.
+Future<void> _addColumnIfMissing(Migrator m, TableInfo table, GeneratedColumn column) async {
+  try {
+    await m.addColumn(table, column);
+  } on SqliteException catch (e) {
+    if (!e.message.contains('duplicate column name')) rethrow;
+  }
+}
+
 /// Reference data pulled from the server when online — read-only offline.
 class LocalWashServices extends Table {
   TextColumn get id => text()();
@@ -513,14 +532,14 @@ class AppDatabase extends _$AppDatabase {
           if (from < 6) {
             await m.createTable(localPrepaidWalletLedger);
             await m.createTable(localPrepaidPackageUsage);
-            await m.addColumn(localPrepaidPackagePurchases, localPrepaidPackagePurchases.purchasedAt);
+            await _addColumnIfMissing(m, localPrepaidPackagePurchases, localPrepaidPackagePurchases.purchasedAt);
           }
           if (from < 7) {
             await m.createTable(localWashStatusHistory);
           }
           if (from < 8) {
-            await m.addColumn(localPayments, localPayments.voided);
-            await m.addColumn(localPayments, localPayments.voidedAt);
+            await _addColumnIfMissing(m, localPayments, localPayments.voided);
+            await _addColumnIfMissing(m, localPayments, localPayments.voidedAt);
           }
           if (from < 9) {
             // Superseded by LocalUsers, which AuthRepository has written
@@ -528,8 +547,8 @@ class AppDatabase extends _$AppDatabase {
             // reads this table any more.
             await m.deleteTable('local_pending_users');
             await m.createTable(localAuditLog);
-            await m.addColumn(localExpenses, localExpenses.reversedByExpenseId);
-            await m.addColumn(localExpenses, localExpenses.reversalOfExpenseId);
+            await _addColumnIfMissing(m, localExpenses, localExpenses.reversedByExpenseId);
+            await _addColumnIfMissing(m, localExpenses, localExpenses.reversalOfExpenseId);
           }
           if (from < 10) {
             await m.createTable(localSmsMessages);
@@ -543,8 +562,8 @@ class AppDatabase extends _$AppDatabase {
             // a vehicle is ever reassigned to a different customer later,
             // historical ledger/reward rows keep the owner as of the wash,
             // which is the correct thing for a loyalty history anyway.
-            await m.addColumn(localLoyaltyLedger, localLoyaltyLedger.customerId);
-            await m.addColumn(localLoyaltyRewards, localLoyaltyRewards.customerId);
+            await _addColumnIfMissing(m, localLoyaltyLedger, localLoyaltyLedger.customerId);
+            await _addColumnIfMissing(m, localLoyaltyRewards, localLoyaltyRewards.customerId);
             await customStatement(
               'UPDATE local_loyalty_ledger SET customer_id = '
               '(SELECT customer_id FROM local_vehicles WHERE local_vehicles.id = local_loyalty_ledger.vehicle_id) '

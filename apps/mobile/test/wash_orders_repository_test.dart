@@ -11,8 +11,15 @@ import 'package:de_nest/data/local/wash_orders_repository.dart';
 class _RecordingSmsProvider implements SmsProvider {
   final sent = <({String phone, String body})>[];
   @override
-  Future<void> send({required String phone, required String body}) async {
+  Future<void> send({required String phone, required String body, bool allowPermissionPrompt = true}) async {
     sent.add((phone: phone, body: body));
+  }
+}
+
+class _DeniedSmsProvider implements SmsProvider {
+  @override
+  Future<void> send({required String phone, required String body, bool allowPermissionPrompt = true}) async {
+    throw Exception('SMS permission was not granted');
   }
 }
 
@@ -144,8 +151,11 @@ void main() {
 
       await repoWithSms.transition(id, 'WASHING', actorId: 'u1');
       expect(provider.sent, isEmpty); // not yet — only READY should trigger it
-      await repoWithSms.transition(id, 'READY', actorId: 'u1');
+      final result = await repoWithSms.transition(id, 'READY', actorId: 'u1');
 
+      expect(result.smsAttempted, isTrue);
+      expect(result.smsSent, isTrue);
+      expect(result.smsError, isNull);
       expect(provider.sent, hasLength(1));
       expect(provider.sent.single.phone, '+26658123456');
       expect(provider.sent.single.body, contains('ABC 123'));
@@ -153,6 +163,28 @@ void main() {
       final messages = await db.select(db.localSmsMessages).get();
       expect(messages, hasLength(1));
       expect(messages.single.status, 'SENT');
+    });
+
+    test('marking a wash READY still succeeds even when the SMS itself fails (e.g. permission denied)', () async {
+      final repoWithSms = WashOrdersRepository(db, prepaid, loyalty, sms: SmsService(db, _DeniedSmsProvider()));
+      await db.into(db.localCustomers).insert(
+            LocalCustomersCompanion.insert(id: 'c1', branchId: 'main', fullName: 'Thabo Mokoena', phone: '+26658123456'),
+          );
+      await db.into(db.localVehicles).insert(
+            LocalVehiclesCompanion.insert(id: 'v1', customerId: 'c1', regNumberNormalized: 'ABC123', regNumberDisplay: 'ABC 123'),
+          );
+      final id = await startBasicWash();
+      await repoWithSms.transition(id, 'WASHING', actorId: 'u1');
+
+      final result = await repoWithSms.transition(id, 'READY', actorId: 'u1');
+
+      // The status change itself is unaffected by the SMS failure...
+      final order = await (db.select(db.localWashOrders)..where((w) => w.id.equals(id))).getSingle();
+      expect(order.status, 'READY');
+      // ...but the caller can tell it didn't go out, to warn whoever's at the till.
+      expect(result.smsAttempted, isTrue);
+      expect(result.smsSent, isFalse);
+      expect(result.smsError, contains('permission was not granted'));
     });
   });
 

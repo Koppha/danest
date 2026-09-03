@@ -7,17 +7,21 @@ import 'package:de_nest/data/models/models.dart';
 
 class _SucceedingProvider implements SmsProvider {
   int calls = 0;
+  final List<bool> promptFlags = [];
   @override
-  Future<void> send({required String phone, required String body}) async {
+  Future<void> send({required String phone, required String body, bool allowPermissionPrompt = true}) async {
     calls++;
+    promptFlags.add(allowPermissionPrompt);
   }
 }
 
 class _FailingProvider implements SmsProvider {
   int calls = 0;
+  final List<bool> promptFlags = [];
   @override
-  Future<void> send({required String phone, required String body}) async {
+  Future<void> send({required String phone, required String body, bool allowPermissionPrompt = true}) async {
     calls++;
+    promptFlags.add(allowPermissionPrompt);
     throw Exception('network down');
   }
 }
@@ -26,7 +30,7 @@ class _ConditionalProvider implements SmsProvider {
   final bool Function() shouldFail;
   _ConditionalProvider(this.shouldFail);
   @override
-  Future<void> send({required String phone, required String body}) async {
+  Future<void> send({required String phone, required String body, bool allowPermissionPrompt = true}) async {
     if (shouldFail()) throw Exception('still down');
   }
 }
@@ -138,6 +142,27 @@ void main() {
 
       final row = await db.select(db.localSmsMessages).getSingle();
       expect(row.status, 'SENT');
+    });
+
+    test('background retries never ask the provider to prompt for permission, only the initial send and an explicit resend do', () async {
+      final provider = _FailingProvider();
+      final sms = SmsService(db, provider);
+
+      // enqueue() fires from marking a wash READY — a direct user action —
+      // so its one call must be allowed to prompt.
+      await sms.enqueue(id: 'm1', washOrderId: 'w1', phone: '+26658123456', body: 'test');
+      expect(provider.promptFlags, [true]);
+
+      // processDueRetries() is driven by the background Timer while the app
+      // is merely open — nothing the user did just now — so it must never
+      // re-trigger the OS permission dialog on an already-denied permission.
+      await sms.processDueRetries(now: DateTime.now().add(const Duration(hours: 1)));
+      expect(provider.promptFlags, [true, false]);
+
+      // Tapping "Resend now" in the Audit & SMS screen is a direct user
+      // action again, so it opts back in explicitly.
+      await sms.attemptSend('m1', allowPermissionPrompt: true);
+      expect(provider.promptFlags, [true, false, true]);
     });
   });
 }

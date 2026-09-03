@@ -34,14 +34,17 @@ String renderReadyMessage({required String customerName, required String vehicle
 }
 
 abstract class SmsProvider {
-  Future<void> send({required String phone, required String body});
+  /// [allowPermissionPrompt] lets a caller that isn't a direct user action
+  /// (the background retry timer) opt out of triggering the OS permission
+  /// dialog — see [SmsService.attemptSend].
+  Future<void> send({required String phone, required String body, bool allowPermissionPrompt = true});
 }
 
 /// Kept for tests (and as a manual fallback) — [DeviceSmsProvider] is the
 /// real default, sending over the device's own SIM.
 class LogOnlySmsProvider implements SmsProvider {
   @override
-  Future<void> send({required String phone, required String body}) async {
+  Future<void> send({required String phone, required String body, bool allowPermissionPrompt = true}) async {
     // ignore: avoid_print
     print('[SMS -> $phone] $body');
   }
@@ -58,11 +61,14 @@ class SmsService {
   final SmsProvider _provider;
   SmsService(this._db, this._provider);
 
-  Future<void> enqueue({String? id, required String washOrderId, required String phone, required String body}) async {
+  /// Returns the message row as it stands right after the first attempt —
+  /// callers that care whether it actually went out (rather than just
+  /// firing and forgetting) can check `.status` without a second query.
+  Future<LocalSmsMessage> enqueue({String? id, required String washOrderId, required String phone, required String body}) async {
     final messageId = id ?? _uuid.v4();
     if (id != null) {
       final existing = await (_db.select(_db.localSmsMessages)..where((m) => m.id.equals(id))).getSingleOrNull();
-      if (existing != null) return;
+      if (existing != null) return existing;
     }
     await _db.into(_db.localSmsMessages).insert(
           LocalSmsMessagesCompanion.insert(
@@ -73,14 +79,20 @@ class SmsService {
             nextAttemptAt: DateTime.now(),
           ),
         );
-    await attemptSend(messageId);
+    await attemptSend(messageId, allowPermissionPrompt: true);
+    return (await (_db.select(_db.localSmsMessages)..where((m) => m.id.equals(messageId))).getSingle());
   }
 
-  Future<void> attemptSend(String id) async {
+  /// [allowPermissionPrompt] defaults to false because the only other
+  /// caller is [processDueRetries], driven by a background Timer — without
+  /// this, a still-denied permission would re-pop the OS SMS dialog,
+  /// unprompted, on every retry cycle. Only [enqueue] (marking a wash
+  /// READY) and an explicit "Resend now" tap opt in with true.
+  Future<void> attemptSend(String id, {bool allowPermissionPrompt = false}) async {
     final message = await (_db.select(_db.localSmsMessages)..where((m) => m.id.equals(id))).getSingleOrNull();
     if (message == null || message.status == 'SENT') return;
     try {
-      await _provider.send(phone: message.phone, body: message.renderedBody);
+      await _provider.send(phone: message.phone, body: message.renderedBody, allowPermissionPrompt: allowPermissionPrompt);
       await (_db.update(_db.localSmsMessages)..where((m) => m.id.equals(id))).write(
         LocalSmsMessagesCompanion(status: const Value('SENT'), sentAt: Value(DateTime.now())),
       );

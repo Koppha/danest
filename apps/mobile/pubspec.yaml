@@ -47,6 +47,10 @@ dependencies:
   # Offline local database
   drift: ^2.21.0
   sqlite3_flutter_libs: ^0.5.27
+  # Already a transitive dep of drift/sqlite3_flutter_libs — declared
+  # directly because test/app_database_migration_test.dart opens the raw
+  # file to simulate a corrupted schema version.
+  sqlite3: ^3.5.2
   path_provider: ^2.1.5
   path: ^1.9.0
 

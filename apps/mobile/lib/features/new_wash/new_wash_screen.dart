@@ -359,7 +359,13 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
   }
 
   void _showAddVehicleDialog() {
-    if (_selectedCustomer == null) return;
+    // Captured once, up front — the dialog stays open across an await, and
+    // the search box's listener can null out _selectedCustomer in the
+    // meantime (typing a new query resets it synchronously; see
+    // _onQueryChanged). Reading the field itself inside the async Save
+    // handler below risked exactly that race.
+    final customer = _selectedCustomer;
+    if (customer == null) return;
     final regController = TextEditingController();
     final makeController = TextEditingController();
     showDialog(
@@ -381,12 +387,15 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
             onPressed: () async {
               final vehicle = await ref
                   .read(offlinePosRepositoryProvider)
-                  .createVehicle(customerId: _selectedCustomer!.id, regNumber: regController.text.trim(), make: makeController.text.trim());
+                  .createVehicle(customerId: customer.id, regNumber: regController.text.trim(), make: makeController.text.trim());
               if (mounted) {
                 Navigator.pop(ctx);
                 setState(() {
-                  _selectedCustomer!.vehicles.add(vehicle);
-                  _selectedVehicle = vehicle;
+                  customer.vehicles.add(vehicle);
+                  // Only adopt it as the active pick if the user is still on
+                  // the same customer — they may have searched again and
+                  // moved on to someone else while this dialog was open.
+                  if (_selectedCustomer?.id == customer.id) _selectedVehicle = vehicle;
                 });
               }
             },

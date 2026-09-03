@@ -199,8 +199,15 @@ class WashOrdersRepository {
   }
 
   /// Only WASHING or READY — cancellation goes through [cancel] instead.
-  /// WAITING -> READY directly is illegal (must pass through WASHING).
-  Future<void> transition(String washOrderId, String toStatus, {required String actorId}) async {
+  /// WAITING -> READY directly is illegal (must pass through WASHING). The
+  /// status change always goes through even if the SMS attempt fails —
+  /// [smsSent]/[smsError] just tell the caller whether to flag that to
+  /// whoever's at the till, not whether the transition itself worked.
+  Future<({bool smsAttempted, bool smsSent, String? smsError})> transition(
+    String washOrderId,
+    String toStatus, {
+    required String actorId,
+  }) async {
     final wash = await (_db.select(_db.localWashOrders)..where((w) => w.id.equals(washOrderId))).getSingleOrNull();
     if (wash == null) throw WashNotFoundException();
     if (!isLegalWashTransition(wash.status, toStatus)) {
@@ -223,9 +230,11 @@ class WashOrdersRepository {
           scope: await _loyaltyScope(),
         );
         final body = renderReadyMessage(customerName: customer.fullName, vehicleReg: vehicle.regNumberDisplay, loyalty: loyaltySummary);
-        await _sms.enqueue(washOrderId: washOrderId, phone: customer.phone, body: body);
+        final message = await _sms.enqueue(washOrderId: washOrderId, phone: customer.phone, body: body);
+        return (smsAttempted: true, smsSent: message.status == 'SENT', smsError: message.lastError);
       }
     }
+    return (smsAttempted: false, smsSent: false, smsError: null);
   }
 
   /// PIN-gated at the UI layer — this method trusts [approvedByUserId] was

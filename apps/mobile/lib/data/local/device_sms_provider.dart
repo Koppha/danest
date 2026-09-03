@@ -19,8 +19,9 @@ class DeviceSmsProvider implements SmsProvider {
   Future<bool> requestPermission() async => (await _channel.invokeMethod<bool>('requestSmsPermission')) ?? false;
 
   @override
-  Future<void> send({required String phone, required String body}) async {
-    if (!await hasPermission() && !await requestPermission()) {
+  Future<void> send({required String phone, required String body, bool allowPermissionPrompt = true}) async {
+    final granted = await hasPermission() || (allowPermissionPrompt && await requestPermission());
+    if (!granted) {
       throw SmsPermissionDeniedException();
     }
     await _channel.invokeMethod('sendSms', {'phone': phone, 'body': body});

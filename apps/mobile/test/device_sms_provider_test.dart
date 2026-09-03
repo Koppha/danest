@@ -69,4 +69,25 @@ void main() {
 
     expect(calls, ['hasSmsPermission', 'requestSmsPermission']);
   });
+
+  test('allowPermissionPrompt: false fails fast on a denied permission without ever calling requestSmsPermission', () async {
+    final calls = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call.method);
+      switch (call.method) {
+        case 'hasSmsPermission':
+          return false;
+      }
+      throw UnsupportedError(call.method);
+    });
+
+    await expectLater(
+      DeviceSmsProvider().send(phone: '62227247', body: 'hi', allowPermissionPrompt: false),
+      throwsA(isA<SmsPermissionDeniedException>()),
+    );
+
+    // The whole point: a background retry must never re-pop the OS SMS
+    // permission dialog on an already-denied permission.
+    expect(calls, ['hasSmsPermission']);
+  });
 }

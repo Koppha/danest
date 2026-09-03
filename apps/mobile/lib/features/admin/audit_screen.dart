@@ -123,8 +123,27 @@ class _SmsList extends ConsumerWidget {
                 final m = list[i];
                 return ListTile(
                   title: Text(m.phone),
-                  subtitle: Text(m.renderedBody, maxLines: 2, overflow: TextOverflow.ellipsis),
-                  trailing: Text(m.status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _smsStatusColor(m.status))),
+                  subtitle: Text(
+                    m.status == 'SENT' ? m.renderedBody : '${m.renderedBody}\n${m.lastError ?? ''}',
+                    maxLines: m.status == 'SENT' ? 2 : 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  isThreeLine: m.status != 'SENT',
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(m.status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _smsStatusColor(m.status))),
+                      if (m.status != 'SENT')
+                        IconButton(
+                          icon: const Icon(Icons.refresh, size: 18),
+                          tooltip: 'Resend now',
+                          onPressed: () async {
+                            await ref.read(smsServiceProvider).attemptSend(m.id, allowPermissionPrompt: true);
+                            ref.invalidate(smsLogProvider);
+                          },
+                        ),
+                    ],
+                  ),
                 );
               },
             ),
