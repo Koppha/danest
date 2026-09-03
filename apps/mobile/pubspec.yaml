@@ -103,6 +103,27 @@ dev_dependencies:
   drift_dev: ^2.21.0
   build_runner: ^2.4.13
 
+  # Generates the launcher icon (and Android adaptive icon layers) from the
+  # in-app mark — see the flutter_launcher_icons: config below.
+  flutter_launcher_icons: ^0.14.3
+
+# Source images are rendered from the actual in-app mark (DnColors.navySoft
+# + Icons.local_car_wash — see login_screen.dart/app_shell.dart) via
+# test/_icon_asset_generator.dart, not hand-drawn. Regenerate them there if
+# the mark ever changes, then rerun `dart run flutter_launcher_icons`.
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "build/icon_src/icon_full.png"
+  adaptive_icon_background: "#12305C"
+  adaptive_icon_foreground: "build/icon_src/icon_foreground.png"
+  min_sdk_android: 21
+  # icon_full.png has transparent corners outside its rounded-square shape
+  # (correct for Android, which composites the legacy icon itself) — the
+  # App Store rejects any alpha, so fill iOS's copy with the same navy.
+  remove_alpha_ios: true
+  background_color_ios: "#12305C"
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
