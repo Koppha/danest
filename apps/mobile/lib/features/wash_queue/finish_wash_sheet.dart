@@ -5,6 +5,7 @@ import '../../core/session.dart';
 import '../../data/models/models.dart';
 import '../../data/local/loyalty_repository.dart';
 import '../../data/local/prepaid_repository.dart';
+import '../../data/local/settings_repository.dart';
 import '../../data/local/wash_orders_repository.dart';
 import '../../design_system/theme.dart';
 import '../dashboard/dashboard_screen.dart' show queueProvider;
@@ -51,14 +52,23 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
   bool _submitting = false;
   String? _error;
   LoyaltySummary? _loyalty;
+  int? _walletBalance;
 
   @override
   void initState() {
     super.initState();
     final vehicleId = widget.order.vehicle?.id;
-    if (vehicleId != null) {
-      widget.ref.read(loyaltyRepositoryProvider).summaryForVehicle(vehicleId).then((summary) {
+    final customerId = widget.order.customer?.id;
+    if (vehicleId != null && customerId != null) {
+      widget.ref.read(loyaltyScopeProvider.future).then((scope) {
+        return widget.ref.read(loyaltyRepositoryProvider).summaryForVehicle(vehicleId: vehicleId, customerId: customerId, scope: scope);
+      }).then((summary) {
         if (mounted) setState(() => _loyalty = summary);
+      });
+    }
+    if (customerId != null) {
+      widget.ref.read(prepaidRepositoryProvider).walletBalance(customerId).then((balance) {
+        if (mounted) setState(() => _walletBalance = balance);
       });
     }
   }
@@ -101,7 +111,14 @@ class _FinishWashSheetState extends State<_FinishWashSheet> {
   @override
   Widget build(BuildContext context) {
     final hasFreeWash = _loyalty?.hasAvailableReward ?? false;
-    final availableMethods = _methods.where((m) => m.$1 != 'LOYALTY_FREE_WASH' || hasFreeWash).toList();
+    // >= (not >), deliberately: a wallet balance that exactly covers the
+    // total is still a perfectly valid way to pay for it.
+    final hasSufficientWallet = (_walletBalance ?? 0) >= widget.order.totalAmount;
+    final availableMethods = _methods.where((m) {
+      if (m.$1 == 'LOYALTY_FREE_WASH') return hasFreeWash;
+      if (m.$1 == 'WALLET') return hasSufficientWallet;
+      return true;
+    }).toList();
 
     return SafeArea(
       child: Padding(

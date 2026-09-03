@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:de_nest/core/session.dart';
 import 'package:de_nest/data/local/app_database.dart';
@@ -19,9 +20,11 @@ class _FakeSession extends SessionNotifier {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late AppDatabase db;
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({}); // finish_wash_sheet reads loyaltyScopeProvider, which is backed by this
     db = AppDatabase.forTesting(NativeDatabase.memory());
     await db.into(db.localWashOrders).insert(
           LocalWashOrdersCompanion.insert(
@@ -45,6 +48,7 @@ void main() {
       totalAmount: 6000,
       createdAt: DateTime.now(),
       vehicle: Vehicle(id: 'v1', customerId: 'c1', regNumberDisplay: 'ABC 123'),
+      customer: Customer(id: 'c1', fullName: 'Thabo Mokoena', phone: '62227247'),
     );
     await tester.pumpWidget(
       ProviderScope(
@@ -67,12 +71,13 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('every real payment method is offered; Loyalty reward only when a reward is actually available', (tester) async {
+  testWidgets('every method that needs no precondition is offered; Wallet and Loyalty reward are not', (tester) async {
     await openSheet(tester);
 
-    for (final label in ['Cash', 'Ecocash', 'M-Pesa', 'Card', 'Bank transfer', 'Wallet', 'Free Wash']) {
+    for (final label in ['Cash', 'Ecocash', 'M-Pesa', 'Card', 'Bank transfer', 'Free Wash']) {
       expect(find.text(label), findsOneWidget);
     }
+    expect(find.text('Wallet'), findsNothing); // no wallet balance for this customer
     expect(find.text('Loyalty reward'), findsNothing); // nothing earned yet
     expect(tester.takeException(), isNull);
   });
@@ -83,7 +88,14 @@ void main() {
     final lastMonth = DateTime(DateTime.now().year, DateTime.now().month - 1);
     final loyalty = LoyaltyRepository(db);
     for (var i = 1; i <= 5; i++) {
-      await loyalty.creditQualifyingWash(vehicleId: 'v1', washOrderId: 'seed-$i', at: lastMonth, actorId: 'u1');
+      await loyalty.creditQualifyingWash(
+        vehicleId: 'v1',
+        customerId: 'c1',
+        scope: LoyaltyScope.vehicle,
+        washOrderId: 'seed-$i',
+        at: lastMonth,
+        actorId: 'u1',
+      );
     }
 
     await openSheet(tester);
@@ -144,16 +156,38 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('selecting Wallet with an insufficient balance shows a clear error and completes nothing', (tester) async {
+  testWidgets('Wallet is not offered when the balance cannot cover the total', (tester) async {
+    await db.into(db.localPrepaidWallets).insert(
+          LocalPrepaidWalletsCompanion.insert(customerId: 'c1', balance: 5999, asOf: DateTime.now()), // 1 cent short
+        );
+
     await openSheet(tester);
+
+    expect(find.text('Wallet'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Wallet is offered once the balance covers the total exactly, and paying with it debits the wallet', (tester) async {
+    // Exactly equal to the total — >=, not strictly >, since a balance that
+    // covers the total to the cent is still a valid way to pay it.
+    await db.into(db.localPrepaidWallets).insert(
+          LocalPrepaidWalletsCompanion.insert(customerId: 'c1', balance: 6000, asOf: DateTime.now()),
+        );
+
+    await openSheet(tester);
+    expect(find.text('Wallet'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(ChoiceChip, 'Wallet'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ElevatedButton, 'FINISH WASH'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Insufficient prepaid balance'), findsOneWidget);
-    final order = await (db.select(db.localWashOrders)..where((w) => w.id.equals('w1'))).getSingle();
-    expect(order.status, 'READY'); // untouched
+    final components = await db.select(db.localPaymentComponents).get();
+    expect(components, hasLength(1));
+    expect(components.single.method, 'WALLET');
+
+    final wallet = await (db.select(db.localPrepaidWallets)..where((w) => w.customerId.equals('c1'))).getSingle();
+    expect(wallet.balance, 0);
+    expect(tester.takeException(), isNull);
   });
 }

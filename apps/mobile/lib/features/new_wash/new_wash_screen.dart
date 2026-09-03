@@ -8,6 +8,7 @@ import '../../core/session.dart';
 import '../../data/models/models.dart';
 import '../../data/local/loyalty_repository.dart';
 import '../../data/local/offline_pos_repository.dart';
+import '../../data/local/settings_repository.dart';
 import '../../data/local/wash_orders_repository.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
@@ -79,7 +80,8 @@ class _NewWashScreenState extends ConsumerState<NewWashScreen> {
 
   Future<void> _selectVehicle(Vehicle v) async {
     setState(() => _selectedVehicle = v);
-    final summary = await ref.read(loyaltyRepositoryProvider).summaryForVehicle(v.id);
+    final scope = await ref.read(loyaltyScopeProvider.future);
+    final summary = await ref.read(loyaltyRepositoryProvider).summaryForVehicle(vehicleId: v.id, customerId: v.customerId, scope: scope);
     if (mounted) setState(() => _loyalty = summary);
   }
 

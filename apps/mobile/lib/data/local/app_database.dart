@@ -82,6 +82,12 @@ class LocalLoyaltySummaries extends Table {
 class LocalLoyaltyLedger extends Table {
   TextColumn get id => text()();
   TextColumn get vehicleId => text()();
+  // Denormalized from the vehicle's owner at write time. Lets the same
+  // append-only ledger be read either per-vehicle or pooled per-customer,
+  // switched by a Settings toggle, without needing two separate ledgers or
+  // a rewrite when the owner flips the setting. Nullable only so the
+  // migration that adds this column can add it before backfilling it.
+  TextColumn get customerId => text().nullable()();
   TextColumn get washOrderId => text().nullable()();
   TextColumn get eventType =>
       text()(); // WASH_CREDITED | WASH_REVERSED | REWARD_EARNED | REWARD_REDEEMED | REWARD_EXPIRED | MANAGER_ADJUSTMENT
@@ -102,6 +108,8 @@ class LocalLoyaltyLedger extends Table {
 class LocalLoyaltyRewards extends Table {
   TextColumn get id => text()();
   TextColumn get vehicleId => text()();
+  // Same denormalization as LocalLoyaltyLedger.customerId, same reason.
+  TextColumn get customerId => text().nullable()();
   DateTimeColumn get earnedMonth => dateTime()();
   DateTimeColumn get validMonth => dateTime()();
   TextColumn get status => text().withDefault(const Constant('AVAILABLE'))(); // AVAILABLE | REDEEMED | EXPIRED | REVOKED
@@ -444,7 +452,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   // Default storage truncates DateTime to whole-second unix timestamps,
   // which let two events in the same second compare as equal instead of
@@ -528,6 +536,25 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 11) {
             await m.createTable(localBackupRuns);
+          }
+          if (from < 12) {
+            // Backfilled from the vehicle's current owner — a one-time,
+            // best-effort denormalization, not a live-updating relation. If
+            // a vehicle is ever reassigned to a different customer later,
+            // historical ledger/reward rows keep the owner as of the wash,
+            // which is the correct thing for a loyalty history anyway.
+            await m.addColumn(localLoyaltyLedger, localLoyaltyLedger.customerId);
+            await m.addColumn(localLoyaltyRewards, localLoyaltyRewards.customerId);
+            await customStatement(
+              'UPDATE local_loyalty_ledger SET customer_id = '
+              '(SELECT customer_id FROM local_vehicles WHERE local_vehicles.id = local_loyalty_ledger.vehicle_id) '
+              'WHERE customer_id IS NULL',
+            );
+            await customStatement(
+              'UPDATE local_loyalty_rewards SET customer_id = '
+              '(SELECT customer_id FROM local_vehicles WHERE local_vehicles.id = local_loyalty_rewards.vehicle_id) '
+              'WHERE customer_id IS NULL',
+            );
           }
         },
       );

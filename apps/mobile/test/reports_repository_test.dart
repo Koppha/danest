@@ -70,7 +70,14 @@ void main() {
       final loyalty = LoyaltyRepository(db);
       final lastMonth = DateTime(DateTime.now().year, DateTime.now().month - 1, 15);
       for (var i = 0; i < 5; i++) {
-        await loyalty.creditQualifyingWash(vehicleId: 'v1', washOrderId: 'seed-wash-$i', at: lastMonth, actorId: 'u1');
+        await loyalty.creditQualifyingWash(
+          vehicleId: 'v1',
+          customerId: 'c1',
+          scope: LoyaltyScope.vehicle,
+          washOrderId: 'seed-wash-$i',
+          at: lastMonth,
+          actorId: 'u1',
+        );
       }
       final rewardOrder = await washOrders.startWash(vehicleId: 'v1', customerId: 'c1', items: [
         {'itemType': 'SERVICE', 'serviceId': 'svc-1'},

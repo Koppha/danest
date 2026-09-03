@@ -47,6 +47,26 @@ void main() {
     return order.id;
   }
 
+  // Every call site here predates LoyaltyScope; they all mean today's only
+  // behavior, per-vehicle, so these wrappers keep the diff small.
+  Future<int> qualifyingCount(String vehicleId, DateTime periodMonth, {String customerId = 'c1'}) => loyalty.qualifyingCount(
+        vehicleId: vehicleId,
+        customerId: customerId,
+        scope: LoyaltyScope.vehicle,
+        periodMonth: periodMonth,
+      );
+  Future<void> creditQualifyingWash({required String vehicleId, required String washOrderId, required DateTime at, String customerId = 'c1'}) =>
+      loyalty.creditQualifyingWash(
+        vehicleId: vehicleId,
+        customerId: customerId,
+        scope: LoyaltyScope.vehicle,
+        washOrderId: washOrderId,
+        at: at,
+        actorId: 'u1',
+      );
+  Future<LocalLoyaltyReward?> findAvailableReward(String vehicleId, DateTime asOf, {String customerId = 'c1'}) =>
+      loyalty.findAvailableReward(vehicleId: vehicleId, customerId: customerId, scope: LoyaltyScope.vehicle, asOf: asOf);
+
   group('startWash', () {
     test('computes the total from the current catalog and snapshots service/extra names+prices', () async {
       final id = await startBasicWash(extraCount: 1);
@@ -165,7 +185,7 @@ void main() {
       final order = await (db.select(db.localWashOrders)..where((w) => w.id.equals(id))).getSingle();
       expect(order.status, 'COMPLETED');
       expect(order.completedAt, isNotNull);
-      expect(await loyalty.qualifyingCount('v1', DateTime.now()), 1);
+      expect(await qualifyingCount('v1', DateTime.now()), 1);
     });
 
     test('finishing an already-COMPLETED wash is an idempotent no-op, not an error', () async {
@@ -177,7 +197,7 @@ void main() {
         {'method': 'CASH', 'amount': 6000},
       ], actorId: 'u1');
       expect(result.status, 'COMPLETED');
-      expect(await loyalty.qualifyingCount('v1', DateTime.now()), 1); // not credited twice
+      expect(await qualifyingCount('v1', DateTime.now()), 1); // not credited twice
     });
 
     test('finishing a CANCELLED wash throws', () async {
@@ -298,9 +318,9 @@ void main() {
       // month — findAvailableReward only matches the current calendar month.
       final lastMonth = DateTime(DateTime.now().year, DateTime.now().month - 1, 15);
       for (var i = 1; i <= 5; i++) {
-        await loyalty.creditQualifyingWash(vehicleId: 'v1', washOrderId: 'seed-$i', at: lastMonth, actorId: 'u1');
+        await creditQualifyingWash(vehicleId: 'v1', washOrderId: 'seed-$i', at: lastMonth);
       }
-      final reward = await loyalty.findAvailableReward('v1', DateTime.now());
+      final reward = await findAvailableReward('v1', DateTime.now());
       expect(reward, isNotNull);
 
       final id = await startBasicWash();
@@ -308,7 +328,7 @@ void main() {
         {'method': 'LOYALTY_FREE_WASH', 'amount': 6000},
       ], actorId: 'u1');
 
-      final countAfter = await loyalty.qualifyingCount('v1', lastMonth);
+      final countAfter = await qualifyingCount('v1', lastMonth);
       expect(countAfter, 5); // unchanged in that period — redeeming a reward doesn't earn another
       final rewardAfter = await db.select(db.localLoyaltyRewards).getSingle();
       expect(rewardAfter.status, 'REDEEMED');
@@ -319,7 +339,7 @@ void main() {
             LocalWashOrdersCompanion.insert(id: 'zero-wash', branchId: 'main', vehicleId: 'v9', customerId: 'c9', status: 'WAITING', totalAmount: 0, createdAt: DateTime.now()),
           );
       await repo.finishWash('zero-wash', [], actorId: 'u1');
-      expect(await loyalty.qualifyingCount('v9', DateTime.now()), 0);
+      expect(await qualifyingCount('v9', DateTime.now(), customerId: 'c9'), 0);
     });
   });
 
@@ -334,14 +354,14 @@ void main() {
       await repo.finishWash(id, [
         {'method': 'CASH', 'amount': 6000},
       ], actorId: 'u1');
-      expect(await loyalty.qualifyingCount('v1', DateTime.now()), 1);
+      expect(await qualifyingCount('v1', DateTime.now()), 1);
 
       await repo.voidPayment(id, 'Customer disputed charge', actorId: 'u1', approvedByUserId: 's1');
 
       final order = await (db.select(db.localWashOrders)..where((w) => w.id.equals(id))).getSingle();
       expect(order.status, 'CANCELLED'); // not some separate REFUNDED status
       expect(order.cancelReason, 'Customer disputed charge');
-      expect(await loyalty.qualifyingCount('v1', DateTime.now()), 0);
+      expect(await qualifyingCount('v1', DateTime.now()), 0);
     });
 
     test('voiding a WALLET payment refunds the wallet', () async {

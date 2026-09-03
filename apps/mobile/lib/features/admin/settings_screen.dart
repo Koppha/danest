@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/money.dart';
+import '../../core/session.dart';
+import '../../data/local/loyalty_repository.dart';
 import '../../data/local/offline_pos_repository.dart';
+import '../../data/local/settings_repository.dart';
 import '../../data/models/models.dart';
 import '../../design_system/theme.dart';
 import '../../design_system/widgets.dart';
@@ -109,6 +112,10 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+          if (ref.watch(sessionProvider).user?.isOwner ?? false) ...[
+            const SizedBox(height: 16),
+            const _LoyaltyScopeCard(),
+          ],
         ],
       ),
     );
@@ -188,6 +195,54 @@ class SettingsScreen extends ConsumerWidget {
               if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Owner-only: whether a customer's monthly free-wash progress is tracked
+/// per vehicle (each car has its own counter) or pooled per customer
+/// (washes across all their cars count toward the same free wash).
+class _LoyaltyScopeCard extends ConsumerWidget {
+  const _LoyaltyScopeCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scope = ref.watch(loyaltyScopeProvider);
+    return DnCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Loyalty program', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          const Text(
+            'How a customer\'s progress toward a free wash is counted.',
+            style: TextStyle(color: DnColors.muted, fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          scope.when(
+            data: (current) => SegmentedButton<LoyaltyScope>(
+              segments: const [
+                ButtonSegment(value: LoyaltyScope.vehicle, label: Text('Per vehicle'), icon: Icon(Icons.directions_car_outlined)),
+                ButtonSegment(value: LoyaltyScope.customer, label: Text('Per customer'), icon: Icon(Icons.person_outline)),
+              ],
+              selected: {current},
+              onSelectionChanged: (selection) async {
+                await ref.read(settingsRepositoryProvider).setLoyaltyScope(selection.first);
+                ref.invalidate(loyaltyScopeProvider);
+              },
+            ),
+            loading: () => const CircularProgressIndicator(),
+            error: (e, _) => Text('$e'),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            scope.value == LoyaltyScope.customer
+                ? 'A customer bringing 2 different cars still adds up to one shared free wash.'
+                : 'Each car has its own counter — a customer with 2 cars earns free washes twice as fast.',
+            style: const TextStyle(color: DnColors.muted, fontSize: 12),
           ),
         ],
       ),

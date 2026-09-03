@@ -19,25 +19,65 @@ const systemActorId = 'system';
 /// configurable via any settings screen.
 const qualifyingWashThreshold = 5;
 
+/// Whether a customer's monthly progress toward a free wash counts each of
+/// their vehicles separately, or pools across all of them. Owner-configurable
+/// (see SettingsRepository) — every method below takes the *current* value
+/// explicitly rather than reading settings itself, so this repository stays
+/// a plain, deterministic function of its inputs (easy to test, no hidden
+/// async settings read buried inside "business logic" methods).
+enum LoyaltyScope { vehicle, customer }
+
+/// One row of the loyalty report — see [LoyaltyRepository.report].
+/// [vehicleRegNumber] is null under [LoyaltyScope.customer], where the row
+/// already represents the customer's pooled progress across every vehicle.
+class LoyaltyReportRow {
+  final String customerName;
+  final String? vehicleRegNumber;
+  final int qualifyingCount;
+  final int remaining;
+  final bool hasAvailableReward;
+
+  LoyaltyReportRow({
+    required this.customerName,
+    required this.vehicleRegNumber,
+    required this.qualifyingCount,
+    required this.remaining,
+    required this.hasAvailableReward,
+  });
+}
+
 DateTime _monthStart(DateTime d) => DateTime(d.year, d.month);
 DateTime _addMonths(DateTime d, int months) => DateTime(d.year, d.month + months);
 
-/// Loyalty tracking is per-vehicle, not per-customer — a customer with two
-/// cars tracks two independent monthly counters. The ledger
-/// (LocalLoyaltyLedger) is append-only and the sole source of truth:
-/// "qualifying count" is never a stored counter, always recomputed by
-/// scanning it, which is what makes offline replay/reversal safe.
+/// The ledger (LocalLoyaltyLedger) is append-only and the sole source of
+/// truth: "qualifying count" is never a stored counter, always recomputed
+/// by scanning it, which is what makes offline replay/reversal safe. Every
+/// row carries both vehicleId and customerId (denormalized from the
+/// vehicle's owner at write time) so the same history can be read either
+/// per-vehicle or pooled per-customer depending on [LoyaltyScope], without
+/// needing two separate ledgers or a rewrite when the setting changes.
 class LoyaltyRepository {
   final AppDatabase _db;
   LoyaltyRepository(this._db);
 
-  Future<int> qualifyingCount(String vehicleId, DateTime periodMonth) async {
+  Expression<bool> _subject($LocalLoyaltyLedgerTable l, LoyaltyScope scope, String vehicleId, String customerId) =>
+      scope == LoyaltyScope.customer ? l.customerId.equals(customerId) : l.vehicleId.equals(vehicleId);
+
+  Expression<bool> _rewardSubject($LocalLoyaltyRewardsTable r, LoyaltyScope scope, String vehicleId, String customerId) =>
+      scope == LoyaltyScope.customer ? r.customerId.equals(customerId) : r.vehicleId.equals(vehicleId);
+
+  Future<int> qualifyingCount({
+    required String vehicleId,
+    required String customerId,
+    required LoyaltyScope scope,
+    required DateTime periodMonth,
+  }) async {
     final period = _monthStart(periodMonth);
     final credited = await (_db.select(_db.localLoyaltyLedger)
-          ..where((l) => l.vehicleId.equals(vehicleId) & l.periodMonth.equals(period) & l.eventType.equals('WASH_CREDITED')))
+          ..where((l) => _subject(l, scope, vehicleId, customerId) & l.periodMonth.equals(period) & l.eventType.equals('WASH_CREDITED')))
         .get();
     final reversed = await (_db.select(_db.localLoyaltyLedger)
-          ..where((l) => l.vehicleId.equals(vehicleId) & l.periodMonth.equals(period) & l.eventType.equals('WASH_REVERSED')))
+          ..where((l) => _subject(l, scope, vehicleId, customerId) & l.periodMonth.equals(period) & l.eventType.equals('WASH_REVERSED')))
         .get();
     final reversedWashIds = reversed.map((r) => r.washOrderId).whereType<String>().toSet();
     return credited.where((c) => c.washOrderId == null || !reversedWashIds.contains(c.washOrderId)).length;
@@ -45,11 +85,17 @@ class LoyaltyRepository {
 
   /// Idempotent per wash (the `(washOrderId, eventType)` unique key backs
   /// this up, but this checks first so a retry is a clean no-op rather than
-  /// a caught constraint violation). Earns exactly one reward on the 5th
-  /// qualifying wash of the calendar month — never a second one, no matter
-  /// how many more washes follow, until next month.
+  /// a caught constraint violation). Earns exactly one reward once the
+  /// month's qualifying count reaches the threshold — never a second one,
+  /// no matter how many more washes follow, until next month. `>=` rather
+  /// than `==` on purpose: robust to a count that jumps past the threshold
+  /// in one step (e.g. right after the owner switches [LoyaltyScope] and a
+  /// customer's pooled count is already ahead of any single wash crediting
+  /// it), not just one that lands on it exactly.
   Future<({bool earned, int count, String? rewardId})> creditQualifyingWash({
     required String vehicleId,
+    required String customerId,
+    required LoyaltyScope scope,
     required String washOrderId,
     required DateTime at,
     required String actorId,
@@ -63,6 +109,7 @@ class LoyaltyRepository {
             LocalLoyaltyLedgerCompanion.insert(
               id: _uuid.v4(),
               vehicleId: vehicleId,
+              customerId: Value(customerId),
               washOrderId: Value(washOrderId),
               eventType: 'WASH_CREDITED',
               periodMonth: period,
@@ -71,17 +118,18 @@ class LoyaltyRepository {
           );
     }
 
-    final count = await qualifyingCount(vehicleId, period);
+    final count = await qualifyingCount(vehicleId: vehicleId, customerId: customerId, scope: scope, periodMonth: period);
     final alreadyEarned = await (_db.select(_db.localLoyaltyRewards)
-          ..where((r) => r.vehicleId.equals(vehicleId) & r.earnedMonth.equals(period)))
+          ..where((r) => _rewardSubject(r, scope, vehicleId, customerId) & r.earnedMonth.equals(period)))
         .getSingleOrNull();
 
-    if (count == qualifyingWashThreshold && alreadyEarned == null) {
+    if (count >= qualifyingWashThreshold && alreadyEarned == null) {
       final ledgerId = _uuid.v4();
       await _db.into(_db.localLoyaltyLedger).insert(
             LocalLoyaltyLedgerCompanion.insert(
               id: ledgerId,
               vehicleId: vehicleId,
+              customerId: Value(customerId),
               washOrderId: Value(washOrderId),
               eventType: 'REWARD_EARNED',
               periodMonth: period,
@@ -94,6 +142,7 @@ class LoyaltyRepository {
             LocalLoyaltyRewardsCompanion.insert(
               id: rewardId,
               vehicleId: vehicleId,
+              customerId: Value(customerId),
               earnedMonth: period,
               validMonth: _addMonths(period, 1),
               earnedFromLedgerId: ledgerId,
@@ -110,8 +159,14 @@ class LoyaltyRepository {
   /// If it was already REDEEMED against some other, later wash, that other
   /// wash is deliberately NOT auto-unwound — this is flagged for manual
   /// review instead (a business judgment call, not an oversight).
+  ///
+  /// Doesn't take vehicleId/customerId — both are read back off the
+  /// WASH_CREDITED row this wash originally wrote, so a void always
+  /// resolves against the same subject the credit used, even if [scope]
+  /// has since changed.
   Future<({int count, bool flaggedForReview, String? downgradedRewardId})> reverseWash({
     required String washOrderId,
+    required LoyaltyScope scope,
     required String actorId,
   }) async {
     final credited = await (_db.select(_db.localLoyaltyLedger)
@@ -120,6 +175,8 @@ class LoyaltyRepository {
     if (credited == null) {
       return (count: 0, flaggedForReview: false, downgradedRewardId: null);
     }
+    final vehicleId = credited.vehicleId;
+    final customerId = credited.customerId!;
 
     final alreadyReversed = await (_db.select(_db.localLoyaltyLedger)
           ..where((l) => l.washOrderId.equals(washOrderId) & l.eventType.equals('WASH_REVERSED')))
@@ -128,7 +185,8 @@ class LoyaltyRepository {
       await _db.into(_db.localLoyaltyLedger).insert(
             LocalLoyaltyLedgerCompanion.insert(
               id: _uuid.v4(),
-              vehicleId: credited.vehicleId,
+              vehicleId: vehicleId,
+              customerId: Value(customerId),
               washOrderId: Value(washOrderId),
               eventType: 'WASH_REVERSED',
               periodMonth: credited.periodMonth,
@@ -137,9 +195,9 @@ class LoyaltyRepository {
           );
     }
 
-    final count = await qualifyingCount(credited.vehicleId, credited.periodMonth);
+    final count = await qualifyingCount(vehicleId: vehicleId, customerId: customerId, scope: scope, periodMonth: credited.periodMonth);
     final reward = await (_db.select(_db.localLoyaltyRewards)
-          ..where((r) => r.vehicleId.equals(credited.vehicleId) & r.earnedMonth.equals(credited.periodMonth)))
+          ..where((r) => _rewardSubject(r, scope, vehicleId, customerId) & r.earnedMonth.equals(credited.periodMonth)))
         .getSingleOrNull();
     // No reward this month, or still >= threshold even after the
     // reversal — nothing to unwind. Also naturally makes a repeat call
@@ -155,11 +213,12 @@ class LoyaltyRepository {
       await _db.into(_db.localLoyaltyLedger).insert(
             LocalLoyaltyLedgerCompanion.insert(
               id: _uuid.v4(),
-              vehicleId: credited.vehicleId,
+              vehicleId: vehicleId,
+              customerId: Value(customerId),
               eventType: 'MANAGER_ADJUSTMENT',
               periodMonth: credited.periodMonth,
               createdById: actorId,
-              notes: Value('Reward revoked: wash $washOrderId reversed, dropping the vehicle below $qualifyingWashThreshold qualifying washes'),
+              notes: Value('Reward revoked: wash $washOrderId reversed, dropping below $qualifyingWashThreshold qualifying washes'),
             ),
           );
       return (count: count, flaggedForReview: false, downgradedRewardId: reward.id);
@@ -169,7 +228,8 @@ class LoyaltyRepository {
       await _db.into(_db.localLoyaltyLedger).insert(
             LocalLoyaltyLedgerCompanion.insert(
               id: _uuid.v4(),
-              vehicleId: credited.vehicleId,
+              vehicleId: vehicleId,
+              customerId: Value(customerId),
               eventType: 'MANAGER_ADJUSTMENT',
               periodMonth: credited.periodMonth,
               createdById: actorId,
@@ -187,10 +247,15 @@ class LoyaltyRepository {
   /// Only matches a reward whose validMonth is exactly the current calendar
   /// month — one not redeemed within its single valid month simply becomes
   /// invisible here (see [expireStaleRewards] for the actual status flip).
-  Future<LocalLoyaltyReward?> findAvailableReward(String vehicleId, DateTime asOf) {
-    final period = _monthStart(asOf);
+  Future<LocalLoyaltyReward?> findAvailableReward({
+    required String vehicleId,
+    required String customerId,
+    required LoyaltyScope scope,
+    DateTime? asOf,
+  }) {
+    final period = _monthStart(asOf ?? DateTime.now());
     return (_db.select(_db.localLoyaltyRewards)
-          ..where((r) => r.vehicleId.equals(vehicleId) & r.status.equals('AVAILABLE') & r.validMonth.equals(period)))
+          ..where((r) => _rewardSubject(r, scope, vehicleId, customerId) & r.status.equals('AVAILABLE') & r.validMonth.equals(period)))
         .getSingleOrNull();
   }
 
@@ -203,6 +268,7 @@ class LoyaltyRepository {
           LocalLoyaltyLedgerCompanion.insert(
             id: _uuid.v4(),
             vehicleId: reward.vehicleId,
+            customerId: Value(reward.customerId),
             washOrderId: Value(washOrderId),
             eventType: 'REWARD_REDEEMED',
             periodMonth: _monthStart(DateTime.now()), // redemption month, not earned month
@@ -213,7 +279,9 @@ class LoyaltyRepository {
 
   /// Admin-only free-text note — does NOT itself grant or revoke a reward
   /// or change any count, purely an annotated record (matches the backend's
-  /// own scope for this method).
+  /// own scope for this method). Always vehicle-keyed regardless of
+  /// [LoyaltyScope]: it's a note about what happened with a specific car,
+  /// not a counted event.
   Future<void> manualAdjustment({required String vehicleId, required String note, required String actorId}) async {
     await _db.into(_db.localLoyaltyLedger).insert(
           LocalLoyaltyLedgerCompanion.insert(
@@ -227,11 +295,63 @@ class LoyaltyRepository {
         );
   }
 
-  Future<LoyaltySummary> summaryForVehicle(String vehicleId, {DateTime? asOf}) async {
+  /// One row per vehicle ([LoyaltyScope.vehicle]) or per customer
+  /// ([LoyaltyScope.customer], one row pooling all of that customer's
+  /// vehicles) — "how many washes before a free wash" for everyone,
+  /// sorted by whoever's closest first. A customer with no vehicles yet
+  /// can't have washed anything, so they're left out entirely.
+  Future<List<LoyaltyReportRow>> report({required LoyaltyScope scope, DateTime? asOf}) async {
     final now = asOf ?? DateTime.now();
     await expireStaleRewards(asOf: now);
-    final count = await qualifyingCount(vehicleId, now);
-    final reward = await findAvailableReward(vehicleId, now);
+    final customers = {for (final c in await _db.select(_db.localCustomers).get()) c.id: c};
+    final vehicles = await _db.select(_db.localVehicles).get();
+    final rows = <LoyaltyReportRow>[];
+
+    if (scope == LoyaltyScope.vehicle) {
+      for (final v in vehicles) {
+        final customer = customers[v.customerId];
+        if (customer == null) continue;
+        final count = await qualifyingCount(vehicleId: v.id, customerId: v.customerId, scope: scope, periodMonth: now);
+        final reward = await findAvailableReward(vehicleId: v.id, customerId: v.customerId, scope: scope, asOf: now);
+        rows.add(LoyaltyReportRow(
+          customerName: customer.fullName,
+          vehicleRegNumber: v.regNumberDisplay,
+          qualifyingCount: count,
+          remaining: (qualifyingWashThreshold - count).clamp(0, qualifyingWashThreshold),
+          hasAvailableReward: reward != null,
+        ));
+      }
+    } else {
+      for (final customer in customers.values) {
+        final ownVehicles = vehicles.where((v) => v.customerId == customer.id);
+        if (ownVehicles.isEmpty) continue;
+        final representativeVehicleId = ownVehicles.first.id; // unused by the query when scope is customer; just satisfies the signature
+        final count = await qualifyingCount(vehicleId: representativeVehicleId, customerId: customer.id, scope: scope, periodMonth: now);
+        final reward = await findAvailableReward(vehicleId: representativeVehicleId, customerId: customer.id, scope: scope, asOf: now);
+        rows.add(LoyaltyReportRow(
+          customerName: customer.fullName,
+          vehicleRegNumber: null,
+          qualifyingCount: count,
+          remaining: (qualifyingWashThreshold - count).clamp(0, qualifyingWashThreshold),
+          hasAvailableReward: reward != null,
+        ));
+      }
+    }
+
+    rows.sort((a, b) => b.qualifyingCount.compareTo(a.qualifyingCount));
+    return rows;
+  }
+
+  Future<LoyaltySummary> summaryForVehicle({
+    required String vehicleId,
+    required String customerId,
+    required LoyaltyScope scope,
+    DateTime? asOf,
+  }) async {
+    final now = asOf ?? DateTime.now();
+    await expireStaleRewards(asOf: now);
+    final count = await qualifyingCount(vehicleId: vehicleId, customerId: customerId, scope: scope, periodMonth: now);
+    final reward = await findAvailableReward(vehicleId: vehicleId, customerId: customerId, scope: scope, asOf: now);
     return LoyaltySummary(
       qualifyingCount: count,
       remaining: (qualifyingWashThreshold - count).clamp(0, qualifyingWashThreshold),
@@ -239,10 +359,14 @@ class LoyaltyRepository {
     );
   }
 
-  /// Flips any AVAILABLE reward whose validMonth has passed to EXPIRED.
-  /// The backend never actually wired this to a scheduler either — here
-  /// it's called opportunistically from [summaryForVehicle] instead, so it
-  /// stays current without needing a background task.
+  /// Flips any AVAILABLE reward whose validMonth has passed to EXPIRED —
+  /// this is how a reward earned one month but never redeemed disappears
+  /// once the month after that ends, i.e. "resets" on the 1st. Scope-
+  /// agnostic: it scans every reward regardless of vehicle or customer, so
+  /// it behaves identically no matter which [LoyaltyScope] is active. The
+  /// backend never actually wired this to a scheduler either — here it's
+  /// called opportunistically from [summaryForVehicle] instead, so it stays
+  /// current without needing a background task.
   Future<void> expireStaleRewards({DateTime? asOf}) async {
     final period = _monthStart(asOf ?? DateTime.now());
     final stale = await (_db.select(_db.localLoyaltyRewards)
@@ -256,6 +380,7 @@ class LoyaltyRepository {
             LocalLoyaltyLedgerCompanion.insert(
               id: _uuid.v4(),
               vehicleId: reward.vehicleId,
+              customerId: Value(reward.customerId),
               eventType: 'REWARD_EXPIRED',
               periodMonth: period,
               createdById: systemActorId,

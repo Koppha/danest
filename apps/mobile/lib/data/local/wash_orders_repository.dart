@@ -9,6 +9,7 @@ import 'audit_log.dart';
 import 'database_provider.dart';
 import 'loyalty_repository.dart';
 import 'prepaid_repository.dart';
+import 'settings_repository.dart';
 import 'sms_service.dart';
 
 const _uuid = Uuid();
@@ -83,7 +84,15 @@ class WashOrdersRepository {
   final PrepaidRepository _prepaid;
   final LoyaltyRepository _loyalty;
   final SmsService? _sms;
-  WashOrdersRepository(this._db, this._prepaid, this._loyalty, {SmsService? sms}) : _sms = sms;
+  final SettingsRepository? _settings;
+  WashOrdersRepository(this._db, this._prepaid, this._loyalty, {SmsService? sms, SettingsRepository? settings})
+      : _sms = sms,
+        _settings = settings;
+
+  // Defaults to today's only behavior (per-vehicle) when no SettingsRepository
+  // is wired up, which is exactly every existing test's 3-positional-arg
+  // construction — avoids rippling a required param through all of them.
+  Future<LoyaltyScope> _loyaltyScope() => _settings == null ? Future.value(LoyaltyScope.vehicle) : _settings.loyaltyScope();
 
   Future<List<WashOrder>> queue() async {
     final rows = await (_db.select(_db.localWashOrders)
@@ -208,7 +217,11 @@ class WashOrdersRepository {
       final customer = await (_db.select(_db.localCustomers)..where((c) => c.id.equals(wash.customerId))).getSingleOrNull();
       final vehicle = await (_db.select(_db.localVehicles)..where((v) => v.id.equals(wash.vehicleId))).getSingleOrNull();
       if (customer != null && vehicle != null) {
-        final loyaltySummary = await _loyalty.summaryForVehicle(wash.vehicleId);
+        final loyaltySummary = await _loyalty.summaryForVehicle(
+          vehicleId: wash.vehicleId,
+          customerId: wash.customerId,
+          scope: await _loyaltyScope(),
+        );
         final body = renderReadyMessage(customerName: customer.fullName, vehicleReg: vehicle.regNumberDisplay, loyalty: loyaltySummary);
         await _sms.enqueue(washOrderId: washOrderId, phone: customer.phone, body: body);
       }
@@ -272,6 +285,7 @@ class WashOrdersRepository {
       tier = service?.tier ?? 'standard';
     }
 
+    final loyaltyScope = await _loyaltyScope();
     final paymentId = _uuid.v4();
     // Each component's side effect runs sequentially, in submitted order,
     // *before* the payment/components/status rows are written — if any of
@@ -300,7 +314,11 @@ class WashOrdersRepository {
             actorId: actorId,
           );
         case 'LOYALTY_FREE_WASH':
-          final reward = await _loyalty.findAvailableReward(wash.vehicleId, DateTime.now());
+          final reward = await _loyalty.findAvailableReward(
+            vehicleId: wash.vehicleId,
+            customerId: wash.customerId,
+            scope: loyaltyScope,
+          );
           if (reward == null) throw NoAvailableRewardException();
           await _loyalty.redeemReward(rewardId: reward.id, washOrderId: washOrderId, actorId: actorId);
       }
@@ -337,7 +355,14 @@ class WashOrdersRepository {
         !isFreeWashOnly &&
         components.any((c) => _qualifyingMethods.contains(c['method']) && (c['amount'] as num).toInt() > 0);
     if (qualifies) {
-      await _loyalty.creditQualifyingWash(vehicleId: wash.vehicleId, washOrderId: washOrderId, at: DateTime.now(), actorId: actorId);
+      await _loyalty.creditQualifyingWash(
+        vehicleId: wash.vehicleId,
+        customerId: wash.customerId,
+        scope: loyaltyScope,
+        washOrderId: washOrderId,
+        at: DateTime.now(),
+        actorId: actorId,
+      );
     }
 
     await recordAudit(
@@ -378,7 +403,7 @@ class WashOrdersRepository {
 
     // Always attempted, even if the wash never actually credited loyalty
     // (a safe no-op in that case).
-    await _loyalty.reverseWash(washOrderId: washOrderId, actorId: actorId);
+    await _loyalty.reverseWash(washOrderId: washOrderId, scope: await _loyaltyScope(), actorId: actorId);
 
     for (final c in components) {
       if (c.method == 'WALLET') {
@@ -422,5 +447,6 @@ final washOrdersRepositoryProvider = Provider<WashOrdersRepository>(
     ref.watch(prepaidRepositoryProvider),
     ref.watch(loyaltyRepositoryProvider),
     sms: ref.watch(smsServiceProvider),
+    settings: ref.watch(settingsRepositoryProvider),
   ),
 );

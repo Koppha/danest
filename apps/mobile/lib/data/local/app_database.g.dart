@@ -2012,6 +2012,17 @@ class $LocalLoyaltyLedgerTable extends LocalLoyaltyLedger
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _customerIdMeta = const VerificationMeta(
+    'customerId',
+  );
+  @override
+  late final GeneratedColumn<String> customerId = GeneratedColumn<String>(
+    'customer_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _washOrderIdMeta = const VerificationMeta(
     'washOrderId',
   );
@@ -2081,6 +2092,7 @@ class $LocalLoyaltyLedgerTable extends LocalLoyaltyLedger
   List<GeneratedColumn> get $columns => [
     id,
     vehicleId,
+    customerId,
     washOrderId,
     eventType,
     periodMonth,
@@ -2112,6 +2124,12 @@ class $LocalLoyaltyLedgerTable extends LocalLoyaltyLedger
       );
     } else if (isInserting) {
       context.missing(_vehicleIdMeta);
+    }
+    if (data.containsKey('customer_id')) {
+      context.handle(
+        _customerIdMeta,
+        customerId.isAcceptableOrUnknown(data['customer_id']!, _customerIdMeta),
+      );
     }
     if (data.containsKey('wash_order_id')) {
       context.handle(
@@ -2185,6 +2203,10 @@ class $LocalLoyaltyLedgerTable extends LocalLoyaltyLedger
         DriftSqlType.string,
         data['${effectivePrefix}vehicle_id'],
       )!,
+      customerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}customer_id'],
+      ),
       washOrderId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}wash_order_id'],
@@ -2222,6 +2244,7 @@ class LocalLoyaltyLedgerData extends DataClass
     implements Insertable<LocalLoyaltyLedgerData> {
   final String id;
   final String vehicleId;
+  final String? customerId;
   final String? washOrderId;
   final String eventType;
   final DateTime periodMonth;
@@ -2231,6 +2254,7 @@ class LocalLoyaltyLedgerData extends DataClass
   const LocalLoyaltyLedgerData({
     required this.id,
     required this.vehicleId,
+    this.customerId,
     this.washOrderId,
     required this.eventType,
     required this.periodMonth,
@@ -2243,6 +2267,9 @@ class LocalLoyaltyLedgerData extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['vehicle_id'] = Variable<String>(vehicleId);
+    if (!nullToAbsent || customerId != null) {
+      map['customer_id'] = Variable<String>(customerId);
+    }
     if (!nullToAbsent || washOrderId != null) {
       map['wash_order_id'] = Variable<String>(washOrderId);
     }
@@ -2260,6 +2287,9 @@ class LocalLoyaltyLedgerData extends DataClass
     return LocalLoyaltyLedgerCompanion(
       id: Value(id),
       vehicleId: Value(vehicleId),
+      customerId: customerId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customerId),
       washOrderId: washOrderId == null && nullToAbsent
           ? const Value.absent()
           : Value(washOrderId),
@@ -2281,6 +2311,7 @@ class LocalLoyaltyLedgerData extends DataClass
     return LocalLoyaltyLedgerData(
       id: serializer.fromJson<String>(json['id']),
       vehicleId: serializer.fromJson<String>(json['vehicleId']),
+      customerId: serializer.fromJson<String?>(json['customerId']),
       washOrderId: serializer.fromJson<String?>(json['washOrderId']),
       eventType: serializer.fromJson<String>(json['eventType']),
       periodMonth: serializer.fromJson<DateTime>(json['periodMonth']),
@@ -2295,6 +2326,7 @@ class LocalLoyaltyLedgerData extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'vehicleId': serializer.toJson<String>(vehicleId),
+      'customerId': serializer.toJson<String?>(customerId),
       'washOrderId': serializer.toJson<String?>(washOrderId),
       'eventType': serializer.toJson<String>(eventType),
       'periodMonth': serializer.toJson<DateTime>(periodMonth),
@@ -2307,6 +2339,7 @@ class LocalLoyaltyLedgerData extends DataClass
   LocalLoyaltyLedgerData copyWith({
     String? id,
     String? vehicleId,
+    Value<String?> customerId = const Value.absent(),
     Value<String?> washOrderId = const Value.absent(),
     String? eventType,
     DateTime? periodMonth,
@@ -2316,6 +2349,7 @@ class LocalLoyaltyLedgerData extends DataClass
   }) => LocalLoyaltyLedgerData(
     id: id ?? this.id,
     vehicleId: vehicleId ?? this.vehicleId,
+    customerId: customerId.present ? customerId.value : this.customerId,
     washOrderId: washOrderId.present ? washOrderId.value : this.washOrderId,
     eventType: eventType ?? this.eventType,
     periodMonth: periodMonth ?? this.periodMonth,
@@ -2327,6 +2361,9 @@ class LocalLoyaltyLedgerData extends DataClass
     return LocalLoyaltyLedgerData(
       id: data.id.present ? data.id.value : this.id,
       vehicleId: data.vehicleId.present ? data.vehicleId.value : this.vehicleId,
+      customerId: data.customerId.present
+          ? data.customerId.value
+          : this.customerId,
       washOrderId: data.washOrderId.present
           ? data.washOrderId.value
           : this.washOrderId,
@@ -2347,6 +2384,7 @@ class LocalLoyaltyLedgerData extends DataClass
     return (StringBuffer('LocalLoyaltyLedgerData(')
           ..write('id: $id, ')
           ..write('vehicleId: $vehicleId, ')
+          ..write('customerId: $customerId, ')
           ..write('washOrderId: $washOrderId, ')
           ..write('eventType: $eventType, ')
           ..write('periodMonth: $periodMonth, ')
@@ -2361,6 +2399,7 @@ class LocalLoyaltyLedgerData extends DataClass
   int get hashCode => Object.hash(
     id,
     vehicleId,
+    customerId,
     washOrderId,
     eventType,
     periodMonth,
@@ -2374,6 +2413,7 @@ class LocalLoyaltyLedgerData extends DataClass
       (other is LocalLoyaltyLedgerData &&
           other.id == this.id &&
           other.vehicleId == this.vehicleId &&
+          other.customerId == this.customerId &&
           other.washOrderId == this.washOrderId &&
           other.eventType == this.eventType &&
           other.periodMonth == this.periodMonth &&
@@ -2386,6 +2426,7 @@ class LocalLoyaltyLedgerCompanion
     extends UpdateCompanion<LocalLoyaltyLedgerData> {
   final Value<String> id;
   final Value<String> vehicleId;
+  final Value<String?> customerId;
   final Value<String?> washOrderId;
   final Value<String> eventType;
   final Value<DateTime> periodMonth;
@@ -2396,6 +2437,7 @@ class LocalLoyaltyLedgerCompanion
   const LocalLoyaltyLedgerCompanion({
     this.id = const Value.absent(),
     this.vehicleId = const Value.absent(),
+    this.customerId = const Value.absent(),
     this.washOrderId = const Value.absent(),
     this.eventType = const Value.absent(),
     this.periodMonth = const Value.absent(),
@@ -2407,6 +2449,7 @@ class LocalLoyaltyLedgerCompanion
   LocalLoyaltyLedgerCompanion.insert({
     required String id,
     required String vehicleId,
+    this.customerId = const Value.absent(),
     this.washOrderId = const Value.absent(),
     required String eventType,
     required DateTime periodMonth,
@@ -2422,6 +2465,7 @@ class LocalLoyaltyLedgerCompanion
   static Insertable<LocalLoyaltyLedgerData> custom({
     Expression<String>? id,
     Expression<String>? vehicleId,
+    Expression<String>? customerId,
     Expression<String>? washOrderId,
     Expression<String>? eventType,
     Expression<DateTime>? periodMonth,
@@ -2433,6 +2477,7 @@ class LocalLoyaltyLedgerCompanion
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (vehicleId != null) 'vehicle_id': vehicleId,
+      if (customerId != null) 'customer_id': customerId,
       if (washOrderId != null) 'wash_order_id': washOrderId,
       if (eventType != null) 'event_type': eventType,
       if (periodMonth != null) 'period_month': periodMonth,
@@ -2446,6 +2491,7 @@ class LocalLoyaltyLedgerCompanion
   LocalLoyaltyLedgerCompanion copyWith({
     Value<String>? id,
     Value<String>? vehicleId,
+    Value<String?>? customerId,
     Value<String?>? washOrderId,
     Value<String>? eventType,
     Value<DateTime>? periodMonth,
@@ -2457,6 +2503,7 @@ class LocalLoyaltyLedgerCompanion
     return LocalLoyaltyLedgerCompanion(
       id: id ?? this.id,
       vehicleId: vehicleId ?? this.vehicleId,
+      customerId: customerId ?? this.customerId,
       washOrderId: washOrderId ?? this.washOrderId,
       eventType: eventType ?? this.eventType,
       periodMonth: periodMonth ?? this.periodMonth,
@@ -2475,6 +2522,9 @@ class LocalLoyaltyLedgerCompanion
     }
     if (vehicleId.present) {
       map['vehicle_id'] = Variable<String>(vehicleId.value);
+    }
+    if (customerId.present) {
+      map['customer_id'] = Variable<String>(customerId.value);
     }
     if (washOrderId.present) {
       map['wash_order_id'] = Variable<String>(washOrderId.value);
@@ -2505,6 +2555,7 @@ class LocalLoyaltyLedgerCompanion
     return (StringBuffer('LocalLoyaltyLedgerCompanion(')
           ..write('id: $id, ')
           ..write('vehicleId: $vehicleId, ')
+          ..write('customerId: $customerId, ')
           ..write('washOrderId: $washOrderId, ')
           ..write('eventType: $eventType, ')
           ..write('periodMonth: $periodMonth, ')
@@ -2542,6 +2593,17 @@ class $LocalLoyaltyRewardsTable extends LocalLoyaltyRewards
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _customerIdMeta = const VerificationMeta(
+    'customerId',
+  );
+  @override
+  late final GeneratedColumn<String> customerId = GeneratedColumn<String>(
+    'customer_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _earnedMonthMeta = const VerificationMeta(
     'earnedMonth',
@@ -2623,6 +2685,7 @@ class $LocalLoyaltyRewardsTable extends LocalLoyaltyRewards
   List<GeneratedColumn> get $columns => [
     id,
     vehicleId,
+    customerId,
     earnedMonth,
     validMonth,
     status,
@@ -2655,6 +2718,12 @@ class $LocalLoyaltyRewardsTable extends LocalLoyaltyRewards
       );
     } else if (isInserting) {
       context.missing(_vehicleIdMeta);
+    }
+    if (data.containsKey('customer_id')) {
+      context.handle(
+        _customerIdMeta,
+        customerId.isAcceptableOrUnknown(data['customer_id']!, _customerIdMeta),
+      );
     }
     if (data.containsKey('earned_month')) {
       context.handle(
@@ -2730,6 +2799,10 @@ class $LocalLoyaltyRewardsTable extends LocalLoyaltyRewards
         DriftSqlType.string,
         data['${effectivePrefix}vehicle_id'],
       )!,
+      customerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}customer_id'],
+      ),
       earnedMonth: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}earned_month'],
@@ -2771,6 +2844,7 @@ class LocalLoyaltyReward extends DataClass
     implements Insertable<LocalLoyaltyReward> {
   final String id;
   final String vehicleId;
+  final String? customerId;
   final DateTime earnedMonth;
   final DateTime validMonth;
   final String status;
@@ -2781,6 +2855,7 @@ class LocalLoyaltyReward extends DataClass
   const LocalLoyaltyReward({
     required this.id,
     required this.vehicleId,
+    this.customerId,
     required this.earnedMonth,
     required this.validMonth,
     required this.status,
@@ -2794,6 +2869,9 @@ class LocalLoyaltyReward extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['vehicle_id'] = Variable<String>(vehicleId);
+    if (!nullToAbsent || customerId != null) {
+      map['customer_id'] = Variable<String>(customerId);
+    }
     map['earned_month'] = Variable<DateTime>(earnedMonth);
     map['valid_month'] = Variable<DateTime>(validMonth);
     map['status'] = Variable<String>(status);
@@ -2814,6 +2892,9 @@ class LocalLoyaltyReward extends DataClass
     return LocalLoyaltyRewardsCompanion(
       id: Value(id),
       vehicleId: Value(vehicleId),
+      customerId: customerId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customerId),
       earnedMonth: Value(earnedMonth),
       validMonth: Value(validMonth),
       status: Value(status),
@@ -2838,6 +2919,7 @@ class LocalLoyaltyReward extends DataClass
     return LocalLoyaltyReward(
       id: serializer.fromJson<String>(json['id']),
       vehicleId: serializer.fromJson<String>(json['vehicleId']),
+      customerId: serializer.fromJson<String?>(json['customerId']),
       earnedMonth: serializer.fromJson<DateTime>(json['earnedMonth']),
       validMonth: serializer.fromJson<DateTime>(json['validMonth']),
       status: serializer.fromJson<String>(json['status']),
@@ -2857,6 +2939,7 @@ class LocalLoyaltyReward extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'vehicleId': serializer.toJson<String>(vehicleId),
+      'customerId': serializer.toJson<String?>(customerId),
       'earnedMonth': serializer.toJson<DateTime>(earnedMonth),
       'validMonth': serializer.toJson<DateTime>(validMonth),
       'status': serializer.toJson<String>(status),
@@ -2870,6 +2953,7 @@ class LocalLoyaltyReward extends DataClass
   LocalLoyaltyReward copyWith({
     String? id,
     String? vehicleId,
+    Value<String?> customerId = const Value.absent(),
     DateTime? earnedMonth,
     DateTime? validMonth,
     String? status,
@@ -2880,6 +2964,7 @@ class LocalLoyaltyReward extends DataClass
   }) => LocalLoyaltyReward(
     id: id ?? this.id,
     vehicleId: vehicleId ?? this.vehicleId,
+    customerId: customerId.present ? customerId.value : this.customerId,
     earnedMonth: earnedMonth ?? this.earnedMonth,
     validMonth: validMonth ?? this.validMonth,
     status: status ?? this.status,
@@ -2894,6 +2979,9 @@ class LocalLoyaltyReward extends DataClass
     return LocalLoyaltyReward(
       id: data.id.present ? data.id.value : this.id,
       vehicleId: data.vehicleId.present ? data.vehicleId.value : this.vehicleId,
+      customerId: data.customerId.present
+          ? data.customerId.value
+          : this.customerId,
       earnedMonth: data.earnedMonth.present
           ? data.earnedMonth.value
           : this.earnedMonth,
@@ -2919,6 +3007,7 @@ class LocalLoyaltyReward extends DataClass
     return (StringBuffer('LocalLoyaltyReward(')
           ..write('id: $id, ')
           ..write('vehicleId: $vehicleId, ')
+          ..write('customerId: $customerId, ')
           ..write('earnedMonth: $earnedMonth, ')
           ..write('validMonth: $validMonth, ')
           ..write('status: $status, ')
@@ -2934,6 +3023,7 @@ class LocalLoyaltyReward extends DataClass
   int get hashCode => Object.hash(
     id,
     vehicleId,
+    customerId,
     earnedMonth,
     validMonth,
     status,
@@ -2948,6 +3038,7 @@ class LocalLoyaltyReward extends DataClass
       (other is LocalLoyaltyReward &&
           other.id == this.id &&
           other.vehicleId == this.vehicleId &&
+          other.customerId == this.customerId &&
           other.earnedMonth == this.earnedMonth &&
           other.validMonth == this.validMonth &&
           other.status == this.status &&
@@ -2960,6 +3051,7 @@ class LocalLoyaltyReward extends DataClass
 class LocalLoyaltyRewardsCompanion extends UpdateCompanion<LocalLoyaltyReward> {
   final Value<String> id;
   final Value<String> vehicleId;
+  final Value<String?> customerId;
   final Value<DateTime> earnedMonth;
   final Value<DateTime> validMonth;
   final Value<String> status;
@@ -2971,6 +3063,7 @@ class LocalLoyaltyRewardsCompanion extends UpdateCompanion<LocalLoyaltyReward> {
   const LocalLoyaltyRewardsCompanion({
     this.id = const Value.absent(),
     this.vehicleId = const Value.absent(),
+    this.customerId = const Value.absent(),
     this.earnedMonth = const Value.absent(),
     this.validMonth = const Value.absent(),
     this.status = const Value.absent(),
@@ -2983,6 +3076,7 @@ class LocalLoyaltyRewardsCompanion extends UpdateCompanion<LocalLoyaltyReward> {
   LocalLoyaltyRewardsCompanion.insert({
     required String id,
     required String vehicleId,
+    this.customerId = const Value.absent(),
     required DateTime earnedMonth,
     required DateTime validMonth,
     this.status = const Value.absent(),
@@ -2999,6 +3093,7 @@ class LocalLoyaltyRewardsCompanion extends UpdateCompanion<LocalLoyaltyReward> {
   static Insertable<LocalLoyaltyReward> custom({
     Expression<String>? id,
     Expression<String>? vehicleId,
+    Expression<String>? customerId,
     Expression<DateTime>? earnedMonth,
     Expression<DateTime>? validMonth,
     Expression<String>? status,
@@ -3011,6 +3106,7 @@ class LocalLoyaltyRewardsCompanion extends UpdateCompanion<LocalLoyaltyReward> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (vehicleId != null) 'vehicle_id': vehicleId,
+      if (customerId != null) 'customer_id': customerId,
       if (earnedMonth != null) 'earned_month': earnedMonth,
       if (validMonth != null) 'valid_month': validMonth,
       if (status != null) 'status': status,
@@ -3027,6 +3123,7 @@ class LocalLoyaltyRewardsCompanion extends UpdateCompanion<LocalLoyaltyReward> {
   LocalLoyaltyRewardsCompanion copyWith({
     Value<String>? id,
     Value<String>? vehicleId,
+    Value<String?>? customerId,
     Value<DateTime>? earnedMonth,
     Value<DateTime>? validMonth,
     Value<String>? status,
@@ -3039,6 +3136,7 @@ class LocalLoyaltyRewardsCompanion extends UpdateCompanion<LocalLoyaltyReward> {
     return LocalLoyaltyRewardsCompanion(
       id: id ?? this.id,
       vehicleId: vehicleId ?? this.vehicleId,
+      customerId: customerId ?? this.customerId,
       earnedMonth: earnedMonth ?? this.earnedMonth,
       validMonth: validMonth ?? this.validMonth,
       status: status ?? this.status,
@@ -3058,6 +3156,9 @@ class LocalLoyaltyRewardsCompanion extends UpdateCompanion<LocalLoyaltyReward> {
     }
     if (vehicleId.present) {
       map['vehicle_id'] = Variable<String>(vehicleId.value);
+    }
+    if (customerId.present) {
+      map['customer_id'] = Variable<String>(customerId.value);
     }
     if (earnedMonth.present) {
       map['earned_month'] = Variable<DateTime>(earnedMonth.value);
@@ -3093,6 +3194,7 @@ class LocalLoyaltyRewardsCompanion extends UpdateCompanion<LocalLoyaltyReward> {
     return (StringBuffer('LocalLoyaltyRewardsCompanion(')
           ..write('id: $id, ')
           ..write('vehicleId: $vehicleId, ')
+          ..write('customerId: $customerId, ')
           ..write('earnedMonth: $earnedMonth, ')
           ..write('validMonth: $validMonth, ')
           ..write('status: $status, ')
@@ -13334,6 +13436,7 @@ typedef $$LocalLoyaltyLedgerTableCreateCompanionBuilder =
     LocalLoyaltyLedgerCompanion Function({
       required String id,
       required String vehicleId,
+      Value<String?> customerId,
       Value<String?> washOrderId,
       required String eventType,
       required DateTime periodMonth,
@@ -13346,6 +13449,7 @@ typedef $$LocalLoyaltyLedgerTableUpdateCompanionBuilder =
     LocalLoyaltyLedgerCompanion Function({
       Value<String> id,
       Value<String> vehicleId,
+      Value<String?> customerId,
       Value<String?> washOrderId,
       Value<String> eventType,
       Value<DateTime> periodMonth,
@@ -13371,6 +13475,11 @@ class $$LocalLoyaltyLedgerTableFilterComposer
 
   ColumnFilters<String> get vehicleId => $composableBuilder(
     column: $table.vehicleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customerId => $composableBuilder(
+    column: $table.customerId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13424,6 +13533,11 @@ class $$LocalLoyaltyLedgerTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get customerId => $composableBuilder(
+    column: $table.customerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get washOrderId => $composableBuilder(
     column: $table.washOrderId,
     builder: (column) => ColumnOrderings(column),
@@ -13469,6 +13583,11 @@ class $$LocalLoyaltyLedgerTableAnnotationComposer
 
   GeneratedColumn<String> get vehicleId =>
       $composableBuilder(column: $table.vehicleId, builder: (column) => column);
+
+  GeneratedColumn<String> get customerId => $composableBuilder(
+    column: $table.customerId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get washOrderId => $composableBuilder(
     column: $table.washOrderId,
@@ -13537,6 +13656,7 @@ class $$LocalLoyaltyLedgerTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> vehicleId = const Value.absent(),
+                Value<String?> customerId = const Value.absent(),
                 Value<String?> washOrderId = const Value.absent(),
                 Value<String> eventType = const Value.absent(),
                 Value<DateTime> periodMonth = const Value.absent(),
@@ -13547,6 +13667,7 @@ class $$LocalLoyaltyLedgerTableTableManager
               }) => LocalLoyaltyLedgerCompanion(
                 id: id,
                 vehicleId: vehicleId,
+                customerId: customerId,
                 washOrderId: washOrderId,
                 eventType: eventType,
                 periodMonth: periodMonth,
@@ -13559,6 +13680,7 @@ class $$LocalLoyaltyLedgerTableTableManager
               ({
                 required String id,
                 required String vehicleId,
+                Value<String?> customerId = const Value.absent(),
                 Value<String?> washOrderId = const Value.absent(),
                 required String eventType,
                 required DateTime periodMonth,
@@ -13569,6 +13691,7 @@ class $$LocalLoyaltyLedgerTableTableManager
               }) => LocalLoyaltyLedgerCompanion.insert(
                 id: id,
                 vehicleId: vehicleId,
+                customerId: customerId,
                 washOrderId: washOrderId,
                 eventType: eventType,
                 periodMonth: periodMonth,
@@ -13610,6 +13733,7 @@ typedef $$LocalLoyaltyRewardsTableCreateCompanionBuilder =
     LocalLoyaltyRewardsCompanion Function({
       required String id,
       required String vehicleId,
+      Value<String?> customerId,
       required DateTime earnedMonth,
       required DateTime validMonth,
       Value<String> status,
@@ -13623,6 +13747,7 @@ typedef $$LocalLoyaltyRewardsTableUpdateCompanionBuilder =
     LocalLoyaltyRewardsCompanion Function({
       Value<String> id,
       Value<String> vehicleId,
+      Value<String?> customerId,
       Value<DateTime> earnedMonth,
       Value<DateTime> validMonth,
       Value<String> status,
@@ -13649,6 +13774,11 @@ class $$LocalLoyaltyRewardsTableFilterComposer
 
   ColumnFilters<String> get vehicleId => $composableBuilder(
     column: $table.vehicleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customerId => $composableBuilder(
+    column: $table.customerId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13707,6 +13837,11 @@ class $$LocalLoyaltyRewardsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get customerId => $composableBuilder(
+    column: $table.customerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get earnedMonth => $composableBuilder(
     column: $table.earnedMonth,
     builder: (column) => ColumnOrderings(column),
@@ -13757,6 +13892,11 @@ class $$LocalLoyaltyRewardsTableAnnotationComposer
 
   GeneratedColumn<String> get vehicleId =>
       $composableBuilder(column: $table.vehicleId, builder: (column) => column);
+
+  GeneratedColumn<String> get customerId => $composableBuilder(
+    column: $table.customerId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get earnedMonth => $composableBuilder(
     column: $table.earnedMonth,
@@ -13835,6 +13975,7 @@ class $$LocalLoyaltyRewardsTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> vehicleId = const Value.absent(),
+                Value<String?> customerId = const Value.absent(),
                 Value<DateTime> earnedMonth = const Value.absent(),
                 Value<DateTime> validMonth = const Value.absent(),
                 Value<String> status = const Value.absent(),
@@ -13846,6 +13987,7 @@ class $$LocalLoyaltyRewardsTableTableManager
               }) => LocalLoyaltyRewardsCompanion(
                 id: id,
                 vehicleId: vehicleId,
+                customerId: customerId,
                 earnedMonth: earnedMonth,
                 validMonth: validMonth,
                 status: status,
@@ -13859,6 +14001,7 @@ class $$LocalLoyaltyRewardsTableTableManager
               ({
                 required String id,
                 required String vehicleId,
+                Value<String?> customerId = const Value.absent(),
                 required DateTime earnedMonth,
                 required DateTime validMonth,
                 Value<String> status = const Value.absent(),
@@ -13870,6 +14013,7 @@ class $$LocalLoyaltyRewardsTableTableManager
               }) => LocalLoyaltyRewardsCompanion.insert(
                 id: id,
                 vehicleId: vehicleId,
+                customerId: customerId,
                 earnedMonth: earnedMonth,
                 validMonth: validMonth,
                 status: status,

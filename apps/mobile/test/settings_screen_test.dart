@@ -2,15 +2,37 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:de_nest/core/session.dart';
 import 'package:de_nest/data/local/app_database.dart';
 import 'package:de_nest/data/local/database_provider.dart';
+import 'package:de_nest/data/local/loyalty_repository.dart';
+import 'package:de_nest/data/local/settings_repository.dart';
 import 'package:de_nest/features/admin/settings_screen.dart';
 
+class _FakeOwnerSession extends SessionNotifier {
+  @override
+  SessionState build() => const SessionState(
+        user: DnUser(id: 'u1', username: 'owner', fullName: 'De Nest Owner', role: 'OWNER'),
+        loading: false,
+      );
+}
+
+class _FakeAttendantSession extends SessionNotifier {
+  @override
+  SessionState build() => const SessionState(
+        user: DnUser(id: 'u2', username: 'attendant', fullName: 'Att Endant', role: 'ATTENDANT'),
+        loading: false,
+      );
+}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late AppDatabase db;
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     db = AppDatabase.forTesting(NativeDatabase.memory());
     await db.into(db.localWashServices).insert(
           LocalWashServicesCompanion.insert(id: 'svc-1', name: 'Standard Wash', tier: 'standard', basePrice: 6000, durationMinutes: 15),
@@ -22,8 +44,11 @@ void main() {
 
   tearDown(() => db.close());
 
-  Widget wrap() => ProviderScope(
-        overrides: [appDatabaseProvider.overrideWithValue(db)],
+  Widget wrap({SessionNotifier Function()? session}) => ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          if (session != null) sessionProvider.overrideWith(session),
+        ],
         child: const MaterialApp(home: Scaffold(body: SettingsScreen())),
       );
 
@@ -94,6 +119,28 @@ void main() {
     final extras = await db.select(db.localWashExtras).get();
     expect(extras, hasLength(2));
     expect(extras.any((e) => e.name == 'Air Freshener' && e.price == 1500), isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the loyalty scope toggle is only visible to the owner', (tester) async {
+    await tester.pumpWidget(wrap(session: _FakeAttendantSession.new));
+    await tester.pumpAndSettle();
+    expect(find.text('Loyalty program'), findsNothing);
+  });
+
+  testWidgets('the owner can switch loyalty tracking to per-customer, and it persists', (tester) async {
+    await tester.pumpWidget(wrap(session: _FakeOwnerSession.new));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Loyalty program'), findsOneWidget);
+    expect(find.textContaining('twice as fast'), findsOneWidget); // default: per-vehicle
+
+    await tester.tap(find.text('Per customer'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('one shared free wash'), findsOneWidget);
+    final settings = SettingsRepository();
+    expect(await settings.loyaltyScope(), LoyaltyScope.customer);
     expect(tester.takeException(), isNull);
   });
 }
