@@ -103,7 +103,7 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
                     if (expected.mobileMoneyTotal != 0) _row('Mobile money', expected.mobileMoneyTotal),
                     if (expected.bankTransferTotal != 0) _row('Bank transfer', expected.bankTransferTotal),
                     if (expected.walletTotal != 0) _row('Wallet', expected.walletTotal),
-                    if (expected.packageUsageTotal != 0) _row('Package', expected.packageUsageTotal),
+                    if (expected.packageUsageTotal != 0) _row('Free Wash', expected.packageUsageTotal),
                     if (expected.loyaltyRedemptionsTotal != 0) _row('Loyalty free wash', expected.loyaltyRedemptionsTotal),
                   ],
                 ),

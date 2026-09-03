@@ -14,7 +14,7 @@ const paymentMethodLabels = {
   'MOBILE_MONEY': 'Mobile Money',
   'BANK_TRANSFER': 'Bank Transfer',
   'WALLET': 'Wallet',
-  'PACKAGE': 'Package',
+  'PACKAGE': 'Free Wash',
   'LOYALTY_FREE_WASH': 'Loyalty Free Wash',
 };
 

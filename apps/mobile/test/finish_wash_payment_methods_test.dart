@@ -67,17 +67,17 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('every real payment method is offered; Free wash only when a reward is actually available', (tester) async {
+  testWidgets('every real payment method is offered; Loyalty reward only when a reward is actually available', (tester) async {
     await openSheet(tester);
 
-    for (final label in ['Cash', 'Ecocash', 'M-Pesa', 'Card', 'Bank transfer', 'Wallet', 'Package']) {
+    for (final label in ['Cash', 'Ecocash', 'M-Pesa', 'Card', 'Bank transfer', 'Wallet', 'Free Wash']) {
       expect(find.text(label), findsOneWidget);
     }
-    expect(find.text('Free wash'), findsNothing); // nothing earned yet
+    expect(find.text('Loyalty reward'), findsNothing); // nothing earned yet
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Free wash is offered once the vehicle has an available reward, and redeeming it marks the reward spent', (tester) async {
+  testWidgets('Loyalty reward is offered once the vehicle has an available reward, and redeeming it marks the reward spent', (tester) async {
     // Earn the reward last month so it's valid (redeemable) this month —
     // findAvailableReward only matches the current calendar month.
     final lastMonth = DateTime(DateTime.now().year, DateTime.now().month - 1);
@@ -87,9 +87,9 @@ void main() {
     }
 
     await openSheet(tester);
-    expect(find.text('Free wash'), findsOneWidget);
+    expect(find.text('Loyalty reward'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Free wash'));
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Loyalty reward'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ElevatedButton, 'FINISH WASH'));
     await tester.pumpAndSettle();

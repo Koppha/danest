@@ -19,8 +19,8 @@ const _methods = [
   ('CARD', 'Card', Icons.credit_card),
   ('BANK_TRANSFER', 'Bank transfer', Icons.account_balance),
   ('WALLET', 'Wallet', Icons.account_balance_wallet_outlined),
-  ('PACKAGE', 'Package', Icons.card_membership_outlined),
-  ('LOYALTY_FREE_WASH', 'Free wash', Icons.card_giftcard),
+  ('PACKAGE', 'Free Wash', Icons.card_membership_outlined),
+  ('LOYALTY_FREE_WASH', 'Loyalty reward', Icons.card_giftcard),
 ];
 
 String _backendMethod(String uiMethod) => switch (uiMethod) {
