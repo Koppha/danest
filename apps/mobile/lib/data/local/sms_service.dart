@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../models/models.dart';
 import 'app_database.dart';
 import 'database_provider.dart';
+import 'device_sms_provider.dart';
 
 const _uuid = Uuid();
 
@@ -36,9 +37,8 @@ abstract class SmsProvider {
   Future<void> send({required String phone, required String body});
 }
 
-/// The backend this was ported from never had a real provider wired up
-/// either — this isn't a regression, just the same "log it, don't send
-/// it" default until a real one is configured with actual credentials.
+/// Kept for tests (and as a manual fallback) — [DeviceSmsProvider] is the
+/// real default, sending over the device's own SIM.
 class LogOnlySmsProvider implements SmsProvider {
   @override
   Future<void> send({required String phone, required String body}) async {
@@ -113,4 +113,4 @@ class SmsService {
   Future<List<LocalSmsMessage>> list() => (_db.select(_db.localSmsMessages)..orderBy([(m) => OrderingTerm.desc(m.createdAt)])).get();
 }
 
-final smsServiceProvider = Provider<SmsService>((ref) => SmsService(ref.watch(appDatabaseProvider), LogOnlySmsProvider()));
+final smsServiceProvider = Provider<SmsService>((ref) => SmsService(ref.watch(appDatabaseProvider), DeviceSmsProvider()));

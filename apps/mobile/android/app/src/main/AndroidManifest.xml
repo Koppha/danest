@@ -1,5 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Lets the app send "your car is ready" SMS directly through the
+         device's own SIM (billed against its SMS bundle/airtime), the same
+         as sending from the stock Messages app — no cloud gateway needed. -->
+    <uses-permission android:name="android.permission.SEND_SMS"/>
     <application
         android:label="De Nest"
         android:name="${applicationName}"
