@@ -586,10 +586,16 @@ class AppDatabase extends _$AppDatabase {
       );
 }
 
+/// Shared with [BackupRepository.restoreFrom], which needs to overwrite
+/// this exact file once the live connection to it is closed.
+Future<File> localDatabaseFile() async {
+  final dir = await getApplicationDocumentsDirectory();
+  return File(p.join(dir.path, 'de_nest.sqlite'));
+}
+
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dir.path, 'de_nest.sqlite'));
+    final file = await localDatabaseFile();
     return NativeDatabase.createInBackground(file);
   });
 }

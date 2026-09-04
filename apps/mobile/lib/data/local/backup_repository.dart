@@ -145,6 +145,56 @@ class BackupRepository {
   }
 
   Future<List<LocalBackupRun>> history() => (_db.select(_db.localBackupRuns)..orderBy([(r) => OrderingTerm.desc(r.createdAt)])).get();
+
+  /// Scans the backups folder directly rather than trusting [history] (a
+  /// local table in the very database that might be about to get
+  /// replaced) — this is what makes restoring possible at all after a
+  /// reinstall/wipe, or a `.denc` file copied in from a different device,
+  /// neither of which this device's own history table would know about.
+  Future<List<File>> availableBackupFiles() async {
+    final dir = await _backupDirectory();
+    final entries = await dir.list().toList();
+    final files = entries.whereType<File>().where((f) => f.path.endsWith('.denc')).toList();
+    files.sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));
+    return files;
+  }
+
+  /// Replaces the live database with the contents of [backupFile]. There
+  /// is no path back into the running app after this succeeds — the
+  /// caller must fully exit the process (see backups_screen.dart) so the
+  /// next launch opens the restored file from scratch through the normal
+  /// migration path, since the backup may predate the running schema.
+  ///
+  /// Before overwriting anything, the *current* database is itself
+  /// snapshotted and encrypted (with the same password, so restoring
+  /// doesn't demand inventing a second one) as a safety net against
+  /// picking the wrong file — it lands in the same backups folder,
+  /// discoverable the same way as any other backup.
+  Future<void> restoreFrom(File backupFile, {required String password}) async {
+    final clearBytes = await decryptBackup(backupFile, password: password);
+    final dbFile = await localDatabaseFile();
+
+    if (await dbFile.exists()) {
+      final preRestoreBytes = await dbFile.readAsBytes();
+      final preRestorePayload = await _encrypt(preRestoreBytes, password);
+      final dir = await _backupDirectory();
+      final safetyFile = File(p.join(dir.path, 'de_nest_pre_restore_${DateTime.now().millisecondsSinceEpoch}.denc'));
+      await safetyFile.writeAsBytes(preRestorePayload);
+    }
+
+    // Must close before touching the file out from under the live
+    // connection — sqlite3 holds its own file handle and page cache that
+    // an external overwrite would leave inconsistent.
+    await _db.close();
+
+    await dbFile.writeAsBytes(clearBytes, flush: true);
+    // Stale WAL/SHM sidecars describe the *old* file's page layout —
+    // leaving them behind would corrupt the restored file on next open.
+    for (final suffix in ['-wal', '-shm']) {
+      final sidecar = File('${dbFile.path}$suffix');
+      if (await sidecar.exists()) await sidecar.delete();
+    }
+  }
 }
 
 final backupRepositoryProvider = Provider<BackupRepository>((ref) => BackupRepository(ref.watch(appDatabaseProvider)));

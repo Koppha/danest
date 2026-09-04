@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
 
+import '../../core/session.dart';
 import '../../data/local/app_database.dart';
 import '../../data/local/backup_repository.dart';
 import '../../design_system/theme.dart';
@@ -19,6 +21,7 @@ class BackupsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final history = ref.watch(backupHistoryProvider);
+    final isOwner = ref.watch(sessionProvider).user?.isOwner ?? false;
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton.extended(
@@ -37,6 +40,18 @@ class BackupsScreen extends ConsumerWidget {
               'Encrypted local exports of everything in this app. Keep the password safe — without it, a backup cannot be restored, by anyone.',
               style: TextStyle(color: DnColors.muted),
             ),
+            if (isOwner) ...[
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showRestorePickerDialog(context, ref),
+                  icon: const Icon(Icons.settings_backup_restore, size: 16, color: DnColors.red),
+                  label: const Text('Restore from backup', style: TextStyle(color: DnColors.red)),
+                  style: OutlinedButton.styleFrom(side: const BorderSide(color: DnColors.red)),
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             Expanded(
               child: history.when(
@@ -187,6 +202,132 @@ class BackupsScreen extends ConsumerWidget {
             child: const Text('Verify'),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Lists whatever `.denc` files actually sit in the backups folder,
+  /// rather than this device's own backup-run history — see
+  /// [BackupRepository.availableBackupFiles] for why that distinction
+  /// matters for restoring after a wipe/reinstall or onto another device.
+  Future<void> _showRestorePickerDialog(BuildContext context, WidgetRef ref) async {
+    final files = await ref.read(backupRepositoryProvider).availableBackupFiles();
+    if (!context.mounted) return;
+    if (files.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No backup files found on this device.')));
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Restore from backup'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: files.length,
+            itemBuilder: (context, i) {
+              final file = files[i];
+              final stat = file.statSync();
+              return ListTile(
+                leading: const Icon(Icons.description_outlined),
+                title: Text(p.basename(file.path)),
+                subtitle: Text('${_dateFormat.format(stat.modified)} · ${(stat.size / 1024).toStringAsFixed(0)} KB'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showRestoreConfirmDialog(context, ref, file);
+                },
+              );
+            },
+          ),
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel'))],
+      ),
+    );
+  }
+
+  /// Stays a single dialog/StatefulBuilder throughout, success included —
+  /// restoreFrom closes the app's one database connection on the way to
+  /// completing, and every other screen (this one's own backupHistory
+  /// list among them) watches it. Popping this dialog and opening a
+  /// second one on the outer BackupsScreen context right at that moment
+  /// was observed to silently swallow the second dialog in practice; a
+  /// dialog swap the connection's closing can't reach avoids the
+  /// question entirely.
+  void _showRestoreConfirmDialog(BuildContext context, WidgetRef ref, File file) {
+    final passwordController = TextEditingController();
+    final confirmTextController = TextEditingController();
+    bool submitting = false;
+    bool confirmed = false;
+    bool completed = false;
+    String? error;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(completed ? 'Restore complete' : 'Restore from backup?'),
+          content: completed
+              ? const Text('The app will now close. Reopen it to continue with the restored data.')
+              : SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'This will ERASE everything currently in the app — every customer, wash, payment, and record — and replace it with "${p.basename(file.path)}". This cannot be undone.',
+                        style: const TextStyle(color: DnColors.red, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'A safety copy of what is currently in the app is made automatically before restoring, in case this turns out to be the wrong file — same password.',
+                        style: TextStyle(color: DnColors.muted, fontSize: 12),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(controller: passwordController, obscureText: true, decoration: const InputDecoration(labelText: 'Backup password')),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: confirmTextController,
+                        decoration: const InputDecoration(labelText: 'Type RESTORE to confirm'),
+                        onChanged: (v) => setDialogState(() => confirmed = v == 'RESTORE'),
+                      ),
+                      if (error != null) ...[
+                        const SizedBox(height: 8),
+                        Text(error!, style: const TextStyle(color: DnColors.red, fontSize: 12)),
+                      ],
+                    ],
+                  ),
+                ),
+          actions: completed
+              ? [ElevatedButton(onPressed: () => exit(0), child: const Text('OK'))]
+              : [
+                  TextButton(onPressed: submitting ? null : () => Navigator.pop(ctx), child: const Text('Cancel')),
+                  FilledButton(
+                    style: FilledButton.styleFrom(backgroundColor: DnColors.red),
+                    onPressed: (submitting || !confirmed)
+                        ? null
+                        : () async {
+                            setDialogState(() {
+                              submitting = true;
+                              error = null;
+                            });
+                            try {
+                              await ref.read(backupRepositoryProvider).restoreFrom(file, password: passwordController.text);
+                              setDialogState(() => completed = true);
+                            } catch (e) {
+                              setDialogState(() {
+                                submitting = false;
+                                error = 'Restore failed: $e';
+                              });
+                            }
+                          },
+                    child: submitting
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Text('Restore'),
+                  ),
+                ],
+        ),
       ),
     );
   }
