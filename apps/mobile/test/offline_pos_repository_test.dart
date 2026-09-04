@@ -40,6 +40,65 @@ void main() {
     expect(outbox.first.entityId, customer.id);
   });
 
+  test('updating a customer changes name/phone, marks it dirty, audits it, and queues a PATCH', () async {
+    final customer = await repo.createCustomer(fullName: 'Thabo Mokoena', phone: '+26658123456', branchId: 'branch-1');
+
+    await repo.updateCustomer(id: customer.id, fullName: 'Thabo M. Mokoena', phone: '+26658999999', actorId: 'u1');
+
+    final row = await (db.select(db.localCustomers)..where((c) => c.id.equals(customer.id))).getSingle();
+    expect(row.fullName, 'Thabo M. Mokoena');
+    expect(row.phone, '+26658999999');
+    expect(row.active, true);
+
+    final audit = await db.select(db.localAuditLog).get();
+    expect(audit.any((a) => a.action == 'CUSTOMER_UPDATED' && a.entityId == customer.id), isTrue);
+
+    final outbox = await (db.select(db.pendingSyncOps)..where((o) => o.opType.equals('update'))).get();
+    expect(outbox, hasLength(1));
+    expect(outbox.single.entityId, customer.id);
+  });
+
+  test('updating a customer that does not exist throws instead of silently no-op-ing', () async {
+    await expectLater(
+      repo.updateCustomer(id: 'ghost', fullName: 'x', phone: 'y', actorId: 'u1'),
+      throwsA(isA<CustomerNotFoundException>()),
+    );
+  });
+
+  test('deleting a customer is a soft flag, not a row removal, and hides them from search', () async {
+    final customer = await repo.createCustomer(fullName: 'Palesa Nkosi', phone: '+26658000000', branchId: 'branch-1');
+
+    await repo.deleteCustomer(id: customer.id, actorId: 'u1');
+
+    final row = await (db.select(db.localCustomers)..where((c) => c.id.equals(customer.id))).getSingle();
+    expect(row.active, false);
+    expect(row.fullName, 'Palesa Nkosi'); // history-preserving, not wiped
+
+    final results = await repo.searchCustomers('');
+    expect(results.any((c) => c.id == customer.id), isFalse);
+
+    final audit = await db.select(db.localAuditLog).get();
+    expect(audit.any((a) => a.action == 'CUSTOMER_DELETED' && a.entityId == customer.id), isTrue);
+
+    final outbox = await (db.select(db.pendingSyncOps)..where((o) => o.opType.equals('delete'))).get();
+    expect(outbox, hasLength(1));
+  });
+
+  test('deleting a customer that does not exist throws instead of silently no-op-ing', () async {
+    await expectLater(
+      repo.deleteCustomer(id: 'ghost', actorId: 'u1'),
+      throwsA(isA<CustomerNotFoundException>()),
+    );
+  });
+
+  test('a deleted customer is excluded from a filtered search too, not just the unfiltered list', () async {
+    final customer = await repo.createCustomer(fullName: 'Kopano', phone: '62227247', branchId: 'branch-1');
+    await repo.deleteCustomer(id: customer.id, actorId: 'u1');
+
+    final results = await repo.searchCustomers('Kopano');
+    expect(results, isEmpty);
+  });
+
   test('creating a vehicle offline normalizes the registration number', () async {
     await repo.createVehicle(customerId: 'cust-1', regNumber: 'abc 123');
     final rows = await db.select(db.localVehicles).get();

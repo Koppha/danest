@@ -703,6 +703,19 @@ class $LocalCustomersTable extends LocalCustomers
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _activeMeta = const VerificationMeta('active');
+  @override
+  late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
+    'active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -712,6 +725,7 @@ class $LocalCustomersTable extends LocalCustomers
     altPhone,
     notes,
     dirty,
+    active,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -772,6 +786,12 @@ class $LocalCustomersTable extends LocalCustomers
         dirty.isAcceptableOrUnknown(data['dirty']!, _dirtyMeta),
       );
     }
+    if (data.containsKey('active')) {
+      context.handle(
+        _activeMeta,
+        active.isAcceptableOrUnknown(data['active']!, _activeMeta),
+      );
+    }
     return context;
   }
 
@@ -809,6 +829,10 @@ class $LocalCustomersTable extends LocalCustomers
         DriftSqlType.bool,
         data['${effectivePrefix}dirty'],
       )!,
+      active: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}active'],
+      )!,
     );
   }
 
@@ -826,6 +850,7 @@ class LocalCustomer extends DataClass implements Insertable<LocalCustomer> {
   final String? altPhone;
   final String? notes;
   final bool dirty;
+  final bool active;
   const LocalCustomer({
     required this.id,
     required this.branchId,
@@ -834,6 +859,7 @@ class LocalCustomer extends DataClass implements Insertable<LocalCustomer> {
     this.altPhone,
     this.notes,
     required this.dirty,
+    required this.active,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -849,6 +875,7 @@ class LocalCustomer extends DataClass implements Insertable<LocalCustomer> {
       map['notes'] = Variable<String>(notes);
     }
     map['dirty'] = Variable<bool>(dirty);
+    map['active'] = Variable<bool>(active);
     return map;
   }
 
@@ -865,6 +892,7 @@ class LocalCustomer extends DataClass implements Insertable<LocalCustomer> {
           ? const Value.absent()
           : Value(notes),
       dirty: Value(dirty),
+      active: Value(active),
     );
   }
 
@@ -881,6 +909,7 @@ class LocalCustomer extends DataClass implements Insertable<LocalCustomer> {
       altPhone: serializer.fromJson<String?>(json['altPhone']),
       notes: serializer.fromJson<String?>(json['notes']),
       dirty: serializer.fromJson<bool>(json['dirty']),
+      active: serializer.fromJson<bool>(json['active']),
     );
   }
   @override
@@ -894,6 +923,7 @@ class LocalCustomer extends DataClass implements Insertable<LocalCustomer> {
       'altPhone': serializer.toJson<String?>(altPhone),
       'notes': serializer.toJson<String?>(notes),
       'dirty': serializer.toJson<bool>(dirty),
+      'active': serializer.toJson<bool>(active),
     };
   }
 
@@ -905,6 +935,7 @@ class LocalCustomer extends DataClass implements Insertable<LocalCustomer> {
     Value<String?> altPhone = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     bool? dirty,
+    bool? active,
   }) => LocalCustomer(
     id: id ?? this.id,
     branchId: branchId ?? this.branchId,
@@ -913,6 +944,7 @@ class LocalCustomer extends DataClass implements Insertable<LocalCustomer> {
     altPhone: altPhone.present ? altPhone.value : this.altPhone,
     notes: notes.present ? notes.value : this.notes,
     dirty: dirty ?? this.dirty,
+    active: active ?? this.active,
   );
   LocalCustomer copyWithCompanion(LocalCustomersCompanion data) {
     return LocalCustomer(
@@ -923,6 +955,7 @@ class LocalCustomer extends DataClass implements Insertable<LocalCustomer> {
       altPhone: data.altPhone.present ? data.altPhone.value : this.altPhone,
       notes: data.notes.present ? data.notes.value : this.notes,
       dirty: data.dirty.present ? data.dirty.value : this.dirty,
+      active: data.active.present ? data.active.value : this.active,
     );
   }
 
@@ -935,14 +968,23 @@ class LocalCustomer extends DataClass implements Insertable<LocalCustomer> {
           ..write('phone: $phone, ')
           ..write('altPhone: $altPhone, ')
           ..write('notes: $notes, ')
-          ..write('dirty: $dirty')
+          ..write('dirty: $dirty, ')
+          ..write('active: $active')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, branchId, fullName, phone, altPhone, notes, dirty);
+  int get hashCode => Object.hash(
+    id,
+    branchId,
+    fullName,
+    phone,
+    altPhone,
+    notes,
+    dirty,
+    active,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -953,7 +995,8 @@ class LocalCustomer extends DataClass implements Insertable<LocalCustomer> {
           other.phone == this.phone &&
           other.altPhone == this.altPhone &&
           other.notes == this.notes &&
-          other.dirty == this.dirty);
+          other.dirty == this.dirty &&
+          other.active == this.active);
 }
 
 class LocalCustomersCompanion extends UpdateCompanion<LocalCustomer> {
@@ -964,6 +1007,7 @@ class LocalCustomersCompanion extends UpdateCompanion<LocalCustomer> {
   final Value<String?> altPhone;
   final Value<String?> notes;
   final Value<bool> dirty;
+  final Value<bool> active;
   final Value<int> rowid;
   const LocalCustomersCompanion({
     this.id = const Value.absent(),
@@ -973,6 +1017,7 @@ class LocalCustomersCompanion extends UpdateCompanion<LocalCustomer> {
     this.altPhone = const Value.absent(),
     this.notes = const Value.absent(),
     this.dirty = const Value.absent(),
+    this.active = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalCustomersCompanion.insert({
@@ -983,6 +1028,7 @@ class LocalCustomersCompanion extends UpdateCompanion<LocalCustomer> {
     this.altPhone = const Value.absent(),
     this.notes = const Value.absent(),
     this.dirty = const Value.absent(),
+    this.active = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        branchId = Value(branchId),
@@ -996,6 +1042,7 @@ class LocalCustomersCompanion extends UpdateCompanion<LocalCustomer> {
     Expression<String>? altPhone,
     Expression<String>? notes,
     Expression<bool>? dirty,
+    Expression<bool>? active,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1006,6 +1053,7 @@ class LocalCustomersCompanion extends UpdateCompanion<LocalCustomer> {
       if (altPhone != null) 'alt_phone': altPhone,
       if (notes != null) 'notes': notes,
       if (dirty != null) 'dirty': dirty,
+      if (active != null) 'active': active,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1018,6 +1066,7 @@ class LocalCustomersCompanion extends UpdateCompanion<LocalCustomer> {
     Value<String?>? altPhone,
     Value<String?>? notes,
     Value<bool>? dirty,
+    Value<bool>? active,
     Value<int>? rowid,
   }) {
     return LocalCustomersCompanion(
@@ -1028,6 +1077,7 @@ class LocalCustomersCompanion extends UpdateCompanion<LocalCustomer> {
       altPhone: altPhone ?? this.altPhone,
       notes: notes ?? this.notes,
       dirty: dirty ?? this.dirty,
+      active: active ?? this.active,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1056,6 +1106,9 @@ class LocalCustomersCompanion extends UpdateCompanion<LocalCustomer> {
     if (dirty.present) {
       map['dirty'] = Variable<bool>(dirty.value);
     }
+    if (active.present) {
+      map['active'] = Variable<bool>(active.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1072,6 +1125,7 @@ class LocalCustomersCompanion extends UpdateCompanion<LocalCustomer> {
           ..write('altPhone: $altPhone, ')
           ..write('notes: $notes, ')
           ..write('dirty: $dirty, ')
+          ..write('active: $active, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -12713,6 +12767,7 @@ typedef $$LocalCustomersTableCreateCompanionBuilder =
       Value<String?> altPhone,
       Value<String?> notes,
       Value<bool> dirty,
+      Value<bool> active,
       Value<int> rowid,
     });
 typedef $$LocalCustomersTableUpdateCompanionBuilder =
@@ -12724,6 +12779,7 @@ typedef $$LocalCustomersTableUpdateCompanionBuilder =
       Value<String?> altPhone,
       Value<String?> notes,
       Value<bool> dirty,
+      Value<bool> active,
       Value<int> rowid,
     });
 
@@ -12768,6 +12824,11 @@ class $$LocalCustomersTableFilterComposer
 
   ColumnFilters<bool> get dirty => $composableBuilder(
     column: $table.dirty,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get active => $composableBuilder(
+    column: $table.active,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -12815,6 +12876,11 @@ class $$LocalCustomersTableOrderingComposer
     column: $table.dirty,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get active => $composableBuilder(
+    column: $table.active,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$LocalCustomersTableAnnotationComposer
@@ -12846,6 +12912,9 @@ class $$LocalCustomersTableAnnotationComposer
 
   GeneratedColumn<bool> get dirty =>
       $composableBuilder(column: $table.dirty, builder: (column) => column);
+
+  GeneratedColumn<bool> get active =>
+      $composableBuilder(column: $table.active, builder: (column) => column);
 }
 
 class $$LocalCustomersTableTableManager
@@ -12888,6 +12957,7 @@ class $$LocalCustomersTableTableManager
                 Value<String?> altPhone = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<bool> dirty = const Value.absent(),
+                Value<bool> active = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalCustomersCompanion(
                 id: id,
@@ -12897,6 +12967,7 @@ class $$LocalCustomersTableTableManager
                 altPhone: altPhone,
                 notes: notes,
                 dirty: dirty,
+                active: active,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -12908,6 +12979,7 @@ class $$LocalCustomersTableTableManager
                 Value<String?> altPhone = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<bool> dirty = const Value.absent(),
+                Value<bool> active = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalCustomersCompanion.insert(
                 id: id,
@@ -12917,6 +12989,7 @@ class $$LocalCustomersTableTableManager
                 altPhone: altPhone,
                 notes: notes,
                 dirty: dirty,
+                active: active,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -15654,16 +15727,18 @@ typedef $$PendingSyncOpsTableProcessedTableManager =
       PendingSyncOp,
       PrefetchHooks Function()
     >;
-typedef $$SyncMetaTableCreateCompanionBuilder = SyncMetaCompanion Function({
-  required String key,
-  required DateTime lastPulledAt,
-  Value<int> rowid,
-});
-typedef $$SyncMetaTableUpdateCompanionBuilder = SyncMetaCompanion Function({
-  Value<String> key,
-  Value<DateTime> lastPulledAt,
-  Value<int> rowid,
-});
+typedef $$SyncMetaTableCreateCompanionBuilder =
+    SyncMetaCompanion Function({
+      required String key,
+      required DateTime lastPulledAt,
+      Value<int> rowid,
+    });
+typedef $$SyncMetaTableUpdateCompanionBuilder =
+    SyncMetaCompanion Function({
+      Value<String> key,
+      Value<DateTime> lastPulledAt,
+      Value<int> rowid,
+    });
 
 class $$SyncMetaTableFilterComposer
     extends Composer<_$AppDatabase, $SyncMetaTable> {
@@ -17810,30 +17885,32 @@ typedef $$LocalCashCollectionsTableProcessedTableManager =
       LocalCashCollection,
       PrefetchHooks Function()
     >;
-typedef $$LocalUsersTableCreateCompanionBuilder = LocalUsersCompanion Function({
-  required String id,
-  required String fullName,
-  required String username,
-  required String passwordHash,
-  Value<String?> pinHash,
-  required String role,
-  Value<bool> active,
-  Value<DateTime?> lastLoginAt,
-  Value<DateTime> createdAt,
-  Value<int> rowid,
-});
-typedef $$LocalUsersTableUpdateCompanionBuilder = LocalUsersCompanion Function({
-  Value<String> id,
-  Value<String> fullName,
-  Value<String> username,
-  Value<String> passwordHash,
-  Value<String?> pinHash,
-  Value<String> role,
-  Value<bool> active,
-  Value<DateTime?> lastLoginAt,
-  Value<DateTime> createdAt,
-  Value<int> rowid,
-});
+typedef $$LocalUsersTableCreateCompanionBuilder =
+    LocalUsersCompanion Function({
+      required String id,
+      required String fullName,
+      required String username,
+      required String passwordHash,
+      Value<String?> pinHash,
+      required String role,
+      Value<bool> active,
+      Value<DateTime?> lastLoginAt,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+typedef $$LocalUsersTableUpdateCompanionBuilder =
+    LocalUsersCompanion Function({
+      Value<String> id,
+      Value<String> fullName,
+      Value<String> username,
+      Value<String> passwordHash,
+      Value<String?> pinHash,
+      Value<String> role,
+      Value<bool> active,
+      Value<DateTime?> lastLoginAt,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
 
 class $$LocalUsersTableFilterComposer
     extends Composer<_$AppDatabase, $LocalUsersTable> {

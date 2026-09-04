@@ -20,6 +20,11 @@ class ExpenseNotFoundException implements Exception {
   String toString() => 'Expense not found';
 }
 
+class CustomerNotFoundException implements Exception {
+  @override
+  String toString() => 'Customer not found';
+}
+
 class ExpenseAlreadyReversedException implements Exception {
   @override
   String toString() => 'This expense was already reversed';
@@ -199,8 +204,9 @@ class OfflinePosRepository {
     final q = _db.select(_db.localCustomers);
     if (query.isNotEmpty) {
       final like = '%$query%';
-      q.where((c) => c.fullName.like(like) | c.phone.like(like));
+      q.where((c) => (c.fullName.like(like) | c.phone.like(like)) & c.active.equals(true));
     } else {
+      q.where((c) => c.active.equals(true));
       q.limit(20);
     }
     final rows = await q.get();
@@ -214,6 +220,7 @@ class OfflinePosRepository {
           id: c.id,
           fullName: c.fullName,
           phone: c.phone,
+          active: c.active,
           vehicles: vehicles
               .map(
                 (v) => Vehicle(
@@ -242,6 +249,10 @@ class OfflinePosRepository {
             branchId: '',
             fullName: c.fullName,
             phone: c.phone,
+            // insertOrReplace overwrites the whole row — without this, a
+            // stale online refresh (the backend has no concept of this
+            // flag) would silently resurrect a locally-deleted customer.
+            active: Value(c.active),
           ),
           mode: InsertMode.insertOrReplace,
         );
@@ -298,6 +309,60 @@ class OfflinePosRepository {
       payload: payload,
     );
     return Customer(id: id, fullName: fullName, phone: phone);
+  }
+
+  /// PIN-free but still gated to OWNER at the UI layer (see
+  /// customers_screen.dart) — editing a customer's name/phone isn't a
+  /// money-moving action the way a payment void or manual loyalty
+  /// adjustment is, so it doesn't need the full PIN-override ceremony.
+  Future<void> updateCustomer({
+    required String id,
+    required String fullName,
+    required String phone,
+    required String actorId,
+  }) async {
+    final existing = await (_db.select(_db.localCustomers)..where((c) => c.id.equals(id))).getSingleOrNull();
+    if (existing == null) throw CustomerNotFoundException();
+    await (_db.update(_db.localCustomers)..where((c) => c.id.equals(id))).write(
+      LocalCustomersCompanion(fullName: Value(fullName), phone: Value(phone), dirty: const Value(true)),
+    );
+    await recordAudit(
+      _db,
+      action: AuditAction.customerUpdated,
+      actorId: actorId,
+      entityType: 'Customer',
+      entityId: id,
+      metadata: {'fullName': fullName, 'phone': phone},
+    );
+    await _enqueueOrPush(
+      entityType: 'customer',
+      entityId: id,
+      opType: 'update',
+      path: '/customers/$id',
+      payload: {'fullName': fullName, 'phone': phone},
+      method: 'PATCH',
+    );
+  }
+
+  /// Soft delete — see the `active` column's doc comment on [LocalCustomers].
+  /// Hides the customer from search (and so from New Wash's picker) while
+  /// leaving their wash/loyalty/prepaid history intact and correctly
+  /// attributed.
+  Future<void> deleteCustomer({required String id, required String actorId}) async {
+    final existing = await (_db.select(_db.localCustomers)..where((c) => c.id.equals(id))).getSingleOrNull();
+    if (existing == null) throw CustomerNotFoundException();
+    await (_db.update(_db.localCustomers)..where((c) => c.id.equals(id))).write(
+      const LocalCustomersCompanion(active: Value(false), dirty: Value(true)),
+    );
+    await recordAudit(_db, action: AuditAction.customerDeleted, actorId: actorId, entityType: 'Customer', entityId: id);
+    await _enqueueOrPush(
+      entityType: 'customer',
+      entityId: id,
+      opType: 'delete',
+      path: '/customers/$id',
+      payload: const {},
+      method: 'DELETE',
+    );
   }
 
   Future<Vehicle> createVehicle({

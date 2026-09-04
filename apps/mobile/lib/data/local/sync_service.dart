@@ -26,7 +26,11 @@ class SyncService {
     for (final op in ops) {
       final payload = jsonDecode(op.payloadJson) as Map<String, dynamic>;
       final path = _pathFor(op);
-      final method = (op.opType.startsWith('transition') || op.opType == 'update') ? 'PATCH' : 'POST';
+      final method = op.opType == 'delete'
+          ? 'DELETE'
+          : (op.opType.startsWith('transition') || op.opType == 'update')
+              ? 'PATCH'
+              : 'POST';
 
       try {
         final options = Options(
@@ -61,7 +65,7 @@ class SyncService {
   String _pathFor(PendingSyncOp op) {
     switch (op.entityType) {
       case 'customer':
-        return '/customers';
+        return (op.opType == 'update' || op.opType == 'delete') ? '/customers/${op.entityId}' : '/customers';
       case 'vehicle':
         return '/vehicles';
       case 'wash_order':

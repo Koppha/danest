@@ -22,6 +22,8 @@ abstract final class AuditAction {
   static const washOrderCancelled = 'WASH_ORDER_CANCELLED';
   static const paymentVoided = 'PAYMENT_VOIDED';
   static const expenseReversed = 'EXPENSE_REVERSED';
+  static const customerUpdated = 'CUSTOMER_UPDATED';
+  static const customerDeleted = 'CUSTOMER_DELETED';
   static const cashCollectionConfirmed = 'CASH_COLLECTION_CONFIRMED';
 }
 

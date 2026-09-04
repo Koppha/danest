@@ -4,9 +4,10 @@ class Customer {
   final String id;
   final String fullName;
   final String phone;
+  final bool active;
   final List<Vehicle> vehicles;
 
-  Customer({required this.id, required this.fullName, required this.phone, List<Vehicle>? vehicles})
+  Customer({required this.id, required this.fullName, required this.phone, this.active = true, List<Vehicle>? vehicles})
       // Always a fresh growable list — screens mutate `.vehicles` directly
       // (e.g. after adding a vehicle inline), which throws on a `const []`.
       : vehicles = vehicles ?? [];
@@ -15,6 +16,9 @@ class Customer {
         id: json['id'] as String,
         fullName: json['fullName'] as String,
         phone: json['phone'] as String,
+        // The backend (being phased out) has no notion of this flag — treat
+        // anything it returns as active.
+        active: json['active'] as bool? ?? true,
         vehicles: (json['vehicles'] as List<dynamic>? ?? []).map((v) => Vehicle.fromJson(v as Map<String, dynamic>)).toList(),
       );
 }

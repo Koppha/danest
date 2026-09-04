@@ -56,6 +56,10 @@ class LocalCustomers extends Table {
   TextColumn get altPhone => text().nullable()();
   TextColumn get notes => text().nullable()();
   BoolColumn get dirty => boolean().withDefault(const Constant(false))();
+  // Deleting a customer is a soft flag, not a row removal — they may have
+  // real wash/loyalty/prepaid history that must keep resolving correctly.
+  // Hidden from search (and so from New Wash's customer picker) once false.
+  BoolColumn get active => boolean().withDefault(const Constant(true))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -471,7 +475,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   // Default storage truncates DateTime to whole-second unix timestamps,
   // which let two events in the same second compare as equal instead of
@@ -574,6 +578,9 @@ class AppDatabase extends _$AppDatabase {
               '(SELECT customer_id FROM local_vehicles WHERE local_vehicles.id = local_loyalty_rewards.vehicle_id) '
               'WHERE customer_id IS NULL',
             );
+          }
+          if (from < 13) {
+            await _addColumnIfMissing(m, localCustomers, localCustomers.active);
           }
         },
       );

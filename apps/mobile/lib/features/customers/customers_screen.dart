@@ -41,6 +41,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
   @override
   Widget build(BuildContext context) {
     final customers = ref.watch(customersListProvider);
+    final isOwner = ref.watch(sessionProvider).user?.isOwner ?? false;
 
     return Column(
       children: [
@@ -57,7 +58,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
               ),
               const SizedBox(width: 10),
               OutlinedButton.icon(
-                onPressed: () => _showAddCustomerDialog(context, ref),
+                onPressed: () => _showCustomerDialog(context, ref),
                 icon: const Icon(Icons.person_add_alt_1, size: 16),
                 label: const Text('Add customer'),
               ),
@@ -94,6 +95,18 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                   ],
                                 ),
                               ),
+                              if (isOwner) ...[
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined, size: 18),
+                                  tooltip: 'Edit',
+                                  onPressed: () => _showCustomerDialog(context, ref, existing: c),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, size: 18, color: DnColors.red),
+                                  tooltip: 'Delete',
+                                  onPressed: () => _confirmDeleteCustomer(context, ref, c),
+                                ),
+                              ],
                             ],
                           ),
                           if (c.vehicles.isNotEmpty) ...[
@@ -126,14 +139,14 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
     );
   }
 
-  void _showAddCustomerDialog(BuildContext context, WidgetRef ref) {
-    final nameController = TextEditingController();
-    final phoneController = TextEditingController();
+  void _showCustomerDialog(BuildContext context, WidgetRef ref, {Customer? existing}) {
+    final nameController = TextEditingController(text: existing?.fullName);
+    final phoneController = TextEditingController(text: existing?.phone);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         scrollable: true,
-        title: const Text('Add customer'),
+        title: Text(existing == null ? 'Add customer' : 'Edit customer'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -146,16 +159,50 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
-              final branchId = ref.read(sessionProvider).user?.branchId ?? '';
-              await ref.read(offlinePosRepositoryProvider).createCustomer(
-                    fullName: nameController.text.trim(),
-                    phone: phoneController.text.trim(),
-                    branchId: branchId,
-                  );
+              final repo = ref.read(offlinePosRepositoryProvider);
+              if (existing == null) {
+                final branchId = ref.read(sessionProvider).user?.branchId ?? '';
+                await repo.createCustomer(
+                  fullName: nameController.text.trim(),
+                  phone: phoneController.text.trim(),
+                  branchId: branchId,
+                );
+              } else {
+                final actorId = ref.read(sessionProvider).user!.id;
+                await repo.updateCustomer(
+                  id: existing.id,
+                  fullName: nameController.text.trim(),
+                  phone: phoneController.text.trim(),
+                  actorId: actorId,
+                );
+              }
               ref.invalidate(customersListProvider);
               if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteCustomer(BuildContext context, WidgetRef ref, Customer customer) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete customer?'),
+        content: Text('${customer.fullName} will no longer appear in search or New Wash. Their existing wash history is kept.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: DnColors.red),
+            onPressed: () async {
+              final actorId = ref.read(sessionProvider).user!.id;
+              await ref.read(offlinePosRepositoryProvider).deleteCustomer(id: customer.id, actorId: actorId);
+              ref.invalidate(customersListProvider);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Delete'),
           ),
         ],
       ),

@@ -26,7 +26,7 @@ void main() {
     final raw = sqlite3.sqlite3.open(dbFile.path);
     final version = raw.select('PRAGMA user_version').first['user_version'] as int;
     raw.close();
-    expect(version, 12);
+    expect(version, 13);
   });
 
   // Reproduces a real crash: if the app is killed between onCreate finishing
@@ -57,6 +57,6 @@ void main() {
     final rawAfter = sqlite3.sqlite3.open(dbFile.path);
     final versionAfter = rawAfter.select('PRAGMA user_version').first['user_version'] as int;
     rawAfter.close();
-    expect(versionAfter, 12); // successfully caught up despite the stale start
+    expect(versionAfter, 13); // successfully caught up despite the stale start
   });
 }
